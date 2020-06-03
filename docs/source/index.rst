@@ -30,7 +30,7 @@ Cartographer
 and mapping (`SLAM`_) in 2D and 3D across multiple platforms and sensor
 configurations.
 
-.. _Cartographer: https://github.com/googlecartographer/cartographer
+.. _Cartographer: https://github.com/cartographer-project/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
 Technical Overview
@@ -38,7 +38,7 @@ Technical Overview
 * High level system overview of Cartographer
 
 .. image:: high_level_system_overview.png
-     :target: https://github.com/googlecartographer/cartographer/blob/master/docs/source/high_level_system_overview.png
+     :target: https://github.com/cartographer-project/cartographer/blob/master/docs/source/high_level_system_overview.png
 
 .. To make modifications, edit the original Google Sketch and export a png.
 .. https://docs.google.com/drawings/d/1kCJ_dEbSvV83THCUfMikCPw7xFrTkrvRw5r6Ji8C90c/edit?usp=sharing
@@ -56,7 +56,7 @@ ROS integration is provided by the `Cartographer ROS repository`_. You will find
 complete documentation for using Cartographer with ROS at the
 `Cartographer ROS Read the Docs site`_.
 
-.. _Cartographer ROS repository: https://github.com/googlecartographer/cartographer_ros
+.. _Cartographer ROS repository: https://github.com/cartographer-project/cartographer_ros
 .. _Cartographer ROS Read the Docs site: https://google-cartographer-ros.readthedocs.io
 
 Getting started without ROS
