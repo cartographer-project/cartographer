@@ -17,7 +17,7 @@
 set -o errexit
 set -o verbose
 
-git clone https://github.com/googlecartographer/async_grpc
+git clone https://github.com/cartographer-project/async_grpc
 cd async_grpc
 git checkout 771af45374af7f7bfc3b622ed7efbe29a4aba403
 mkdir build

@@ -47,8 +47,8 @@ class MinMaxRangeFiteringPointsProcessor : public PointsProcessor {
   FlushResult Flush() override;
 
  private:
-  const double min_range_;
-  const double max_range_;
+  const double min_range_squared_;
+  const double max_range_squared_;
   PointsProcessor* const next_;
 };
 
