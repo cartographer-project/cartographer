@@ -19,6 +19,7 @@
 #include <fstream>
 #include <iostream>
 #include <streambuf>
+#include <cstdlib>
 
 #include "cartographer/common/config.h"
 #include "glog/logging.h"
@@ -29,7 +30,11 @@ namespace common {
 ConfigurationFileResolver::ConfigurationFileResolver(
     const std::vector<std::string>& configuration_files_directories)
     : configuration_files_directories_(configuration_files_directories) {
-  configuration_files_directories_.push_back(kConfigurationFilesDirectory);
+  if(const char* config_dir = std::getenv("CARTOGRAPHER_CONFIG_DIR")) {
+    configuration_files_directories_.push_back(config_dir);
+  } else {
+    configuration_files_directories_.push_back(kConfigurationFilesDirectory);
+  }
 }
 
 std::string ConfigurationFileResolver::GetFullPathOrDie(
