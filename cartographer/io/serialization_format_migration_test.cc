@@ -150,7 +150,7 @@ TEST_F(MigrationTest, MigrationAddsHeaderAsFirstMessage) {
 
   mapping::proto::SerializationHeader header;
   EXPECT_TRUE(TextFormat::ParseFromString(output_messages_[0], &header));
-  EXPECT_THAT(header.format_version(), Eq(1));
+  EXPECT_THAT(header.format_version(), Eq(1u));
 }
 
 TEST_F(MigrationTest, MigrationWithGridMigrationAddsHeaderAsFirstMessage) {
@@ -165,7 +165,7 @@ TEST_F(MigrationTest, MigrationWithGridMigrationAddsHeaderAsFirstMessage) {
   mapping::proto::SerializationHeader header;
   EXPECT_TRUE(TextFormat::ParseFromString(
       output_messages_after_migrating_grid_[0], &header));
-  EXPECT_THAT(header.format_version(), Eq(1));
+  EXPECT_THAT(header.format_version(), Eq(1u));
 }
 
 TEST_F(MigrationTest, SerializedDataOrderIsCorrect) {

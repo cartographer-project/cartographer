@@ -50,3 +50,9 @@ sudo apt-get install -y \
     libsuitesparse-dev \
     ninja-build \
     python-sphinx
+
+# Install Ceres Solver on Ubuntu Bionic. No need to build it ourselves.
+if [[ "$(lsb_release -sc)" = "bionic" ]]
+then
+  sudo apt-get install -y libceres-dev
+fi
