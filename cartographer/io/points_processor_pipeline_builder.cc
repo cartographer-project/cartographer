@@ -29,9 +29,9 @@
 #include "cartographer/io/pcd_writing_points_processor.h"
 #include "cartographer/io/ply_writing_points_processor.h"
 #include "cartographer/io/probability_grid_points_processor.h"
+#include "cartographer/io/vertical_range_filtering_points_processor.h"
 #include "cartographer/io/xray_points_processor.h"
 #include "cartographer/io/xyz_writing_points_processor.h"
-#include "cartographer/io/vertical_range_filtering_points_processor.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
 
 namespace cartographer {
