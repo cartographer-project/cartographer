@@ -25,14 +25,14 @@
 namespace cartographer {
 namespace io {
 
-// Filters all points which distance in the Z direction from their 'origin' 
+// Filters all points which distance in the Z direction from their 'origin'
 // exceeds 'max_z' or 'min_z'.
 class VerticalRangeFilteringPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName =
       "vertical_range_filter";
   VerticalRangeFilteringPointsProcessor(double min_z, double max_z,
-                                       PointsProcessor* next);
+                                        PointsProcessor* next);
   static std::unique_ptr<VerticalRangeFilteringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
