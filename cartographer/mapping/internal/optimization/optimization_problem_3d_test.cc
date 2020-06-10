@@ -49,7 +49,7 @@ class OptimizationProblem3DTest : public ::testing::Test {
           fixed_frame_pose_translation_weight = 1e1,
           fixed_frame_pose_rotation_weight = 1e2,
           fixed_frame_pose_use_tolerant_loss = false,
-          fixed_frame_pose_tolerant_loss_param_a = 1, 
+          fixed_frame_pose_tolerant_loss_param_a = 1,
           fixed_frame_pose_tolerant_loss_param_b = 1,
           log_solver_summary = true,
           use_online_imu_extrinsics_in_3d = true,

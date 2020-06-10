@@ -549,7 +549,7 @@ void OptimizationProblem3D::Solve(
       problem.AddResidualBlock(
           SpaCostFunction3D::CreateAutoDiffCostFunction(constraint_pose),
           /* loss function */
-          options_.fixed_frame_pose_use_tolerant_loss() ? 
+          options_.fixed_frame_pose_use_tolerant_loss() ?
               new ceres::TolerantLoss(
             options_.fixed_frame_pose_tolerant_loss_param_a(),
             options_.fixed_frame_pose_tolerant_loss_param_b()) : nullptr,
