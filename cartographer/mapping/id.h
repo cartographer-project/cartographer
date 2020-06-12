@@ -383,22 +383,26 @@ class MapById {
       return EndOfTrajectory(trajectory_id);
     }
 
-    size_t left = 0;
-    size_t right = trajectory.size() - 1;
+    auto left = trajectory.begin();
+    auto right = std::prev(trajectory.end());
     while (left != right) {
-      const int middle_index = (left + right) / 2;
-      auto middle = trajectory.begin();
-      std::advance(middle, middle_index);
-
-      if (internal::GetTime(middle->second) < time) {
-        left = middle_index + 1;
+      // This is never 'right' which is important to guarantee progress.
+      const int middle = left->first + (right->first - left->first) / 2;
+      // This could be 'right' in the presence of gaps, so we need to use the
+      // previous element in this case.
+      auto lower_bound_middle = trajectory.lower_bound(middle);
+      if (lower_bound_middle->first > middle) {
+        CHECK(lower_bound_middle != left);
+        lower_bound_middle = std::prev(lower_bound_middle);
+      }
+      if (internal::GetTime(lower_bound_middle->second) < time) {
+        left = std::next(lower_bound_middle);
       } else {
-        right = middle_index;
+        right = lower_bound_middle;
       }
     }
-    auto result = trajectory.begin();
-    std::advance(result, left);
-    return ConstIterator(*this, IdType{trajectory_id, result->first});
+
+    return ConstIterator(*this, IdType{trajectory_id, left->first});
   }
 
  private:
