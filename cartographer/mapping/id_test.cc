@@ -284,8 +284,10 @@ TEST(IdTest, LowerBoundTrimmedTrajectory) {
   std::advance(trim_segment_end,
                trim_segment_start_index + trim_segment_length);
 
-  for (auto it = trim_segment_start; it != trim_segment_end; ++it) {
-    map_by_id.Trim(it->id);
+  for (auto it = trim_segment_start; it != trim_segment_end;) {
+    const auto this_it = it;
+    ++it;
+    map_by_id.Trim(this_it->id);
   }
 
   auto it = map_by_id.lower_bound(kTrajectoryId, CreateTime(0));
