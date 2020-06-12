@@ -140,9 +140,13 @@ RotationalScanMatcher::RotationalScanMatcher(const Eigen::VectorXf* histogram)
 // rotations of a fractional bucket which is handled by linearly interpolating.
 Eigen::VectorXf RotationalScanMatcher::RotateHistogram(
     const Eigen::VectorXf& histogram, const float angle) {
+  if (histogram.size() == 0) {
+    return histogram;
+  }
   const float rotate_by_buckets = -angle * histogram.size() / M_PI;
   int full_buckets = common::RoundToInt(rotate_by_buckets - 0.5f);
   const float fraction = rotate_by_buckets - full_buckets;
+  CHECK_GT(histogram.size(), 0);
   while (full_buckets < 0) {
     full_buckets += histogram.size();
   }

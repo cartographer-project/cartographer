@@ -20,12 +20,9 @@ set -o verbose
 # Install the required libraries that are available as debs.
 sudo apt-get update
 
-# Install CMake 3.2 for Ubuntu Trusty and Debian Jessie.
+# Install CMake 3.2 for Debian Jessie.
 sudo apt-get install lsb-release -y
-if [[ "$(lsb_release -sc)" = "trusty" ]]
-then
-  sudo apt-get install cmake3 -y
-elif [[ "$(lsb_release -sc)" = "jessie" ]]
+if [[ "$(lsb_release -sc)" = "jessie" ]]
 then
   sudo sh -c "echo 'deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main' >> /etc/apt/sources.list"
   sudo sh -c "echo 'Acquire::Check-Valid-Until \"false\";' >> /etc/apt/apt.conf"
@@ -50,3 +47,9 @@ sudo apt-get install -y \
     libsuitesparse-dev \
     ninja-build \
     python-sphinx
+
+# Install Ceres Solver on Ubuntu Bionic. No need to build it ourselves.
+if [[ "$(lsb_release -sc)" = "bionic" ]]
+then
+  sudo apt-get install -y libceres-dev
+fi
