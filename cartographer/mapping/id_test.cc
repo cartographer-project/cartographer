@@ -275,7 +275,7 @@ TEST(IdTest, LowerBoundTrimmedTrajectory) {
   // Choose random start for a trim_segment.
   std::uniform_int_distribution<int> dt_trim_segment_start(
       2, N - trim_segment_length - 1);
-  auto trim_segment_start_index = dt_trim_segment_start(rng);
+  size_t trim_segment_start_index = dt_trim_segment_start(rng);
 
   auto trim_segment_start = map_by_id.begin();
   std::advance(trim_segment_start, trim_segment_start_index);
