@@ -30,5 +30,11 @@ COPY scripts/install_debs_cmake.sh cartographer/scripts/
 RUN cartographer/scripts/install_debs_cmake.sh && rm -rf /var/lib/apt/lists/*
 COPY scripts/install_proto3.sh cartographer/scripts/
 RUN cartographer/scripts/install_proto3.sh && rm -rf protobuf
+COPY scripts/install_grpc.sh cartographer/scripts/
+RUN cartographer/scripts/install_grpc.sh && rm -rf grpc
+COPY scripts/install_async_grpc.sh cartographer/scripts/
+RUN cartographer/scripts/install_async_grpc.sh && rm -rf async_grpc
+COPY scripts/install_prometheus_cpp.sh cartographer/scripts/
+RUN cartographer/scripts/install_prometheus_cpp.sh && rm -rf prometheus-cpp
 COPY . cartographer
-RUN cartographer/scripts/install_cartographer_cmake.sh && rm -rf cartographer
+RUN cartographer/scripts/install_cartographer_cmake_with_grpc.sh && rm -rf cartographer
