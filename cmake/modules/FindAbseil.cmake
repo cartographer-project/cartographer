@@ -14,7 +14,7 @@
 
 cmake_minimum_required(VERSION 3.2)
 
-if(NOT TARGET standalone_absl)
+if(NOT Abseil_FOUND)
   set(Abseil_FOUND ON)
   set(ABSEIL_FOUND ON)
   set(prefix ${CMAKE_STATIC_LIBRARY_PREFIX})
