@@ -34,7 +34,7 @@ if(NOT Abseil_FOUND)
       absl::utility
     )
     message(STATUS "Found installed abseil package")
-    add_library(standalone_absl INTERFACE)
+    add_library(standalone_absl INTERFACE IMPORTED GLOBAL)
     set_target_properties(standalone_absl
       PROPERTIES INTERFACE_LINK_LIBRARIES
       "${absl_libs}"
