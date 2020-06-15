@@ -260,7 +260,7 @@ def cartographer_repositories():
         sha256 = "83c2a27c92979787f38810adc4b6bb67aa09607c53dbadca3430a5f29e0a1cd3",
         strip_prefix = "async_grpc-771af45374af7f7bfc3b622ed7efbe29a4aba403",
         urls = [
-            "https://github.com/googlecartographer/async_grpc/archive/771af45374af7f7bfc3b622ed7efbe29a4aba403.tar.gz",
+            "https://github.com/cartographer-project/async_grpc/archive/771af45374af7f7bfc3b622ed7efbe29a4aba403.tar.gz",
         ],
     )
 

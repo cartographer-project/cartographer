@@ -33,5 +33,5 @@ The tool assumes that the first pbstream provided as commandline argument,
 follows the serialization format of Cartographer 0.3. The resulting
 1.0 pbstream will be saved to the second commandline argument location.
 
-.. _RFC-0021: https://github.com/googlecartographer/rfcs/blob/master/text/0021-serialization-format.md
-.. _source: https://github.com/googlecartographer/cartographer/blob/master/cartographer/io/pbstream_main.cc
+.. _RFC-0021: https://github.com/cartographer-project/rfcs/blob/master/text/0021-serialization-format.md
+.. _source: https://github.com/cartographer-project/cartographer/blob/master/cartographer/io/pbstream_main.cc
