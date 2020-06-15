@@ -19,7 +19,6 @@ package cartographer.mapping.optimization.proto;
 import "cartographer/common/proto/ceres_solver_options.proto";
 
 // NEXT ID: 26
-// IDs 20-22 are for visual constraints
 message OptimizationProblemOptions {
   reserved 20 to 22; // For visual constraints.
   // Scaling parameter for Huber loss function.
