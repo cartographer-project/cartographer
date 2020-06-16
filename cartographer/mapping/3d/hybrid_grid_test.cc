@@ -212,11 +212,15 @@ struct EigenComparator {
 TEST_F(RandomHybridGridTest, FromProto) {
   const HybridGrid constructed_grid(hybrid_grid_.ToProto());
 
-  std::map<Eigen::Vector3i, float, EigenComparator> member_map(
-      hybrid_grid_.begin(), hybrid_grid_.end());
+  std::map<Eigen::Vector3i, float, EigenComparator> member_map;
+  for (const auto& cell : hybrid_grid_) {
+    member_map.insert(cell);
+  }
 
-  std::map<Eigen::Vector3i, float, EigenComparator> constructed_map(
-      constructed_grid.begin(), constructed_grid.end());
+  std::map<Eigen::Vector3i, float, EigenComparator> constructed_map;
+  for (const auto& cell : constructed_grid) {
+    constructed_map.insert(cell);
+  }
 
   EXPECT_EQ(member_map, constructed_map);
 }
