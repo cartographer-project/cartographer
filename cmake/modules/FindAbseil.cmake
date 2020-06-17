@@ -52,7 +52,6 @@ if(NOT TARGET standalone_absl)
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/meta/${prefix}absl_meta${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/${prefix}absl_int128${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/numeric/${prefix}absl_numeric${suffix}"
-    "${ABSEIL_PROJECT_BUILD_DIR}/absl/synchronization/${prefix}absl_synchronization${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_any${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_bad_any_cast${suffix}"
     "${ABSEIL_PROJECT_BUILD_DIR}/absl/types/${prefix}absl_bad_optional_access${suffix}"
