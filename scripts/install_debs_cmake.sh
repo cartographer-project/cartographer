@@ -45,11 +45,23 @@ sudo apt-get install -y \
     libgoogle-glog-dev \
     liblua5.2-dev \
     libsuitesparse-dev \
-    ninja-build \
-    python-sphinx
+    ninja-build
+
+if [[ "$(lsb_release -sc)" = "focal" ]]
+then
+    sudo apt-get install -y python3-sphinx libgmock-dev
+else
+    sudo apt-get install -y python-sphinx
+fi
 
 # Install Ceres Solver on Ubuntu Bionic. No need to build it ourselves.
 if [[ "$(lsb_release -sc)" = "bionic" ]]
 then
   sudo apt-get install -y libceres-dev
+fi
+
+# Install Ceres Solver and Protocol Buffers support on Ubuntu Focal. No need to build it ourselves.
+if [[ "$(lsb_release -sc)" = "focal" ]]
+then
+  sudo apt-get install -y libceres-dev protobuf-compiler
 fi

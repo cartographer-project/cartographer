@@ -30,6 +30,25 @@ if(NOT GMock_FOUND)
     PATHS
       /usr
   )
+  if(GMOCK_LIBRARIES)
+    find_library(GMOCK_LIBRARY
+      NAMES gmock
+      HINTS
+        ENV GMOCK_DIR
+      PATH_SUFFIXES lib
+      PATHS
+        /usr
+    )
+    find_library(GTEST_LIBRARY
+      NAMES gtest
+      HINTS
+        ENV GMOCK_DIR
+      PATH_SUFFIXES lib
+      PATHS
+        /usr
+    )
+    list(APPEND GMOCK_LIBRARIES ${GMOCK_LIBRARY} ${GTEST_LIBRARY})
+  endif()
 
   # Find system-wide gtest header.
   find_path(GTEST_INCLUDE_DIRS gtest/gtest.h
