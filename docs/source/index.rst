@@ -93,8 +93,8 @@ on systems that meet the following requirements:
 
 * 64-bit, modern CPU (e.g. 3rd generation i7)
 * 16 GB RAM
-* Ubuntu 16.04 (Xenial), 18.04 (Bionic)
-* gcc version 4.8.4, 5.4.0, 7.5.0
+* Ubuntu 16.04 (Xenial), 18.04 (Bionic), 20.04 (Focal)
+* gcc version 4.8.4, 5.4.0, 7.5.0, 9.3.0
 
 Known Issues
 ------------
