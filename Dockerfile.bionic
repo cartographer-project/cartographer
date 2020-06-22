@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y sudo apt-utils tzdata && rm -rf /var/li
 
 COPY scripts/install_debs_cmake.sh cartographer/scripts/
 RUN cartographer/scripts/install_debs_cmake.sh && rm -rf /var/lib/apt/lists/*
+COPY scripts/install_abseil.sh cartographer/scripts/
+RUN cartographer/scripts/install_abseil.sh && rm -rf /var/lib/apt/lists/*
 COPY scripts/install_proto3.sh cartographer/scripts/
 RUN cartographer/scripts/install_proto3.sh && rm -rf protobuf
 COPY scripts/install_grpc.sh cartographer/scripts/
