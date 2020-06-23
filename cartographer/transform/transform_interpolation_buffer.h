@@ -40,7 +40,7 @@ class TransformInterpolationBuffer {
 
   // Sets the transform buffer size limit and removes old transforms
   // if it is exceeded.
-  void SetSizeLimit(const size_t buffer_size_limit);
+  void SetSizeLimit(size_t buffer_size_limit);
 
   // Adds a new transform to the buffer and removes the oldest transform if the
   // buffer size limit is exceeded.
