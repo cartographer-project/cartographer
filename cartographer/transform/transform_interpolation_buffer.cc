@@ -34,10 +34,6 @@ TransformInterpolationBuffer::TransformInterpolationBuffer(
   }
 }
 
-TransformInterpolationBuffer::TransformInterpolationBuffer(
-    const size_t buffer_size_limit)
-    : buffer_size_limit_(buffer_size_limit) {}
-
 void TransformInterpolationBuffer::Push(const common::Time time,
                                         const transform::Rigid3d& transform) {
   if (!timestamped_transforms_.empty()) {

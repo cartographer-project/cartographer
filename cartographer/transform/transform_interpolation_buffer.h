@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_TRANSFORM_TRANSFORM_INTERPOLATION_BUFFER_H_
 
 #include <deque>
-#include <numeric>
+#include <limits>
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
@@ -37,7 +37,6 @@ class TransformInterpolationBuffer {
   TransformInterpolationBuffer() = default;
   explicit TransformInterpolationBuffer(
       const mapping::proto::Trajectory& trajectory);
-  explicit TransformInterpolationBuffer(const size_t buffer_size_limit);
 
   // Sets the transform buffer size limit and removes old transforms
   // if it is exceeded.
