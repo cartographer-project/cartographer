@@ -45,7 +45,8 @@ sudo apt-get install -y \
     libgoogle-glog-dev \
     liblua5.2-dev \
     libsuitesparse-dev \
-    ninja-build
+    ninja-build \
+    stow
 
 if [[ "$(lsb_release -sc)" = "focal" ]]
 then

@@ -28,5 +28,7 @@ RUN apt-get update && apt-get install -y sudo apt-utils tzdata && rm -rf /var/li
 
 COPY scripts/install_debs_cmake.sh cartographer/scripts/
 RUN cartographer/scripts/install_debs_cmake.sh && rm -rf /var/lib/apt/lists/*
+COPY scripts/install_abseil.sh cartographer/scripts/
+RUN cartographer/scripts/install_abseil.sh && rm -rf /var/lib/apt/lists/*
 COPY . cartographer
 RUN cartographer/scripts/install_cartographer_cmake.sh && rm -rf cartographer
