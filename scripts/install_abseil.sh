@@ -24,6 +24,7 @@ mkdir build
 cd build
 cmake -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
   -DCMAKE_INSTALL_PREFIX=/usr/local/stow/absl \
   ..
 ninja

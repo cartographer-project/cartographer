@@ -71,6 +71,10 @@ On Ubuntu 16.04 (Xenial):
   :language: bash
   :lines: 20-
 
+.. literalinclude:: ../../scripts/install_abseil.sh
+  :language: bash
+  :lines: 20-
+
 .. literalinclude:: ../../scripts/install_ceres.sh
   :language: bash
   :lines: 20-
