@@ -279,6 +279,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${imu_integrator_rk4_LIBRARIES})
 #endforeach()
 
 
+add_definitions(-DEIGEN_MAX_ALIGN_BYTES=16)
 
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${Open3D_INCLUDE_DIRS})
