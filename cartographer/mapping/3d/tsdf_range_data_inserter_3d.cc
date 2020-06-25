@@ -34,7 +34,7 @@
 #include "pcl/search/kdtree.h"
 #endif
 
-//#define USE_OPEN3D
+#define USE_OPEN3D
 #ifdef USE_OPEN3D
 #include "Open3D/Open3D.h"
 #endif

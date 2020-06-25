@@ -104,6 +104,9 @@ class OptimizingLocalTrajectoryBuilder {
   State PredictStateEuler(const State& start_state,
                           const common::Time start_time,
                           const common::Time end_time);
+  State PredictStateOdom(const State& start_state,
+                          const common::Time start_time,
+                          const common::Time end_time);
 
   void RemoveObsoleteSensorData();
 

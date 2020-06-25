@@ -566,9 +566,8 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     for (size_t i = 1; i < control_points_.size(); ++i) {
       problem.SetParameterization(control_points_[i].state.rotation.data(),
                                   new ceres::QuaternionParameterization());
-
-      problem.SetParameterBlockConstant(
-          control_points_[i].state.rotation.data());
+//      problem.SetParameterBlockConstant(
+//          control_points_[i].state.rotation.data());
     }
     ceres::Solver::Summary summary;
     ceres::Solve(ceres_solver_options_, &problem, &summary);
@@ -639,7 +638,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
 
   RemoveObsoleteSensorData();
 
-  return AddAccumulatedRangeData(time, optimized_pose,
+  return AddAccumulatedRangeData(control_points_.front().time, optimized_pose,
                                  accumulated_range_data_in_tracking);
 }
 
@@ -706,6 +705,7 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
     const transform::Rigid3d& pose_estimate,
     const Eigen::Quaterniond& gravity_alignment) {
   if (motion_filter_.IsSimilar(time, pose_estimate)) {
+    LOG(INFO)<<"Skipped by motion filter";
     return nullptr;
   }
   const Eigen::VectorXf rotational_scan_matcher_histogram_in_gravity =
@@ -742,6 +742,11 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
 State OptimizingLocalTrajectoryBuilder::PredictState(
     const State& start_state, const common::Time start_time,
     const common::Time end_time) {
+  bool predict_odom = false;
+  if (predict_odom) {
+    return PredictStateOdom(start_state, start_time, end_time);
+  }
+
   switch (
       options_.optimizing_local_trajectory_builder_options().imu_integrator()) {
     case proto::IMUIntegrator::EULER:
@@ -794,6 +799,45 @@ State OptimizingLocalTrajectoryBuilder::PredictStateEuler(
       Eigen::Map<const Eigen::Vector3d>(start_state.velocity.data()) +
       start_rotation * result.delta_velocity -
       gravity_constant_ * delta_time_seconds * Eigen::Vector3d::UnitZ();
+
+  return State(position, orientation, velocity);
+}
+
+State OptimizingLocalTrajectoryBuilder::PredictStateOdom(
+  const State& start_state, const common::Time start_time,
+  const common::Time end_time) {
+  auto it = --imu_data_.cend();
+  while (it->time > start_time) {
+    CHECK(it != imu_data_.cbegin());
+    --it;
+  }
+
+
+  transform::TransformInterpolationBuffer interpolation_buffer;
+  for (const auto& odometer_data : odometer_data_) {
+    interpolation_buffer.Push(odometer_data.time, odometer_data.pose);
+  }
+//  if (!(interpolation_buffer.earliest_time() <=
+//    control_points_[i - 1].time &&
+//    control_points_[i].time <= interpolation_buffer.latest_time())) {
+//    continue;
+//  }
+  const transform::Rigid3d previous_odometer_pose =
+    interpolation_buffer.Lookup(start_time);
+  const transform::Rigid3d current_odometer_pose =
+    interpolation_buffer.Lookup(end_time);
+  const transform::Rigid3d delta_pose =
+    current_odometer_pose.inverse() * previous_odometer_pose;
+  const double delta_time_seconds = common::ToSeconds(end_time - start_time);
+
+  const Eigen::Vector3d position =
+    Eigen::Map<const Eigen::Vector3d>(start_state.translation.data()) + delta_pose.translation();
+  const Eigen::Vector3d velocity = (1.0/delta_time_seconds) * delta_pose.translation();
+
+  const Eigen::Quaterniond start_rotation(
+    start_state.rotation[0], start_state.rotation[1], start_state.rotation[2],
+    start_state.rotation[3]);
+  const Eigen::Quaterniond orientation = start_rotation * delta_pose.rotation();
 
   return State(position, orientation, velocity);
 }
