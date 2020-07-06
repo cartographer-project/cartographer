@@ -19,21 +19,9 @@ set -o verbose
 
 # Install the required libraries that are available as debs.
 sudo apt-get update
-
-# Install CMake 3.2 for Debian Jessie.
-sudo apt-get install lsb-release -y
-if [[ "$(lsb_release -sc)" = "jessie" ]]
-then
-  sudo sh -c "echo 'deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main' >> /etc/apt/sources.list"
-  sudo sh -c "echo 'Acquire::Check-Valid-Until \"false\";' >> /etc/apt/apt.conf"
-  sudo apt-get update
-  sudo apt-get -t jessie-backports install cmake -y
-else
-  sudo apt-get install cmake -y
-fi
-
 sudo apt-get install -y \
     clang \
+    cmake \
     g++ \
     git \
     google-mock \
@@ -45,6 +33,7 @@ sudo apt-get install -y \
     libgoogle-glog-dev \
     liblua5.2-dev \
     libsuitesparse-dev \
+    lsb-release \
     ninja-build \
     stow
 
