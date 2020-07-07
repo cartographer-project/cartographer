@@ -70,6 +70,22 @@ TEST(TransformInterpolationBufferTest, testLookupSingleTransform) {
   EXPECT_THAT(interpolated, IsNearly(transform::Rigid3d::Identity(), 1e-6));
 }
 
+TEST(TransformInterpolationBufferTest, testSetSizeLimit) {
+  TransformInterpolationBuffer buffer;
+  EXPECT_EQ(buffer.size_limit(), kUnlimitedBufferSize);
+  buffer.Push(common::FromUniversal(0), transform::Rigid3d::Identity());
+  buffer.Push(common::FromUniversal(1), transform::Rigid3d::Identity());
+  buffer.Push(common::FromUniversal(2), transform::Rigid3d::Identity());
+  EXPECT_EQ(buffer.size(), 3);
+  buffer.SetSizeLimit(2);
+  EXPECT_EQ(buffer.size_limit(), 2);
+  EXPECT_EQ(buffer.size(), 2);
+  EXPECT_FALSE(buffer.Has(common::FromUniversal(0)));
+  buffer.Push(common::FromUniversal(3), transform::Rigid3d::Identity());
+  EXPECT_EQ(buffer.size(), 2);
+  EXPECT_FALSE(buffer.Has(common::FromUniversal(1)));
+}
+
 }  // namespace
 }  // namespace transform
 }  // namespace cartographer

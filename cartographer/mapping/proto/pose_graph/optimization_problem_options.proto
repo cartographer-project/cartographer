@@ -18,8 +18,9 @@ package cartographer.mapping.optimization.proto;
 
 import "cartographer/common/proto/ceres_solver_options.proto";
 
-// NEXT ID: 19
+// NEXT ID: 26
 message OptimizationProblemOptions {
+  reserved 20 to 22; // For visual constraints.
   // Scaling parameter for Huber loss function.
   double huber_scale = 1;
 
@@ -45,11 +46,19 @@ message OptimizationProblemOptions {
   // odometry.
   double odometry_rotation_weight = 17;
 
-  // Scaling parameter for the FixedFramePose translation.
+  // Scaling parameter for the FixedFramePose translation. Unit: 1/meters.
   double fixed_frame_pose_translation_weight = 11;
 
   // Scaling parameter for the FixedFramePose rotation.
   double fixed_frame_pose_rotation_weight = 12;
+
+  bool fixed_frame_pose_use_tolerant_loss = 23;
+  // The following parameters are used only if fixed_frame_pose_use_tolerant_loss is true.
+  // See http://ceres-solver.org/nnls_modeling.html.
+  // For large values of s, the tolerant loss function approaches a null loss
+  // with fixed_frame_pose_translation_weight.
+  double fixed_frame_pose_tolerant_loss_param_a = 24;
+  double fixed_frame_pose_tolerant_loss_param_b = 25;
 
   // 3D only: fix Z.
   bool fix_z_in_3d = 13;

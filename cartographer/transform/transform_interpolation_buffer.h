@@ -17,7 +17,8 @@
 #ifndef CARTOGRAPHER_TRANSFORM_TRANSFORM_INTERPOLATION_BUFFER_H_
 #define CARTOGRAPHER_TRANSFORM_TRANSFORM_INTERPOLATION_BUFFER_H_
 
-#include <vector>
+#include <deque>
+#include <limits>
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
@@ -27,18 +28,28 @@
 namespace cartographer {
 namespace transform {
 
+constexpr size_t kUnlimitedBufferSize = std::numeric_limits<size_t>::max();
+
 // A time-ordered buffer of transforms that supports interpolated lookups.
+// Unless explicitly set, the buffer size is unlimited.
 class TransformInterpolationBuffer {
  public:
   TransformInterpolationBuffer() = default;
   explicit TransformInterpolationBuffer(
       const mapping::proto::Trajectory& trajectory);
 
+  // Sets the transform buffer size limit and removes old transforms
+  // if it is exceeded.
+  void SetSizeLimit(size_t buffer_size_limit);
+
   // Adds a new transform to the buffer and removes the oldest transform if the
   // buffer size limit is exceeded.
   void Push(common::Time time, const transform::Rigid3d& transform);
 
-  // Returns true if an interpolated transfrom can be computed at 'time'.
+  // Clears the transform buffer.
+  void Clear();
+
+  // Returns true if an interpolated transform can be computed at 'time'.
   bool Has(common::Time time) const;
 
   // Returns an interpolated transform at 'time'. CHECK()s that a transform at
@@ -56,8 +67,17 @@ class TransformInterpolationBuffer {
   // Returns true if the buffer is empty.
   bool empty() const;
 
+  // Returns the maximum allowed size of the transform buffer.
+  size_t size_limit() const;
+
+  // Returns the current size of the transform buffer.
+  size_t size() const;
+
  private:
-  std::vector<TimestampedTransform> timestamped_transforms_;
+  void RemoveOldTransformsIfNeeded();
+
+  std::deque<TimestampedTransform> timestamped_transforms_;
+  size_t buffer_size_limit_ = kUnlimitedBufferSize;
 };
 
 }  // namespace transform
