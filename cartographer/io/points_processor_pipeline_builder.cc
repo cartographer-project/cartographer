@@ -29,6 +29,7 @@
 #include "cartographer/io/pcd_writing_points_processor.h"
 #include "cartographer/io/ply_writing_points_processor.h"
 #include "cartographer/io/probability_grid_points_processor.h"
+#include "cartographer/io/vertical_range_filtering_points_processor.h"
 #include "cartographer/io/xray_points_processor.h"
 #include "cartographer/io/xyz_writing_points_processor.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
@@ -83,7 +84,8 @@ void RegisterBuiltInPointsProcessors(
   RegisterPlainPointsProcessor<CountingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<FixedRatioSamplingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<FrameIdFilteringPointsProcessor>(builder);
-  RegisterPlainPointsProcessor<MinMaxRangeFiteringPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<MinMaxRangeFilteringPointsProcessor>(builder);
+  RegisterPlainPointsProcessor<VerticalRangeFilteringPointsProcessor>(builder);
   RegisterPlainPointsProcessor<OutlierRemovingPointsProcessor>(builder);
   RegisterPlainPointsProcessor<ColoringPointsProcessor>(builder);
   RegisterPlainPointsProcessor<IntensityToColorPointsProcessor>(builder);

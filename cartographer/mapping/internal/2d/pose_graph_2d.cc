@@ -656,6 +656,22 @@ void PoseGraph2D::FreezeTrajectory(const int trajectory_id) {
   AddWorkItem([this, trajectory_id]() LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock locker(&mutex_);
     CHECK(!IsTrajectoryFrozen(trajectory_id));
+    // Connect multiple frozen trajectories among each other.
+    // This is required for localization against multiple frozen trajectories
+    // because we lose inter-trajectory constraints when freezing.
+    for (const auto& entry : data_.trajectories_state) {
+      const int other_trajectory_id = entry.first;
+      if (!IsTrajectoryFrozen(other_trajectory_id)) {
+        continue;
+      }
+      if (data_.trajectory_connectivity_state.TransitivelyConnected(
+              trajectory_id, other_trajectory_id)) {
+        // Already connected, nothing to do.
+        continue;
+      }
+      data_.trajectory_connectivity_state.Connect(
+          trajectory_id, other_trajectory_id, common::FromUniversal(0));
+    }
     data_.trajectories_state[trajectory_id].state = TrajectoryState::FROZEN;
     return WorkItem::Result::kDoNotRunOptimization;
   });

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_MIN_MAX_RANGE_FILTERING_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_MIN_MAX_RANGE_FILTERING_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_VERTICAL_RANGE_FILTERING_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_VERTICAL_RANGE_FILTERING_POINTS_PROCESSOR_H_
 
 #include <memory>
 
@@ -25,34 +25,34 @@
 namespace cartographer {
 namespace io {
 
-// Filters all points that are farther away from their 'origin' as 'max_range'
-// or closer than 'min_range'.
-class MinMaxRangeFilteringPointsProcessor : public PointsProcessor {
+// Filters all points which distance in the Z direction from their 'origin'
+// exceeds 'max_z' or 'min_z'.
+class VerticalRangeFilteringPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName =
-      "min_max_range_filter";
-  MinMaxRangeFilteringPointsProcessor(double min_range, double max_range,
-                                      PointsProcessor* next);
-  static std::unique_ptr<MinMaxRangeFilteringPointsProcessor> FromDictionary(
+      "vertical_range_filter";
+  VerticalRangeFilteringPointsProcessor(double min_z, double max_z,
+                                        PointsProcessor* next);
+  static std::unique_ptr<VerticalRangeFilteringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
-  ~MinMaxRangeFilteringPointsProcessor() override {}
+  ~VerticalRangeFilteringPointsProcessor() override {}
 
-  MinMaxRangeFilteringPointsProcessor(
-      const MinMaxRangeFilteringPointsProcessor&) = delete;
-  MinMaxRangeFilteringPointsProcessor& operator=(
-      const MinMaxRangeFilteringPointsProcessor&) = delete;
+  VerticalRangeFilteringPointsProcessor(
+      const VerticalRangeFilteringPointsProcessor&) = delete;
+  VerticalRangeFilteringPointsProcessor& operator=(
+      const VerticalRangeFilteringPointsProcessor&) = delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
 
  private:
-  const double min_range_squared_;
-  const double max_range_squared_;
+  const double min_z_;
+  const double max_z_;
   PointsProcessor* const next_;
 };
 
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_MIN_MAX_RANGE_FILTERING_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_VERTICAL_RANGE_FILTERING_POINTS_PROCESSOR_H_

@@ -27,7 +27,7 @@ namespace {
 class RangeDataInserterTest2DTSDF : public ::testing::Test {
  protected:
   RangeDataInserterTest2DTSDF()
-      : tsdf_(MapLimits(1., Eigen::Vector2d(0., 7.), CellLimits(8, 1)), 2.0,
+      : tsdf_(MapLimits(1., Eigen::Vector2d(1., 7.), CellLimits(8, 1)), 2.0,
               10.0, &conversion_tables_) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
