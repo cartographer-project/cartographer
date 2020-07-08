@@ -209,6 +209,7 @@ void OptimizationProblem2D::InsertTrajectoryNode(const NodeId& node_id,
 void OptimizationProblem2D::TrimTrajectoryNode(const NodeId& node_id) {
   imu_data_.Trim(node_data_, node_id);
   odometry_data_.Trim(node_data_, node_id);
+  fixed_frame_pose_data_.Trim(node_data_, node_id);
   node_data_.Trim(node_id);
   if (node_data_.SizeOfTrajectoryOrZero(node_id.trajectory_id) == 0) {
     trajectory_data_.erase(node_id.trajectory_id);
@@ -377,19 +378,24 @@ void OptimizationProblem2D::Solve(
           fixed_frame_pose_in_map = transform::Project2D(
               trajectory_data.fixed_frame_origin_in_map.value());
         } else {
-          fixed_frame_pose_in_map = node_data.global_pose_2d;
+          fixed_frame_pose_in_map =
+              node_data.global_pose_2d *
+              transform::Project2D(constraint_pose.zbar_ij).inverse();
         }
 
-        C_fixed_frames.emplace(
-            std::piecewise_construct, std::forward_as_tuple(trajectory_id),
-            std::forward_as_tuple(FromPose(fixed_frame_pose_in_map)));
+        C_fixed_frames.emplace(trajectory_id,
+                               FromPose(fixed_frame_pose_in_map));
         fixed_frame_pose_initialized = true;
       }
 
-      problem.AddResidualBlock(CreateAutoDiffSpaCostFunction(constraint_pose),
-                               nullptr /* loss function */,
-                               C_fixed_frames.at(trajectory_id).data(),
-                               C_nodes.at(node_id).data());
+      problem.AddResidualBlock(
+          CreateAutoDiffSpaCostFunction(constraint_pose),
+          options_.fixed_frame_pose_use_tolerant_loss()
+              ? new ceres::TolerantLoss(
+                    options_.fixed_frame_pose_tolerant_loss_param_a(),
+                    options_.fixed_frame_pose_tolerant_loss_param_b())
+              : nullptr,
+          C_fixed_frames.at(trajectory_id).data(), C_nodes.at(node_id).data());
     }
   }
 
