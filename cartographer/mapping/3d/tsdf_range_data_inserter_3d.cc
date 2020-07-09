@@ -34,8 +34,7 @@
 #include "pcl/search/kdtree.h"
 #endif
 
-#define USE_OPEN3D
-#ifdef USE_OPEN3D
+#ifdef WITH_OPEN3D
 #include "Open3D/Open3D.h"
 #endif
 
@@ -338,7 +337,7 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
       ++point_idx;
     }
 #endif
-#ifdef USE_OPEN3D
+#ifdef WITH_OPEN3D
     std::shared_ptr<open3d::geometry::PointCloud> cloud =
         std::make_shared<open3d::geometry::PointCloud>();
     for (const auto& point : range_data.returns) {

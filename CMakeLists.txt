@@ -24,6 +24,8 @@ set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VE
 option(BUILD_GRPC "build Cartographer gRPC support" false)
 set(CARTOGRAPHER_HAS_GRPC ${BUILD_GRPC})
 option(BUILD_PROMETHEUS "build Prometheus monitoring support" false)
+option(WITH_OPEN3D "build with open3d support" false)
+
 
 include("${PROJECT_SOURCE_DIR}/cmake/functions.cmake")
 google_initialize_cartographer_project()
@@ -73,21 +75,22 @@ find_package(imu_integrator_rk4 REQUIRED)
 #find_package(PCL REQUIRED common kdtree search features)
 
 # Open3D
-find_package(Open3D HINTS ${CMAKE_INSTALL_PREFIX}/lib/CMake)
-list(APPEND Open3D_LIBRARIES dl)
-if (Open3D_FOUND)
- message(STATUS "Found Open3D ${Open3D_VERSION}")
- add_definitions(-DUNIX)
- add_compile_options(-Wno-deprecated-declarations)
- add_compile_options(-Wno-unused-result)
- add_definitions(-O3)
-else ()
- message(SEND_ERROR "Open3D not found")
-endif ()
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${Open3D_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Open3D_CXX_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${Open3D_EXE_LINKER_FLAGS}")
+if(${WITH_OPEN3D})
+  find_package(Open3D HINTS ${CMAKE_INSTALL_PREFIX}/lib/CMake)
+  list(APPEND Open3D_LIBRARIES dl)
+  if (Open3D_FOUND)
+   message(STATUS "Found Open3D ${Open3D_VERSION}")
+   add_definitions(-DUNIX)
+   add_compile_options(-Wno-deprecated-declarations)
+   add_compile_options(-Wno-unused-result)
+   add_definitions(-O3)
+  else ()
+   message(SEND_ERROR "Open3D not found")
+  endif ()
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${Open3D_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Open3D_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${Open3D_EXE_LINKER_FLAGS}")
+endif()
 
 # Install catkin package.xml
 install(FILES package.xml DESTINATION share/cartographer)
@@ -282,8 +285,10 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${imu_integrator_rk4_LIBRARIES})
 add_definitions(-DEIGEN_MAX_ALIGN_BYTES=16)
 
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${Open3D_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${Open3D_LIBRARIES})
+if(${WITH_OPEN3D})
+  target_include_directories(${PROJECT_NAME} PUBLIC ${Open3D_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} PUBLIC ${Open3D_LIBRARIES})
+endif()
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
         "${Boost_INCLUDE_DIRS}")
