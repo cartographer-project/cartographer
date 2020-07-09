@@ -37,21 +37,17 @@ sudo apt-get install -y \
     ninja-build \
     stow
 
-if [[ "$(lsb_release -sc)" = "focal" ]]
+# Install Ceres Solver and Protocol Buffers support if available.
+# No need to build it ourselves.
+if [[ "$(lsb_release -sc)" = "focal" || "$(lsb_release -sc)" = "buster" ]]
 then
-    sudo apt-get install -y python3-sphinx libgmock-dev
+  sudo apt-get install -y python3-sphinx libgmock-dev libceres-dev protobuf-compiler
 else
-    sudo apt-get install -y python-sphinx
+  sudo apt-get install -y python-sphinx
+  if [[ "$(lsb_release -sc)" = "bionic" ]]
+  then
+    sudo apt-get install -y libceres-dev
+  fi
 fi
 
-# Install Ceres Solver on Ubuntu Bionic. No need to build it ourselves.
-if [[ "$(lsb_release -sc)" = "bionic" ]]
-then
-  sudo apt-get install -y libceres-dev
-fi
 
-# Install Ceres Solver and Protocol Buffers support on Ubuntu Focal. No need to build it ourselves.
-if [[ "$(lsb_release -sc)" = "focal" ]]
-then
-  sudo apt-get install -y libceres-dev protobuf-compiler
-fi

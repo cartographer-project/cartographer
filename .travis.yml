@@ -26,6 +26,7 @@ env:
   - LSB_RELEASE=bionic DOCKER_CACHE_FILE=/home/travis/docker/bionic-cache.tar.gz CC=gcc CXX=g++
   - LSB_RELEASE=focal DOCKER_CACHE_FILE=/home/travis/docker/focal-cache.tar.gz CC=gcc CXX=g++
   - LSB_RELEASE=stretch DOCKER_CACHE_FILE=/home/travis/docker/stretch-cache.tar.gz CC=gcc CXX=g++
+  - LSB_RELEASE=buster DOCKER_CACHE_FILE=/home/travis/docker/buster-cache.tar.gz CC=gcc CXX=g++
 
 before_install: scripts/load_docker_cache.sh
 
