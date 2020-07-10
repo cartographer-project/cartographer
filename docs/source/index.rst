@@ -30,7 +30,7 @@ Cartographer
 and mapping (`SLAM`_) in 2D and 3D across multiple platforms and sensor
 configurations.
 
-.. _Cartographer: https://github.com/googlecartographer/cartographer
+.. _Cartographer: https://github.com/cartographer-project/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
 Technical Overview
@@ -38,7 +38,7 @@ Technical Overview
 * High level system overview of Cartographer
 
 .. image:: high_level_system_overview.png
-     :target: https://github.com/googlecartographer/cartographer/blob/master/docs/source/high_level_system_overview.png
+     :target: https://github.com/cartographer-project/cartographer/blob/master/docs/source/high_level_system_overview.png
 
 .. To make modifications, edit the original Google Sketch and export a png.
 .. https://docs.google.com/drawings/d/1kCJ_dEbSvV83THCUfMikCPw7xFrTkrvRw5r6Ji8C90c/edit?usp=sharing
@@ -56,7 +56,7 @@ ROS integration is provided by the `Cartographer ROS repository`_. You will find
 complete documentation for using Cartographer with ROS at the
 `Cartographer ROS Read the Docs site`_.
 
-.. _Cartographer ROS repository: https://github.com/googlecartographer/cartographer_ros
+.. _Cartographer ROS repository: https://github.com/cartographer-project/cartographer_ros
 .. _Cartographer ROS Read the Docs site: https://google-cartographer-ros.readthedocs.io
 
 Getting started without ROS
@@ -65,9 +65,13 @@ Getting started without ROS
 Please see our ROS integration as a starting point for integrating your system
 with the standalone library. Currently, it is the best available reference.
 
-On Ubuntu 14.04 (Trusty):
+On Ubuntu 16.04 (Xenial):
 
 .. literalinclude:: ../../scripts/install_debs_cmake.sh
+  :language: bash
+  :lines: 20-
+
+.. literalinclude:: ../../scripts/install_abseil.sh
   :language: bash
   :lines: 20-
 
@@ -93,8 +97,8 @@ on systems that meet the following requirements:
 
 * 64-bit, modern CPU (e.g. 3rd generation i7)
 * 16 GB RAM
-* Ubuntu 14.04 (Trusty) and 16.04 (Xenial)
-* gcc version 4.8.4 and 5.4.0
+* Ubuntu 16.04 (Xenial), 18.04 (Bionic), 20.04 (Focal)
+* gcc version 4.8.4, 5.4.0, 7.5.0, 9.3.0
 
 Known Issues
 ------------

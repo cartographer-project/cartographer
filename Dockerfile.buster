@@ -1,4 +1,4 @@
-# Copyright 2016 The Cartographer Authors
+# Copyright 2020 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:xenial
+FROM debian:buster
 
 ARG cc
 ARG cxx
@@ -28,9 +28,5 @@ COPY scripts/install_debs_cmake.sh cartographer/scripts/
 RUN cartographer/scripts/install_debs_cmake.sh && rm -rf /var/lib/apt/lists/*
 COPY scripts/install_abseil.sh cartographer/scripts/
 RUN cartographer/scripts/install_abseil.sh && rm -rf /var/lib/apt/lists/*
-COPY scripts/install_ceres.sh cartographer/scripts/
-RUN cartographer/scripts/install_ceres.sh && rm -rf ceres-solver
-COPY scripts/install_proto3.sh cartographer/scripts/
-RUN cartographer/scripts/install_proto3.sh && rm -rf protobuf
 COPY . cartographer
 RUN cartographer/scripts/install_cartographer_cmake.sh && rm -rf cartographer

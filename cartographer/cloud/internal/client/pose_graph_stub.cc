@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/cloud/internal/client/pose_graph_stub.h"
+
 #include "async_grpc/client.h"
 #include "cartographer/cloud/internal/handlers/delete_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/get_all_submap_poses.h"

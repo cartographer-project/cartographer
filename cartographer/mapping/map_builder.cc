@@ -82,6 +82,8 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
       parameter_dictionary->GetBool("use_trajectory_builder_3d"));
   options.set_num_background_threads(
       parameter_dictionary->GetNonNegativeInt("num_background_threads"));
+  options.set_collate_by_trajectory(
+      parameter_dictionary->GetBool("collate_by_trajectory"));
   *options.mutable_pose_graph_options() = CreatePoseGraphOptions(
       parameter_dictionary->GetDictionary("pose_graph").get());
   CHECK_NE(options.use_trajectory_builder_2d(),

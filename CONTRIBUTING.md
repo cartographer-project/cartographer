@@ -1,27 +1,30 @@
-Want to contribute? Great! First, read this page (including the small print at the end).
+Want to contribute? Great! First, read this page.
 
 ### Before you contribute
-Before we can use your code, you must sign the
-[Google Individual Contributor License Agreement]
-(https://cla.developers.google.com/about/google-individual)
-(CLA), which you can do online. The CLA is necessary mainly because you own the
-copyright to your changes, even after your contribution becomes part of our
-codebase, so we need your permission to use and distribute your code. We also
-need to be sure of various other things—for instance that you'll tell us if you
-know that your code infringes on other people's patents. You don't have to sign
-the CLA until after you've submitted your code for review and a member has
-approved it, but you must do it before we can put your code into our codebase.
-Before you start working on a larger contribution, you should get in touch with
-us first through the issue tracker with your idea so that we can help out and
-possibly guide you. Coordinating up front makes it much easier to avoid
-frustration later on.
+
+Any contribution that you make to this repository will
+be under the Apache 2 License, as dictated by that
+[license](http://www.apache.org/licenses/LICENSE-2.0):
+
+```
+5. Submission of Contributions. Unless You explicitly state otherwise,
+   any Contribution intentionally submitted for inclusion in the Work
+   by You to the Licensor shall be under the terms and conditions of
+   this License, without any additional terms or conditions.
+   Notwithstanding the above, nothing herein shall supersede or modify
+   the terms of any separate license agreement you may have executed
+   with Licensor regarding such Contributions.
+```
+
+### Developer Certificate of Origin
+
+Contributors must sign-off each commit by adding a `Signed-off-by: ...`
+line to commit messages to certify that they have the right to submit
+the code they are contributing to the project according to the
+[Developer Certificate of Origin (DCO)](https://developercertificate.org/).
+You can sign-off a commit via `git commit -s`.
 
 ### Code reviews
-All submissions, including submissions by project members, require review. We
-use Github pull requests for this purpose.
 
-### The small print
-Contributions made by corporations are covered by a different agreement than
-the one above, the
-[Software Grant and Corporate Contributor License Agreement]
-(https://cla.developers.google.com/about/google-corporate).
+All submissions, including submissions by project members, require review.
+We use GitHub pull requests for this purpose.

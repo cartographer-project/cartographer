@@ -17,6 +17,7 @@
 #include "cartographer/io/probability_grid_points_processor.h"
 
 #include <string>
+
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/port.h"

@@ -1,4 +1,5 @@
 #include "cartographer/common/lockless_queue.h"
+
 #include "gtest/gtest.h"
 
 namespace cartographer {

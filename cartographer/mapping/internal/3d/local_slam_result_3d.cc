@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/mapping/internal/3d/local_slam_result_3d.h"
+
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
 
 namespace cartographer {

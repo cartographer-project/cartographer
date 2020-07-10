@@ -42,6 +42,9 @@ namespace mapping {
 static auto* kWorkQueueDelayMetric = metrics::Gauge::Null();
 static auto* kConstraintsSameTrajectoryMetric = metrics::Gauge::Null();
 static auto* kConstraintsDifferentTrajectoryMetric = metrics::Gauge::Null();
+static auto* kActiveSubmapsMetric = metrics::Gauge::Null();
+static auto* kFrozenSubmapsMetric = metrics::Gauge::Null();
+static auto* kDeletedSubmapsMetric = metrics::Gauge::Null();
 
 PoseGraph3D::PoseGraph3D(
     const proto::PoseGraphOptions& options,
@@ -130,6 +133,7 @@ std::pair<NodeId, std::vector<SubmapId>> PoseGraph3D::AppendNode(
         data_.submap_data.Append(trajectory_id, InternalSubmapData());
     data_.submap_data.at(submap_id).submap = insertion_submaps.back();
     LOG(INFO) << "Inserted submap " << submap_id << ".";
+    kActiveSubmapsMetric->Increment();
   }
   std::vector<SubmapId> submap_ids;
   auto submap_data_iter =
@@ -650,6 +654,22 @@ void PoseGraph3D::FreezeTrajectory(const int trajectory_id) {
   AddWorkItem([this, trajectory_id]() LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock locker(&mutex_);
     CHECK(!IsTrajectoryFrozen(trajectory_id));
+    // Connect multiple frozen trajectories among each other.
+    // This is required for localization against multiple frozen trajectories
+    // because we lose inter-trajectory constraints when freezing.
+    for (const auto& entry : data_.trajectories_state) {
+      const int other_trajectory_id = entry.first;
+      if (!IsTrajectoryFrozen(other_trajectory_id)) {
+        continue;
+      }
+      if (data_.trajectory_connectivity_state.TransitivelyConnected(
+              trajectory_id, other_trajectory_id)) {
+        // Already connected, nothing to do.
+        continue;
+      }
+      data_.trajectory_connectivity_state.Connect(
+          trajectory_id, other_trajectory_id, common::FromUniversal(0));
+    }
     data_.trajectories_state[trajectory_id].state = TrajectoryState::FROZEN;
     return WorkItem::Result::kDoNotRunOptimization;
   });
@@ -682,6 +702,15 @@ void PoseGraph3D::AddSubmapFromProto(
     data_.global_submap_poses_3d.Insert(
         submap_id, optimization::SubmapSpec3D{global_submap_pose});
   }
+
+  // TODO(MichaelGrupp): MapBuilder does freezing before deserializing submaps,
+  // so this should be fine.
+  if (IsTrajectoryFrozen(submap_id.trajectory_id)) {
+    kFrozenSubmapsMetric->Increment();
+  } else {
+    kActiveSubmapsMetric->Increment();
+  }
+
   AddWorkItem([this, submap_id, global_submap_pose]() LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock locker(&mutex_);
     data_.submap_data.at(submap_id).state = SubmapState::kFinished;
@@ -1214,6 +1243,14 @@ void PoseGraph3D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   parent_->constraint_builder_.DeleteScanMatcher(submap_id);
   parent_->optimization_problem_->TrimSubmap(submap_id);
 
+  // We have one submap less, update the gauge metrics.
+  kDeletedSubmapsMetric->Increment();
+  if (parent_->IsTrajectoryFrozen(submap_id.trajectory_id)) {
+    kFrozenSubmapsMetric->Decrement();
+  } else {
+    kActiveSubmapsMetric->Decrement();
+  }
+
   // Remove the 'nodes_to_remove' from the pose graph and the optimization
   // problem.
   for (const NodeId& node_id : nodes_to_remove) {
@@ -1244,11 +1281,16 @@ void PoseGraph3D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
   kWorkQueueDelayMetric = latency->Add({});
   auto* constraints = family_factory->NewGaugeFamily(
       "mapping_3d_pose_graph_constraints",
-      "Current number constraints in the pose graph");
+      "Current number of constraints in the pose graph");
   kConstraintsDifferentTrajectoryMetric =
       constraints->Add({{"tag", "inter_submap"}, {"trajectory", "different"}});
   kConstraintsSameTrajectoryMetric =
       constraints->Add({{"tag", "inter_submap"}, {"trajectory", "same"}});
+  auto* submaps = family_factory->NewGaugeFamily(
+      "mapping_3d_pose_graph_submaps", "Number of submaps in the pose graph.");
+  kActiveSubmapsMetric = submaps->Add({{"state", "active"}});
+  kFrozenSubmapsMetric = submaps->Add({{"state", "frozen"}});
+  kDeletedSubmapsMetric = submaps->Add({{"state", "deleted"}});
 }
 
 }  // namespace mapping

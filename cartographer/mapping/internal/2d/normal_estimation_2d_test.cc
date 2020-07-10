@@ -37,7 +37,7 @@ TEST(NormalEstimation2DTest, SinglePoint) {
       "}");
   const proto::NormalEstimationOptions2D options =
       CreateNormalEstimationOptions2D(parameter_dictionary.get());
-  sensor::RangeData range_data;
+  auto range_data = sensor::RangeData();
   const size_t num_angles = 100;
   range_data.origin.x() = 0.f;
   range_data.origin.y() = 0.f;
@@ -63,7 +63,7 @@ TEST(NormalEstimation2DTest, StraightLineGeometry) {
       "}");
   const proto::NormalEstimationOptions2D options =
       CreateNormalEstimationOptions2D(parameter_dictionary.get());
-  sensor::RangeData range_data;
+  auto range_data = sensor::RangeData();
   range_data.returns.push_back({Eigen::Vector3f{-1.f, 1.f, 0.f}});
   range_data.returns.push_back({Eigen::Vector3f{0.f, 1.f, 0.f}});
   range_data.returns.push_back({Eigen::Vector3f{1.f, 1.f, 0.f}});
@@ -117,7 +117,7 @@ TEST_P(CircularGeometry2DTest, NumSamplesPerNormal) {
       "}");
   const proto::NormalEstimationOptions2D options =
       CreateNormalEstimationOptions2D(parameter_dictionary.get());
-  sensor::RangeData range_data;
+  auto range_data = sensor::RangeData();
   const size_t num_angles = 100;
   for (size_t angle_idx = 0; angle_idx < num_angles; ++angle_idx) {
     const double angle = static_cast<double>(angle_idx) /

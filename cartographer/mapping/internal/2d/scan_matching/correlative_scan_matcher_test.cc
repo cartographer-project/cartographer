@@ -15,7 +15,6 @@
  */
 
 #include "cartographer/mapping/internal/2d/scan_matching/correlative_scan_matcher_2d.h"
-
 #include "cartographer/sensor/point_cloud.h"
 #include "gtest/gtest.h"
 
