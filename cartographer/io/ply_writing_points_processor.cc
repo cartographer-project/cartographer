@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <sys/stat.h>
 
 #include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
@@ -89,15 +90,27 @@ namespace cartographer {
       return absl::make_unique<PlyWritingPointsProcessor>(
               file_writer_factory(dictionary->GetString("filename")),
               dictionary->GetInt("aggregate"),
+              dictionary->HasKey("poisson_depth") ? dictionary->GetInt("poisson_depth") : 0,
+              dictionary->HasKey("trim_surface") ? dictionary->GetDouble("trim_surface") : 0,
+              dictionary->HasKey("statistical_outlier_neighbours") ? dictionary->GetInt("statistical_outlier_neighbours") : 0,
+              dictionary->HasKey("statistical_outlier_radius") ? dictionary->GetDouble("statistical_outlier_radius") : 0,
               std::vector<std::string>(), next);
     }
 
     PlyWritingPointsProcessor::PlyWritingPointsProcessor(std::unique_ptr<FileWriter> file_writer,
-                                                         const int64 &aggregate,
+                                                         const size_t &aggregate,
+                                                         const int64 &poisson_depth,
+                                                         const double &trim_surface,
+                                                         const int64 &statistical_outlier_neighbours,
+                                                         const double &statistical_outlier_radius,
                                                          const std::vector<std::string> &comments,
                                                          PointsProcessor *const next)
             : next_(next),
               aggregate_(aggregate),
+              poisson_depth_(poisson_depth),
+              trim_surface_(trim_surface),
+              statistical_outlier_neighbours_(statistical_outlier_neighbours),
+              statistical_outlier_radius_(statistical_outlier_radius),
               comments_(comments),
               num_points_(0),
               currentTime_(common::FromUniversal(0)),
@@ -105,12 +118,48 @@ namespace cartographer {
               file_(std::move(file_writer)) {
       name_ = file_->GetFilename();
       pc_ = std::make_shared<open3d::geometry::PointCloud>();
+      resultpc_ = std::make_shared<open3d::geometry::PointCloud>();
     }
 
     PointsProcessor::FlushResult PlyWritingPointsProcessor::Flush() {
-//  WriteBinaryPlyHeader(has_colors_, has_intensities_, comments_, num_points_,
-//                       file_.get());
-//  CHECK(file_->Close()) << "Closing PLY file_writer failed.";
+      if(statistical_outlier_neighbours_ != 0 && statistical_outlier_radius_ != 0) {
+        LOG(INFO) << "Removing statistical outliers using: " << std::to_string(statistical_outlier_neighbours_) << " " << std::to_string(statistical_outlier_radius_);
+        std::vector<size_t> outliers;
+        std::tie(resultpc_, outliers) = resultpc_->RemoveStatisticalOutliers(statistical_outlier_neighbours_, statistical_outlier_radius_);
+      }
+
+      if(poisson_depth_ == 0) {
+        LOG(INFO) << "Writing point cloud to file: " + name_;
+        open3d::io::WritePointCloudToPLY(name_, *resultpc_);
+      } else {
+        LOG(INFO) << "Calculating mesh using poisson reconstruction with depth: " + std::to_string(poisson_depth_);
+        std::shared_ptr<open3d::geometry::TriangleMesh> mesh_es;
+        std::vector<double> densities_es;
+        std::tie(mesh_es, densities_es) = open3d::geometry::TriangleMesh::CreateFromPointCloudPoisson(*resultpc_, poisson_depth_);
+
+        std::vector<bool> density_mask(densities_es.size(), false);
+        double max = 0;
+        for (int i = 0 ; i < densities_es.size(); i++) {
+          if(densities_es[i] > max) max = densities_es[i];
+          if(densities_es[i] < trim_surface_) density_mask[i] = true;
+        }
+        std::vector<Eigen::Vector3d> densities;
+        for (std::vector<double>::iterator it = densities_es.begin() ; it != densities_es.end(); ++it) {
+          double val = *it/max;
+          densities.push_back({ val, val, val });
+        }
+        mesh_es->vertex_colors_ = densities;
+        if(trim_surface_ > 0) {
+          LOG(INFO) << "Trimming Mesh below density: " + std::to_string(trim_surface_);
+          mesh_es->RemoveVerticesByMask(density_mask);
+        }
+        mesh_es->RemoveDegenerateTriangles();
+        mesh_es->RemoveDuplicatedTriangles();
+        mesh_es->RemoveDuplicatedVertices();
+        mesh_es->RemoveNonManifoldEdges();
+
+        open3d::io::WriteTriangleMesh(name_, *mesh_es);
+      }
 
       switch (next_->Flush()) {
         case FlushResult::kFinished:
@@ -167,10 +216,23 @@ namespace cartographer {
       if(aggregation_counter_ >= aggregate_) {
         aggregation_counter_ = 0;
         std::string path = name_.substr(0, name_.find(".ply")) + std::to_string(common::ToUniversal(batch->start_time));
-        std::string plyPath = path + ".ply";
+
+        size_t position = path.find_last_of("/");
+        std::string folderPath = path.substr(0, position) + "/results";
+        std::string filePath = path.substr(position, path.length());
+        struct stat buffer;
+
+
+
+        std::string plyPath = folderPath + filePath + ".ply";
         pc_->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.5, 30));
         pc_->OrientNormalsTowardsCameraLocation(batch->origin.cast<double>());
-        open3d::io::WritePointCloudToPLY(plyPath, *pc_);
+        resultpc_->operator+=(*pc_);
+
+//        if(stat(folderPath.c_str(), &buffer) != 0) {
+//          mkdir(folderPath.c_str(), 0755);
+//        }
+//        open3d::io::WritePointCloudToPLY(plyPath, *pc_);
         pc_ = std::make_shared<open3d::geometry::PointCloud>();
       }
       next_->Process(std::move(batch));

@@ -22,12 +22,16 @@
 namespace cartographer {
   namespace io {
 
-// Streams a PLY file to disk. The header is written in 'Flush'.
+    // Streams a PLY file to disk. The header is written in 'Flush'.
     class PlyWritingPointsProcessor : public PointsProcessor {
     public:
       constexpr static const char* kConfigurationFileActionName = "write_ply";
       PlyWritingPointsProcessor(std::unique_ptr<FileWriter> file_writer,
-                                const int64 &aggregate,
+                                const size_t &aggregate,
+                                const int64 &poisson_depth,
+                                const double &trim_surface,
+                                const int64 &statistical_outlier_neighbours,
+                                const double &statistical_outlier_radius,
                                 const std::vector<std::string>& comments,
                                 PointsProcessor* next);
 
@@ -46,7 +50,11 @@ namespace cartographer {
 
     private:
       PointsProcessor* const next_;
-      int64 aggregate_;
+      size_t aggregate_;
+      int64 poisson_depth_;
+      double trim_surface_;
+      int64 statistical_outlier_neighbours_;
+      double statistical_outlier_radius_;
       int64 aggregation_counter_ = 0;
       std::vector<std::string> comments_;
       int64 num_points_;
@@ -56,6 +64,7 @@ namespace cartographer {
       bool has_intensities_;
       std::unique_ptr<FileWriter> file_;
       std::shared_ptr<open3d::geometry::PointCloud> pc_;
+      std::shared_ptr<open3d::geometry::PointCloud> resultpc_;
     };
 
   }  // namespace io
