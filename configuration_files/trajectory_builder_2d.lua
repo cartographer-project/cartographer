@@ -59,7 +59,12 @@ TRAJECTORY_BUILDER_2D = {
     max_angle_radians = math.rad(1.),
   },
 
-  imu_gravity_time_constant = 10.,
+  pose_extrapolator = {
+    constant_velocity = {
+      imu_gravity_time_constant = 10.,
+      pose_queue_duration = 0.001,
+    },
+  },
 
   submaps = {
     num_range_data = 90,
