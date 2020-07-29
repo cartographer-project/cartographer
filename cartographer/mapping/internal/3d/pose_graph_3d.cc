@@ -40,6 +40,7 @@ namespace cartographer {
 namespace mapping {
 
 static auto* kWorkQueueDelayMetric = metrics::Gauge::Null();
+static auto* kWorkQueueSizeMetric = metrics::Gauge::Null();
 static auto* kConstraintsSameTrajectoryMetric = metrics::Gauge::Null();
 static auto* kConstraintsDifferentTrajectoryMetric = metrics::Gauge::Null();
 static auto* kActiveSubmapsMetric = metrics::Gauge::Null();
@@ -169,6 +170,7 @@ void PoseGraph3D::AddWorkItem(
   }
   const auto now = std::chrono::steady_clock::now();
   work_queue_->push_back({now, work_item});
+  kWorkQueueSizeMetric->Set(work_queue_->size());
   kWorkQueueDelayMetric->Set(
       std::chrono::duration_cast<std::chrono::duration<double>>(
           now - work_queue_->front().time)
@@ -516,6 +518,7 @@ void PoseGraph3D::DrainWorkQueue() {
       work_item = work_queue_->front().task;
       work_queue_->pop_front();
       work_queue_size = work_queue_->size();
+      kWorkQueueSizeMetric->Set(work_queue_size);
     }
     process_work_queue = work_item() == WorkItem::Result::kDoNotRunOptimization;
   }
@@ -1268,6 +1271,10 @@ void PoseGraph3D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
       "mapping_3d_pose_graph_work_queue_delay",
       "Age of the oldest entry in the work queue in seconds");
   kWorkQueueDelayMetric = latency->Add({});
+  auto* queue_size =
+      family_factory->NewGaugeFamily("mapping_3d_pose_graph_work_queue_size",
+                                     "Number of items in the work queue");
+  kWorkQueueSizeMetric = queue_size->Add({});
   auto* constraints = family_factory->NewGaugeFamily(
       "mapping_3d_pose_graph_constraints",
       "Current number of constraints in the pose graph");
