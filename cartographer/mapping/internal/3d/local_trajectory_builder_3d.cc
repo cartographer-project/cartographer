@@ -211,12 +211,23 @@ LocalTrajectoryBuilder3D::AddRangeData(
   last_sensor_time_ = current_sensor_time;
 
   const common::Time current_time = hit_times.back();
+  const auto voxel_filter_start = std::chrono::steady_clock::now();
   const sensor::RangeData filtered_range_data = {
       extrapolation_result.current_pose.translation().cast<float>(),
       sensor::VoxelFilter(options_.voxel_filter_size())
           .Filter(accumulated_range_data.returns),
       sensor::VoxelFilter(options_.voxel_filter_size())
           .Filter(accumulated_range_data.misses)};
+  const auto voxel_filter_stop = std::chrono::steady_clock::now();
+  const auto voxel_filter_duration = voxel_filter_stop - voxel_filter_start;
+
+  if (sensor_duration.has_value()) {
+    const double voxel_filter_fraction =
+        common::ToSeconds(voxel_filter_duration) /
+        common::ToSeconds(sensor_duration.value());
+    kLocalSlamVoxelFilterFraction->Set(voxel_filter_fraction);
+  }
+
   return AddAccumulatedRangeData(
       current_time,
       sensor::TransformRangeData(
