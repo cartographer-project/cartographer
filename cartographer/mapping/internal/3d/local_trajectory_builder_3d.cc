@@ -108,9 +108,8 @@ void LocalTrajectoryBuilder3D::AddImuData(const sensor::ImuData& imu_data) {
     extrapolator_->AddImuData(imu_data);
     return;
   }
-  extrapolator_ = mapping::PoseExtrapolator::InitializeWithImu(
-      ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
-      options_.imu_gravity_time_constant(), imu_data);
+  extrapolator_ = mapping::PoseExtrapolatorInterface::CreateWithImuData(
+      options_.pose_extrapolator_options(), {imu_data});
 }
 
 std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
