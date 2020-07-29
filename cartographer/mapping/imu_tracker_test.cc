@@ -17,6 +17,7 @@
 #include "cartographer/mapping/imu_tracker.h"
 
 #include "absl/memory/memory.h"
+#include "cartographer/mapping/eigen_quaterniond_from_two_vectors.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {
@@ -82,9 +83,8 @@ TEST_F(ImuTrackerTest, IntegrateFullRotation) {
 TEST_F(ImuTrackerTest, LearnGravityVector) {
   linear_acceleration_ = Eigen::Vector3d(0.5, 0.3, 9.5);
   AdvanceImu();
-  Eigen::Quaterniond expected_orientation;
-  expected_orientation.setFromTwoVectors(linear_acceleration_,
-                                         Eigen::Vector3d::UnitZ());
+  const Eigen::Quaterniond expected_orientation =
+      FromTwoVectors(linear_acceleration_, Eigen::Vector3d::UnitZ());
   EXPECT_NEAR(0.,
               imu_tracker_->orientation().angularDistance(expected_orientation),
               kPrecision);
