@@ -108,13 +108,8 @@ void LocalTrajectoryBuilder3D::AddImuData(const sensor::ImuData& imu_data) {
     extrapolator_->AddImuData(imu_data);
     return;
   }
-  // We derive velocities from poses which are at least 1 ms apart for numerical
-  // stability. Usually poses known to the extrapolator will be further apart
-  // in time and thus the last two are used.
-  constexpr double kExtrapolationEstimationTimeSec = 0.001;
-  extrapolator_ = mapping::PoseExtrapolator::InitializeWithImu(
-      ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
-      options_.imu_gravity_time_constant(), imu_data);
+  extrapolator_ = mapping::PoseExtrapolatorInterface::CreateWithImuData(
+      options_.pose_extrapolator_options(), {imu_data});
 }
 
 std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>

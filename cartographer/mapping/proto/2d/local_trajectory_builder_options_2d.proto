@@ -17,11 +17,13 @@ syntax = "proto3";
 package cartographer.mapping.proto;
 
 import "cartographer/mapping/proto/motion_filter_options.proto";
+import "cartographer/mapping/proto/pose_extrapolator_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/mapping/proto/2d/submaps_options_2d.proto";
 import "cartographer/mapping/proto/scan_matching/ceres_scan_matcher_options_2d.proto";
 import "cartographer/mapping/proto/scan_matching/real_time_correlative_scan_matcher_options.proto";
 
+// NEXT ID: 22
 message LocalTrajectoryBuilderOptions2D {
   // Rangefinder points outside these ranges will be dropped.
   float min_range = 14;
@@ -58,12 +60,15 @@ message LocalTrajectoryBuilderOptions2D {
   MotionFilterOptions motion_filter_options = 13;
 
   // Time constant in seconds for the orientation moving average based on
-  // observed gravity via the IMU. It should be chosen so that the error
-  // 1. from acceleration measurements not due to gravity (which gets worse when
-  // the constant is reduced) and
-  // 2. from integration of angular velocities (which gets worse when the
-  // constant is increased) is balanced.
+  // observed gravity via the IMU. It should be chosen so that the error	
+  // 1. from acceleration measurements not due to gravity (which gets worse when	
+  // the constant is reduced) and	
+  // 2. from integration of angular velocities (which gets worse when the	
+  // constant is increased) is balanced.	
+  // TODO(schwoere,wohe): Remove this constant. This is only used for ROS and 
+  // was replaced by pose_extrapolator_options.
   double imu_gravity_time_constant = 17;
+  mapping.proto.PoseExtrapolatorOptions pose_extrapolator_options = 21;
 
   SubmapsOptions2D submaps_options = 11;
 

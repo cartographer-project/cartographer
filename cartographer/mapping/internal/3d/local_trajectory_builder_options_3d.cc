@@ -20,6 +20,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/ceres_scan_matcher_3d.h"
 #include "cartographer/mapping/internal/motion_filter.h"
 #include "cartographer/mapping/internal/scan_matching/real_time_correlative_scan_matcher.h"
+#include "cartographer/mapping/pose_extrapolator_interface.h"
 #include "cartographer/sensor/internal/voxel_filter.h"
 #include "glog/logging.h"
 
@@ -57,6 +58,8 @@ proto::LocalTrajectoryBuilderOptions3D CreateLocalTrajectoryBuilderOptions3D(
           parameter_dictionary->GetDictionary("ceres_scan_matcher").get());
   *options.mutable_motion_filter_options() = CreateMotionFilterOptions(
       parameter_dictionary->GetDictionary("motion_filter").get());
+  *options.mutable_pose_extrapolator_options() = CreatePoseExtrapolatorOptions(
+      parameter_dictionary->GetDictionary("pose_extrapolator").get());
   options.set_imu_gravity_time_constant(
       parameter_dictionary->GetDouble("imu_gravity_time_constant"));
   options.set_rotational_histogram_size(

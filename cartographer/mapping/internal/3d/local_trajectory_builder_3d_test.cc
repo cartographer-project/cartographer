@@ -96,7 +96,14 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
 
           imu_gravity_time_constant = 1.,
           rotational_histogram_size = 120,
-
+          
+          pose_extrapolator = {
+            constant_velocity = {
+              imu_gravity_time_constant = 10.,
+              pose_queue_duration = 0.001,
+            },
+          },
+          
           submaps = {
             high_resolution = 0.2,
             high_resolution_max_range = 50.,

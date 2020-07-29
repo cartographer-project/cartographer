@@ -26,7 +26,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/real_time_correlative_scan_matcher_3d.h"
 #include "cartographer/mapping/internal/motion_filter.h"
 #include "cartographer/mapping/internal/range_data_collator.h"
-#include "cartographer/mapping/pose_extrapolator.h"
+#include "cartographer/mapping/pose_extrapolator_interface.h"
 #include "cartographer/mapping/proto/3d/local_trajectory_builder_options_3d.pb.h"
 #include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/imu_data.h"
@@ -103,7 +103,7 @@ class LocalTrajectoryBuilder3D {
       real_time_correlative_scan_matcher_;
   std::unique_ptr<scan_matching::CeresScanMatcher3D> ceres_scan_matcher_;
 
-  std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
+  std::unique_ptr<mapping::PoseExtrapolatorInterface> extrapolator_;
 
   int num_accumulated_ = 0;
   sensor::RangeData accumulated_range_data_;
