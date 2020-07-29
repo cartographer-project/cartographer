@@ -33,6 +33,7 @@
 #include "cartographer/sensor/internal/voxel_filter.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/range_data.h"
+#include "cartographer/sensor/timed_point_cloud_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
