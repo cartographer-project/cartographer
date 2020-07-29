@@ -81,7 +81,6 @@ class LocalTrajectoryBuilder3D {
       const sensor::RangeData& filtered_range_data_in_tracking,
       const absl::optional<common::Duration>& sensor_duration,
       const transform::Rigid3d& pose_prediction,
-      const Eigen::Vector3d& current_velocity,
       const Eigen::Quaterniond& gravity_alignment);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(

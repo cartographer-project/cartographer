@@ -151,18 +151,31 @@ LocalTrajectoryBuilder3D::AddRangeData(
       std::move(synchronized_data));
   ++num_accumulated_;
 
-  // !!!!
   if (num_accumulated_ < options_.num_accumulated_range_data()) {
     return nullptr;
   }
   num_accumulated_ = 0;
 
+  bool warned = false;
   std::vector<common::Time> hit_times;
+  common::Time prev_time_point = extrapolator_->GetLastExtrapolatedTime();
   for (const auto& point_cloud_origin_data :
        accumulated_point_cloud_origin_data_) {
     for (const auto& hit : point_cloud_origin_data.ranges) {
-      hit_times.push_back(point_cloud_origin_data.time +
-                          common::FromSeconds(hit.point_time.time));
+      common::Time time_point = point_cloud_origin_data.time +
+                                common::FromSeconds(hit.point_time.time);
+      if (time_point < prev_time_point) {
+        if (!warned) {
+          LOG(ERROR) << "Timestamp of individual range data point jumps "
+                        "backwards from "
+                     << prev_time_point << " to " << time_point;
+          warned = true;
+        }
+        time_point = prev_time_point;
+      }
+
+      hit_times.push_back(time_point);
+      prev_time_point = time_point;
     }
   }
   hit_times.push_back(accumulated_point_cloud_origin_data_.back().time);
@@ -234,7 +247,6 @@ LocalTrajectoryBuilder3D::AddRangeData(
           filtered_range_data,
           extrapolation_result.current_pose.inverse().cast<float>()),
       sensor_duration, extrapolation_result.current_pose,
-      extrapolation_result.current_velocity,
       extrapolation_result.gravity_from_tracking);
 }
 
@@ -244,7 +256,6 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     const sensor::RangeData& filtered_range_data_in_tracking,
     const absl::optional<common::Duration>& sensor_duration,
     const transform::Rigid3d& pose_prediction,
-    const Eigen::Vector3d& current_velocity,
     const Eigen::Quaterniond& gravity_alignment) {
   if (filtered_range_data_in_tracking.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
