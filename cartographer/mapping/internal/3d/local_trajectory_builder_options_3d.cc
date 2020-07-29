@@ -59,9 +59,9 @@ proto::LocalTrajectoryBuilderOptions3D CreateLocalTrajectoryBuilderOptions3D(
   *options.mutable_motion_filter_options() = CreateMotionFilterOptions(
       parameter_dictionary->GetDictionary("motion_filter").get());
   *options.mutable_pose_extrapolator_options() = CreatePoseExtrapolatorOptions(
-     parameter_dictionary->GetDictionary("pose_extrapolator").get());
+      parameter_dictionary->GetDictionary("pose_extrapolator").get());
   options.set_imu_gravity_time_constant(
-    parameter_dictionary->GetDouble("imu_gravity_time_constant"));
+      parameter_dictionary->GetDouble("imu_gravity_time_constant"));
   options.set_rotational_histogram_size(
       parameter_dictionary->GetInt("rotational_histogram_size"));
   *options.mutable_submaps_options() = CreateSubmapsOptions3D(
