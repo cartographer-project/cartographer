@@ -20,6 +20,7 @@
 #include <limits>
 
 #include "cartographer/common/math.h"
+#include "cartographer/mapping/eigen_quaterniond_from_two_vectors.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -60,7 +61,7 @@ void ImuTracker::AddImuLinearAccelerationObservation(
       (1. - alpha) * gravity_vector_ + alpha * imu_linear_acceleration;
   // Change the 'orientation_' so that it agrees with the current
   // 'gravity_vector_'.
-  const Eigen::Quaterniond rotation = Eigen::Quaterniond::FromTwoVectors(
+  const Eigen::Quaterniond rotation = FromTwoVectors(
       gravity_vector_, orientation_.conjugate() * Eigen::Vector3d::UnitZ());
   orientation_ = (orientation_ * rotation).normalized();
   CHECK_GT((orientation_ * gravity_vector_).z(), 0.);
