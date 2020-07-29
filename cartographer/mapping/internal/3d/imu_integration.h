@@ -24,6 +24,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/imu_data.h"
+#include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -33,6 +34,7 @@ namespace mapping {
 template <typename T>
 struct IntegrateImuResult {
   Eigen::Matrix<T, 3, 1> delta_velocity;
+  Eigen::Matrix<T, 3, 1> delta_translation;
   Eigen::Quaternion<T> delta_rotation;
 };
 
@@ -54,6 +56,7 @@ IntegrateImuResult<T> IntegrateImu(
   common::Time current_time = start_time;
 
   IntegrateImuResult<T> result = {Eigen::Matrix<T, 3, 1>::Zero(),
+                                  Eigen::Matrix<T, 3, 1>::Zero(),
                                   Eigen::Quaterniond::Identity().cast<T>()};
   while (current_time < end_time) {
     common::Time next_imu_data = common::Time::max();
@@ -73,6 +76,7 @@ IntegrateImuResult<T> IntegrateImu(
                              ((linear_acceleration_calibration *
                                (*it)->linear_acceleration.template cast<T>()) *
                               delta_t);
+    result.delta_translation += delta_t * result.delta_velocity;
     current_time = next_time;
     if (current_time == next_imu_data) {
       ++(*it);
@@ -90,6 +94,67 @@ IntegrateImuResult<double> IntegrateImu(const RangeType& imu_data,
   return IntegrateImu<double, RangeType, IteratorType>(
       imu_data, Eigen::Affine3d::Identity(), Eigen::Affine3d::Identity(),
       start_time, end_time, it);
+}
+
+template <typename T>
+struct ExtrapolatePoseResult {
+  transform::Rigid3<T> pose;
+  Eigen::Matrix<T, 3, 1> velocity;
+};
+
+// Returns pose and linear velocity at 'time' which is equal to
+// 'prev_from_tracking' extrapolated using IMU data.
+template <typename T, typename RangeType, typename IteratorType>
+ExtrapolatePoseResult<T> ExtrapolatePoseWithImu(
+    const transform::Rigid3<T>& prev_from_tracking,
+    const Eigen::Matrix<T, 3, 1>& prev_velocity_in_tracking,
+    const common::Time prev_time, const Eigen::Matrix<T, 3, 1>& gravity,
+    const common::Time time, const RangeType& imu_data,
+    IteratorType* const imu_it) {
+  const IntegrateImuResult<T> result =
+      IntegrateImu(imu_data, Eigen::Transform<T, 3, Eigen::Affine>::Identity(),
+                   Eigen::Transform<T, 3, Eigen::Affine>::Identity(), prev_time,
+                   time, imu_it);
+
+  const T delta_t = static_cast<T>(common::ToSeconds(time - prev_time));
+  const Eigen::Matrix<T, 3, 1> translation =
+      prev_from_tracking.translation() +
+      prev_from_tracking.rotation() *
+          (delta_t * prev_velocity_in_tracking + result.delta_translation) -
+      static_cast<T>(.5) * delta_t * delta_t * gravity;
+  const Eigen::Quaternion<T> rotation =
+      prev_from_tracking.rotation() * result.delta_rotation;
+
+  const Eigen::Matrix<T, 3, 1> velocity =
+      prev_from_tracking.rotation() *
+          (prev_velocity_in_tracking + result.delta_velocity) -
+      delta_t * gravity;
+  return ExtrapolatePoseResult<T>{transform::Rigid3<T>(translation, rotation),
+                                  velocity};
+}
+
+// Same as above but given the last two poses.
+template <typename T, typename RangeType, typename IteratorType>
+ExtrapolatePoseResult<T> ExtrapolatePoseWithImu(
+    const transform::Rigid3<T>& prev_from_tracking,
+    const common::Time prev_time,
+    const transform::Rigid3<T>& prev_prev_from_tracking,
+    const common::Time prev_prev_time, const Eigen::Matrix<T, 3, 1>& gravity,
+    const common::Time time, const RangeType& imu_data,
+    IteratorType* const imu_it) {
+  // TODO(danielsievers): Really we should integrate velocities starting from
+  // the midpoint in between two poses, since this is how we fit them to poses
+  // in the optimization.
+  const T prev_delta_t =
+      static_cast<T>(common::ToSeconds(prev_time - prev_prev_time));
+  const Eigen::Matrix<T, 3, 1> prev_velocity_in_tracking =
+      prev_from_tracking.inverse().rotation() *
+      (prev_from_tracking.translation() -
+       prev_prev_from_tracking.translation()) /
+      prev_delta_t;
+
+  return ExtrapolatePoseWithImu(prev_from_tracking, prev_velocity_in_tracking,
+                                prev_time, gravity, time, imu_data, imu_it);
 }
 
 }  // namespace mapping
