@@ -52,6 +52,16 @@ message LocalTrajectoryBuilderOptions3D {
       ceres_scan_matcher_options = 6;
   mapping.proto.MotionFilterOptions motion_filter_options = 7;
 
+  // Time constant in seconds for the orientation moving average based on
+  // observed gravity via the IMU. It should be chosen so that the error	
+  // 1. from acceleration measurements not due to gravity (which gets worse when	
+  // the constant is reduced) and	
+  // 2. from integration of angular velocities (which gets worse when the	
+  // constant is increased) is balanced.	
+  // TODO(schwoere,wohe): Remove this constant. This is only used for ROS and 
+  // was replaced by pose_extrapolator_options.
+  double imu_gravity_time_constant = 15;
+
   // Number of histogram buckets for the rotational scan matcher.
   int32 rotational_histogram_size = 17;
 

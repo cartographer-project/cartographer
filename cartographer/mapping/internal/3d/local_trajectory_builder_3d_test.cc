@@ -94,6 +94,7 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
             max_angle_radians = 0.001,
           },
 
+          imu_gravity_time_constant = 1.,
           rotational_histogram_size = 120,
           
           pose_extrapolator = {

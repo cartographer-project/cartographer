@@ -61,6 +61,8 @@ proto::LocalTrajectoryBuilderOptions2D CreateLocalTrajectoryBuilderOptions2D(
       parameter_dictionary->GetDictionary("motion_filter").get());
   *options.mutable_pose_extrapolator_options() = CreatePoseExtrapolatorOptions(
       parameter_dictionary->GetDictionary("pose_extrapolator").get());
+  options.set_imu_gravity_time_constant(
+    parameter_dictionary->GetDouble("imu_gravity_time_constant"));
   *options.mutable_submaps_options() = CreateSubmapsOptions2D(
       parameter_dictionary->GetDictionary("submaps").get());
   options.set_use_imu_data(parameter_dictionary->GetBool("use_imu_data"));

@@ -61,6 +61,8 @@ TRAJECTORY_BUILDER_3D = {
 
   rotational_histogram_size = 120,
 
+  -- TODO(schwoere,wohe): Remove this constant. This is only kept for ROS.
+  imu_gravity_time_constant = 10.,
   pose_extrapolator = {
     constant_velocity = {
       imu_gravity_time_constant = 10.,
