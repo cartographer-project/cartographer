@@ -51,6 +51,7 @@ PoseExtrapolatorInterface::CreateWithImuData(
     const proto::PoseExtrapolatorOptions& options,
     const std::vector<sensor::ImuData>& imu_data) {
   CHECK(!imu_data.empty());
+  CHECK(!options.use_imu_based()) << "Not implemented!";
   return PoseExtrapolator::InitializeWithImu(
         common::FromSeconds(options.constant_velocity().pose_queue_duration()),
         options.constant_velocity().imu_gravity_time_constant(),
