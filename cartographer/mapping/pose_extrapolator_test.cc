@@ -18,6 +18,7 @@
 
 #include "Eigen/Geometry"
 #include "absl/memory/memory.h"
+#include "cartographer/mapping/eigen_quaterniond_from_two_vectors.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "gtest/gtest.h"
 
@@ -71,9 +72,8 @@ TEST(PoseExtrapolatorTest, EstimateGravityOrientationWithIMU) {
                            angular_velocity};
   auto extrapolator = PoseExtrapolator::InitializeWithImu(
       common::FromSeconds(kPoseQueueDuration), kGravityTimeConstant, imu_data);
-  Eigen::Quaterniond expected_orientation;
-  expected_orientation.setFromTwoVectors(initial_gravity_acceleration,
-                                         Eigen::Vector3d::UnitZ());
+  Eigen::Quaterniond expected_orientation =
+      FromTwoVectors(initial_gravity_acceleration, Eigen::Vector3d::UnitZ());
   EXPECT_NEAR(0.,
               extrapolator->EstimateGravityOrientation(current_time)
                   .angularDistance(expected_orientation),
@@ -84,8 +84,8 @@ TEST(PoseExtrapolatorTest, EstimateGravityOrientationWithIMU) {
     extrapolator->AddImuData(
         sensor::ImuData{current_time, gravity_acceleration, angular_velocity});
   }
-  expected_orientation.setFromTwoVectors(gravity_acceleration,
-                                         Eigen::Vector3d::UnitZ());
+  expected_orientation =
+      FromTwoVectors(gravity_acceleration, Eigen::Vector3d::UnitZ());
   EXPECT_NEAR(0.,
               extrapolator->EstimateGravityOrientation(current_time)
                   .angularDistance(expected_orientation),
