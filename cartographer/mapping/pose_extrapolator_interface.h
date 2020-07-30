@@ -45,13 +45,15 @@ class PoseExtrapolatorInterface {
   };
 
   PoseExtrapolatorInterface(const PoseExtrapolatorInterface&) = delete;
-  PoseExtrapolatorInterface& operator=(const PoseExtrapolatorInterface&) = delete;
+  PoseExtrapolatorInterface& operator=(const PoseExtrapolatorInterface&) =
+      delete;
   virtual ~PoseExtrapolatorInterface() {}
 
   // TODO: Remove dependency cycle.
   static std::unique_ptr<PoseExtrapolatorInterface> CreateWithImuData(
       const proto::PoseExtrapolatorOptions& options,
-      const std::vector<sensor::ImuData>& imu_data);
+      const std::vector<sensor::ImuData>& imu_data,
+      const std::vector<transform::TimestampedTransform>& initial_poses);
 
   // Returns the time of the last added pose or Time::min() if no pose was added
   // yet.
