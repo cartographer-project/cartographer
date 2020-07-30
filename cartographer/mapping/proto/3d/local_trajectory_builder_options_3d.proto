@@ -25,7 +25,7 @@ import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
 import "cartographer/sensor/proto/sensor.proto";
 import "cartographer/transform/proto/timestamped_transform.proto";
 
-// NEXT ID: 19
+// NEXT ID: 21
 message LocalTrajectoryBuilderOptions3D {
   // Rangefinder points outside these ranges will be dropped.
   float min_range = 1;
@@ -55,12 +55,12 @@ message LocalTrajectoryBuilderOptions3D {
   mapping.proto.MotionFilterOptions motion_filter_options = 7;
 
   // Time constant in seconds for the orientation moving average based on
-  // observed gravity via the IMU. It should be chosen so that the error	
-  // 1. from acceleration measurements not due to gravity (which gets worse when	
-  // the constant is reduced) and	
-  // 2. from integration of angular velocities (which gets worse when the	
-  // constant is increased) is balanced.	
-  // TODO(schwoere,wohe): Remove this constant. This is only used for ROS and 
+  // observed gravity via the IMU. It should be chosen so that the error
+  // 1. from acceleration measurements not due to gravity (which gets worse when
+  // the constant is reduced) and
+  // 2. from integration of angular velocities (which gets worse when the
+  // constant is increased) is balanced.
+  // TODO(schwoere,wohe): Remove this constant. This is only used for ROS and
   // was replaced by pose_extrapolator_options.
   double imu_gravity_time_constant = 15;
 
