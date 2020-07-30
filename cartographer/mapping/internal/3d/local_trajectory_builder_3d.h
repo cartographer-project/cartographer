@@ -33,6 +33,7 @@
 #include "cartographer/sensor/internal/voxel_filter.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/sensor/range_data.h"
+#include "cartographer/sensor/timed_point_cloud_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
@@ -78,7 +79,9 @@ class LocalTrajectoryBuilder3D {
   std::unique_ptr<MatchingResult> AddAccumulatedRangeData(
       common::Time time,
       const sensor::RangeData& filtered_range_data_in_tracking,
-      const absl::optional<common::Duration>& sensor_duration);
+      const absl::optional<common::Duration>& sensor_duration,
+      const transform::Rigid3d& pose_prediction,
+      const Eigen::Quaterniond& gravity_alignment);
 
   std::unique_ptr<InsertionResult> InsertIntoSubmap(
       common::Time time, const sensor::RangeData& filtered_range_data_in_local,
@@ -106,7 +109,8 @@ class LocalTrajectoryBuilder3D {
   std::unique_ptr<mapping::PoseExtrapolatorInterface> extrapolator_;
 
   int num_accumulated_ = 0;
-  sensor::RangeData accumulated_range_data_;
+  std::vector<sensor::TimedPointCloudOriginData>
+      accumulated_point_cloud_origin_data_;
   absl::optional<std::chrono::steady_clock::time_point> last_wall_time_;
 
   absl::optional<double> last_thread_cpu_time_seconds_;
