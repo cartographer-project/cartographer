@@ -22,6 +22,8 @@ import "cartographer/mapping/proto/pose_extrapolator_options.proto";
 import "cartographer/mapping/proto/scan_matching/ceres_scan_matcher_options_3d.proto";
 import "cartographer/mapping/proto/scan_matching/real_time_correlative_scan_matcher_options.proto";
 import "cartographer/sensor/proto/adaptive_voxel_filter_options.proto";
+import "cartographer/sensor/proto/sensor.proto";
+import "cartographer/transform/proto/timestamped_transform.proto";
 
 // NEXT ID: 19
 message LocalTrajectoryBuilderOptions3D {
@@ -66,6 +68,9 @@ message LocalTrajectoryBuilderOptions3D {
   int32 rotational_histogram_size = 17;
 
   mapping.proto.PoseExtrapolatorOptions pose_extrapolator_options = 18;
+
+  repeated transform.proto.TimestampedTransform initial_poses = 19;
+  repeated sensor.proto.ImuData initial_imu_data = 20;
 
   SubmapsOptions3D submaps_options = 8;
 }

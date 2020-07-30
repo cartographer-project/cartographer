@@ -108,8 +108,18 @@ void LocalTrajectoryBuilder3D::AddImuData(const sensor::ImuData& imu_data) {
     extrapolator_->AddImuData(imu_data);
     return;
   }
+  std::vector<transform::TimestampedTransform> initial_poses;
+  for (const auto& pose_proto : options_.initial_poses()) {
+    initial_poses.push_back(transform::FromProto(pose_proto));
+  }
+  std::vector<sensor::ImuData> initial_imu_data;
+  for (const auto& imu : options_.initial_imu_data()) {
+    initial_imu_data.push_back(sensor::FromProto(imu));
+  }
+  initial_imu_data.push_back(imu_data);
+
   extrapolator_ = mapping::PoseExtrapolatorInterface::CreateWithImuData(
-      options_.pose_extrapolator_options(), {imu_data});
+      options_.pose_extrapolator_options(), initial_imu_data, initial_poses);
 }
 
 std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
