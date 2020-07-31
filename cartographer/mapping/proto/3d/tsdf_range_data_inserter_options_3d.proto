@@ -23,4 +23,12 @@ message TSDFRangeDataInserterOptions3D {
 
   // Exponential drop-off model variance.
   double weight_function_sigma = 6;
+
+  // Up to how many free space voxels are updated for scan matching.
+  // 0 disables free space.
+  int32 normal_estimate_max_nn = 7;
+
+  // Up to how many free space voxels are updated for scan matching.
+  // 0 disables free space.
+  double normal_estimate_radius = 8;
 }

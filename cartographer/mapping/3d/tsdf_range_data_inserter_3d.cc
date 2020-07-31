@@ -55,8 +55,12 @@ proto::TSDFRangeDataInserterOptions3D CreateTSDFRangeDataInserterOptions3D(
       parameter_dictionary->GetInt("num_free_space_voxels"));
   options.set_weight_function_epsilon(
       parameter_dictionary->GetDouble("weight_function_epsilon"));
-  options.set_weight_function_sigma(
-      parameter_dictionary->GetDouble("weight_function_sigma"));
+    options.set_weight_function_sigma(
+            parameter_dictionary->GetDouble("weight_function_sigma"));
+    options.set_normal_estimate_max_nn(
+            parameter_dictionary->GetInt("normal_estimate_max_nn"));
+    options.set_normal_estimate_radius(
+            parameter_dictionary->GetDouble("normal_estimate_radius"));
   return options;
 }
 
@@ -80,7 +84,7 @@ void TSDFRangeDataInserter3D::InsertHitWithNormal(const Eigen::Vector3f& hit,
       0;  // todo(kdaun) use num free space
   // cells value instead of bool
   float normal_direction = 1.f;
-  if (normal.dot(ray) < 0.f) normal_direction = -1.f;
+  if (normal.dot(ray) > 0.f) normal_direction = -1.f;
   const Eigen::Vector3f ray_begin =
       hit - normal_direction * truncation_distance * normal;
   const Eigen::Vector3f ray_end =
@@ -99,9 +103,10 @@ void TSDFRangeDataInserter3D::InsertHitWithNormal(const Eigen::Vector3f& hit,
     // voxels) It is chosen so that between two samples we change from one voxel
     // to the next on the fastest changing dimension.
 
-    for (int position = 0; position < num_samples; ++position) {
+    for (int position = 0; position <= num_samples; ++position) {
+//        LOG(INFO)<<"ratio "<< position / num_samples;
       const Eigen::Array3i update_cell_index =
-          begin_cell + delta * position / num_samples;
+          begin_cell + (delta.cast<float>() * float(position) / float(num_samples)).round().cast<int>();
       //    if (tsdf->CellIsUpdated(update_cell)) continue;
       Eigen::Vector3f cell_center = tsdf->GetCenterOfCell(update_cell_index);
       float update_tsd = normal_direction * (cell_center - hit).dot(normal);
@@ -193,9 +198,9 @@ void TSDFRangeDataInserter3D::InsertHit(const Eigen::Vector3f& hit,
     // voxels) It is chosen so that between two samples we change from one voxel
     // to the next on the fastest changing dimension.
 
-    for (int position = 0; position < num_samples; ++position) {
+    for (int position = 0; position <= num_samples; ++position) {
       const Eigen::Array3i update_cell_index =
-          begin_cell + delta * position / num_samples;
+          begin_cell + (delta.cast<float>() * float(position) / float(num_samples)).round().cast<int>();
       //    if (tsdf->CellIsUpdated(update_cell)) continue;
       Eigen::Vector3f cell_center = tsdf->GetCenterOfCell(update_cell_index);
       float distance_cell_to_origin = (cell_center - origin).norm();
@@ -273,7 +278,6 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
   HybridGridTSDF* tsdf = static_cast<HybridGridTSDF*>(grid);
 
   const Eigen::Vector3f origin = range_data.origin.head<3>();
-  bool compute_normals = false;
 
   //  LOG(INFO) << "start normal computation";
   if (options_.tsdf_range_data_inserter_options_3d()
@@ -344,7 +348,7 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
       cloud->points_.push_back(
           {point.position[0], point.position[1], point.position[2]});
     }
-    cloud->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.5, 30));
+    cloud->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(options_.tsdf_range_data_inserter_options_3d().normal_estimate_radius(), options_.tsdf_range_data_inserter_options_3d().normal_estimate_max_nn()));
     //    cloud->OrientNormalsTowardsCameraLocation(range_data.origin.cast<double>());
     //    open3d::visualization::DrawGeometries({cloud});
 
