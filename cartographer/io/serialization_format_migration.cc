@@ -18,284 +18,200 @@
 
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
+#include "cartographer/common/config.h"
+#include "cartographer/common/configuration_file_resolver.h"
+#include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/common/thread_pool.h"
+#include "cartographer/io/internal/mapping_state_serialization.h"
+#include "cartographer/io/proto_stream_deserializer.h"
 #include "cartographer/mapping/3d/submap_3d.h"
+#include "cartographer/mapping/id.h"
+#include "cartographer/mapping/internal/3d/pose_graph_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
+#include "cartographer/mapping/map_builder.h"
+#include "cartographer/mapping/map_builder_interface.h"
+#include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/probability_values.h"
-#include "cartographer/mapping/proto/internal/legacy_serialized_data.pb.h"
-#include "cartographer/mapping/proto/internal/legacy_submap.pb.h"
+#include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "glog/logging.h"
 
 namespace cartographer {
 namespace io {
-namespace {
 
 using mapping::proto::SerializedData;
-using ProtoMap = absl::flat_hash_map<int, std::vector<SerializedData>>;
 
-bool ReadPoseGraph(cartographer::io::ProtoStreamReaderInterface* const input,
-                   ProtoMap* proto_map) {
-  auto& pose_graph_vec = (*proto_map)[SerializedData::kPoseGraph];
-  pose_graph_vec.emplace_back();
-  return input->ReadProto(pose_graph_vec.back().mutable_pose_graph());
-}
-
-bool ReadBuilderOptions(
-    cartographer::io::ProtoStreamReaderInterface* const input,
-    ProtoMap* proto_map) {
-  auto& options_vec =
-      (*proto_map)[SerializedData::kAllTrajectoryBuilderOptions];
-  options_vec.emplace_back();
-  return input->ReadProto(
-      options_vec.back().mutable_all_trajectory_builder_options());
-}
-
-mapping::proto::Submap MigrateLegacySubmap2d(
-    const mapping::proto::LegacySubmap& submap_in) {
-  mapping::proto::Submap2D submap_2d;
-
-  // Convert probability grid to generalized grid.
-  *submap_2d.mutable_grid()->mutable_limits() =
-      submap_in.submap_2d().probability_grid().limits();
-  *submap_2d.mutable_grid()->mutable_cells() =
-      submap_in.submap_2d().probability_grid().cells();
-  for (auto& cell : *submap_2d.mutable_grid()->mutable_cells()) {
-    cell = -1 * cell;
-  }
-  // CellBox can't be trivially copied because the protobuf
-  // serialization field number doesn't match.
-  submap_2d.mutable_grid()->mutable_known_cells_box()->set_max_x(
-      submap_in.submap_2d().probability_grid().known_cells_box().max_x());
-  submap_2d.mutable_grid()->mutable_known_cells_box()->set_max_y(
-      submap_in.submap_2d().probability_grid().known_cells_box().max_y());
-  submap_2d.mutable_grid()->mutable_known_cells_box()->set_min_x(
-      submap_in.submap_2d().probability_grid().known_cells_box().min_x());
-  submap_2d.mutable_grid()->mutable_known_cells_box()->set_min_y(
-      submap_in.submap_2d().probability_grid().known_cells_box().min_y());
-
-  // Correspondence costs can be safely set to standard values.
-  // Otherwise, this would be done during the next deserialization, but with a
-  // warning, which we can avoid by setting it already here.
-  submap_2d.mutable_grid()->set_max_correspondence_cost(
-      mapping::kMaxCorrespondenceCost);
-  submap_2d.mutable_grid()->set_min_correspondence_cost(
-      mapping::kMinCorrespondenceCost);
-  submap_2d.mutable_grid()->mutable_probability_grid_2d();
-  *submap_2d.mutable_local_pose() = submap_in.submap_2d().local_pose();
-  submap_2d.set_num_range_data(submap_in.submap_2d().num_range_data());
-  submap_2d.set_finished(submap_in.submap_2d().finished());
-
-  mapping::proto::Submap submap_out;
-  *submap_out.mutable_submap_2d() = submap_2d;
-  *submap_out.mutable_submap_id() = submap_in.submap_id();
-  return submap_out;
-}
-
-mapping::proto::Submap MigrateLegacySubmap3d(
-    const mapping::proto::LegacySubmap& submap_in) {
-  mapping::proto::Submap3D submap_3d;
-  *submap_3d.mutable_local_pose() = submap_in.submap_3d().local_pose();
-  submap_3d.set_num_range_data(submap_in.submap_3d().num_range_data());
-  submap_3d.set_finished(submap_in.submap_3d().finished());
-  *submap_3d.mutable_high_resolution_hybrid_grid() =
-      submap_in.submap_3d().high_resolution_hybrid_grid();
-  *submap_3d.mutable_low_resolution_hybrid_grid() =
-      submap_in.submap_3d().low_resolution_hybrid_grid();
-
-  mapping::proto::Submap submap_out;
-  *submap_out.mutable_submap_3d() = submap_3d;
-  *submap_out.mutable_submap_id() = submap_in.submap_id();
-  return submap_out;
-}
-
-bool DeserializeNext(cartographer::io::ProtoStreamReaderInterface* const input,
-                     ProtoMap* proto_map) {
-  mapping::proto::LegacySerializedData legacy_data;
-  if (!input->ReadProto(&legacy_data)) return false;
-
-  if (legacy_data.has_submap()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating submap data.";
-    if (legacy_data.submap().has_submap_2d()) {
-      CHECK(legacy_data.submap().submap_2d().grid().has_probability_grid_2d() ||
-            legacy_data.submap().submap_2d().grid().has_tsdf_2d())
-          << "\nThe legacy data contains a 2D submap, but it's not using the "
-             "expected grid format. Try to migrate the grid format instead.";
-    }
-    auto& output_vector = (*proto_map)[SerializedData::kSubmapFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_submap() = legacy_data.submap();
-  }
-  if (legacy_data.has_node()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating node data.";
-    auto& output_vector = (*proto_map)[SerializedData::kNodeFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_node() = legacy_data.node();
-  }
-  if (legacy_data.has_trajectory_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating trajectory data.";
-    auto& output_vector =
-        (*proto_map)[SerializedData::kTrajectoryDataFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_trajectory_data() =
-        legacy_data.trajectory_data();
-  }
-  if (legacy_data.has_imu_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating IMU data.";
-    auto& output_vector = (*proto_map)[SerializedData::kImuDataFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_imu_data() = legacy_data.imu_data();
-  }
-  if (legacy_data.has_odometry_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating odometry data.";
-    auto& output_vector = (*proto_map)[SerializedData::kOdometryData];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_odometry_data() = legacy_data.odometry_data();
-  }
-  if (legacy_data.has_fixed_frame_pose_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating fixed frame pose data.";
-    auto& output_vector =
-        (*proto_map)[SerializedData::kFixedFramePoseDataFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_fixed_frame_pose_data() =
-        legacy_data.fixed_frame_pose_data();
-  }
-  if (legacy_data.has_landmark_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating landmark data.";
-    auto& output_vector =
-        (*proto_map)[SerializedData::kLandmarkDataFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_landmark_data() = legacy_data.landmark_data();
-  }
-  return true;
-}
-
-bool DeserializeNextAndMigrateGridFormat(
-    cartographer::io::ProtoStreamReaderInterface* const input,
-    ProtoMap* proto_map) {
-  mapping::proto::LegacySerializedDataLegacySubmap legacy_data;
-  if (!input->ReadProto(&legacy_data)) return false;
-
-  if (legacy_data.has_submap()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating submap data.";
-    auto& output_vector = (*proto_map)[SerializedData::kSubmapFieldNumber];
-    output_vector.emplace_back();
-    if (legacy_data.submap().has_submap_2d()) {
-      CHECK(legacy_data.submap().submap_2d().has_probability_grid())
-          << "\nThe legacy data contains a 2D submap, but it has no legacy "
-             "probability grid that can be migrated to the new grid format.";
-      *output_vector.back().mutable_submap() =
-          MigrateLegacySubmap2d(legacy_data.submap());
-    } else {
-      *output_vector.back().mutable_submap() =
-          MigrateLegacySubmap3d(legacy_data.submap());
-    }
-  }
-  if (legacy_data.has_node()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating node data.";
-    auto& output_vector = (*proto_map)[SerializedData::kNodeFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_node() = legacy_data.node();
-  }
-  if (legacy_data.has_trajectory_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating trajectory data.";
-    auto& output_vector =
-        (*proto_map)[SerializedData::kTrajectoryDataFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_trajectory_data() =
-        legacy_data.trajectory_data();
-  }
-  if (legacy_data.has_imu_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating IMU data.";
-    auto& output_vector = (*proto_map)[SerializedData::kImuDataFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_imu_data() = legacy_data.imu_data();
-  }
-  if (legacy_data.has_odometry_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating odometry data.";
-    auto& output_vector = (*proto_map)[SerializedData::kOdometryData];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_odometry_data() = legacy_data.odometry_data();
-  }
-  if (legacy_data.has_fixed_frame_pose_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating fixed frame pose data.";
-    auto& output_vector =
-        (*proto_map)[SerializedData::kFixedFramePoseDataFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_fixed_frame_pose_data() =
-        legacy_data.fixed_frame_pose_data();
-  }
-  if (legacy_data.has_landmark_data()) {
-    LOG_FIRST_N(INFO, 1) << "Migrating landmark data.";
-    auto& output_vector =
-        (*proto_map)[SerializedData::kLandmarkDataFieldNumber];
-    output_vector.emplace_back();
-    *output_vector.back().mutable_landmark_data() = legacy_data.landmark_data();
-  }
-  return true;
-}
-
-ProtoMap ParseLegacyData(
-    cartographer::io::ProtoStreamReaderInterface* const input,
-    bool migrate_grid_format) {
-  ProtoMap proto_map;
-  CHECK(ReadPoseGraph(input, &proto_map))
-      << "Input stream seems to differ from original stream format. Could "
-         "not "
-         "read PoseGraph as first message.";
-  CHECK(ReadBuilderOptions(input, &proto_map))
-      << "Input stream seems to differ from original stream format. Could "
-         "not "
-         "read AllTrajectoryBuilderOptions as second message.";
-  if (migrate_grid_format) {
-    do {
-    } while (DeserializeNextAndMigrateGridFormat(input, &proto_map));
-  } else {
-    do {
-    } while (DeserializeNext(input, &proto_map));
-  }
-  return proto_map;
-}
-
-mapping::proto::SerializationHeader CreateSerializationHeader() {
-  constexpr uint32_t kVersion1 = 1;
-  mapping::proto::SerializationHeader header;
-  header.set_format_version(kVersion1);
-  return header;
-}
-
-void SerializeToVersion1Format(
-    const ProtoMap& deserialized_data,
-    cartographer::io::ProtoStreamWriterInterface* const output) {
-  const std::vector<int> kFieldSerializationOrder = {
-      SerializedData::kPoseGraphFieldNumber,
-      SerializedData::kAllTrajectoryBuilderOptionsFieldNumber,
-      SerializedData::kSubmapFieldNumber,
-      SerializedData::kNodeFieldNumber,
-      SerializedData::kTrajectoryDataFieldNumber,
-      SerializedData::kImuDataFieldNumber,
-      SerializedData::kOdometryDataFieldNumber,
-      SerializedData::kFixedFramePoseDataFieldNumber,
-      SerializedData::kLandmarkDataFieldNumber};
-
-  LOG(INFO) << "Writing proto stream.";
-  output->WriteProto(CreateSerializationHeader());
-  for (auto field_index : kFieldSerializationOrder) {
-    const auto proto_vector_it = deserialized_data.find(field_index);
-    if (proto_vector_it == deserialized_data.end()) continue;
-    for (const auto& proto : proto_vector_it->second) {
-      output->WriteProto(proto);
-    }
-  }
-}
-}  // namespace
-
-void MigrateStreamFormatToVersion1(
+void MigrateStreamVersion1ToVersion2(
     cartographer::io::ProtoStreamReaderInterface* const input,
     cartographer::io::ProtoStreamWriterInterface* const output,
-    bool migrate_grid_format) {
-  SerializeToVersion1Format(ParseLegacyData(input, migrate_grid_format),
-                            output);
+    bool include_unfinished_submaps) {
+  auto file_resolver = ::absl::make_unique<common::ConfigurationFileResolver>(
+      std::vector<std::string>{std::string(common::kSourceDirectory) +
+                               "/configuration_files"});
+  const std::string kCode = R"text(
+      include "map_builder.lua"
+      MAP_BUILDER.use_trajectory_builder_3d = true
+      return MAP_BUILDER)text";
+  cartographer::common::LuaParameterDictionary lua_parameter_dictionary(
+      kCode, std::move(file_resolver));
+  const auto options =
+      mapping::CreateMapBuilderOptions(&lua_parameter_dictionary);
+
+  common::ThreadPool thread_pool(1);
+  CHECK(!options.use_trajectory_builder_2d());
+  // We always use 3D here. 2D submaps do not have histograms.
+  mapping::PoseGraph3D pose_graph(
+      options.pose_graph_options(),
+      absl::make_unique<mapping::optimization::OptimizationProblem3D>(
+          options.pose_graph_options().optimization_problem_options()),
+      &thread_pool);
+
+  ProtoStreamDeserializer deserializer(input);
+
+  // Create a copy of the pose_graph_proto, such that we can re-write the
+  // trajectory ids.
+  mapping::proto::PoseGraph pose_graph_proto = deserializer.pose_graph();
+  const auto& all_builder_options_proto =
+      deserializer.all_trajectory_builder_options();
+
+  std::vector<mapping::proto::TrajectoryBuilderOptionsWithSensorIds>
+      trajectory_builder_options;
+  for (int i = 0; i < pose_graph_proto.trajectory_size(); ++i) {
+    auto& trajectory_proto = *pose_graph_proto.mutable_trajectory(i);
+    const auto& options_with_sensor_ids_proto =
+        all_builder_options_proto.options_with_sensor_ids(i);
+    trajectory_builder_options.push_back(options_with_sensor_ids_proto);
+    CHECK_EQ(trajectory_proto.trajectory_id(), i);
+  }
+
+  // Apply the calculated remapping to constraints in the pose graph proto.
+  for (auto& constraint_proto : *pose_graph_proto.mutable_constraint()) {
+    constraint_proto.mutable_submap_id()->set_trajectory_id(
+        constraint_proto.submap_id().trajectory_id());
+    constraint_proto.mutable_node_id()->set_trajectory_id(
+        constraint_proto.node_id().trajectory_id());
+  }
+
+  mapping::MapById<mapping::SubmapId, transform::Rigid3d> submap_poses;
+  for (const mapping::proto::Trajectory& trajectory_proto :
+       pose_graph_proto.trajectory()) {
+    for (const mapping::proto::Trajectory::Submap& submap_proto :
+         trajectory_proto.submap()) {
+      submap_poses.Insert(mapping::SubmapId{trajectory_proto.trajectory_id(),
+                                            submap_proto.submap_index()},
+                          transform::ToRigid3(submap_proto.pose()));
+    }
+  }
+
+  mapping::MapById<mapping::NodeId, transform::Rigid3d> node_poses;
+  for (const mapping::proto::Trajectory& trajectory_proto :
+       pose_graph_proto.trajectory()) {
+    for (const mapping::proto::Trajectory::Node& node_proto :
+         trajectory_proto.node()) {
+      node_poses.Insert(mapping::NodeId{trajectory_proto.trajectory_id(),
+                                        node_proto.node_index()},
+                        transform::ToRigid3(node_proto.pose()));
+    }
+  }
+
+  // Set global poses of landmarks.
+  for (const auto& landmark : pose_graph_proto.landmark_poses()) {
+    pose_graph.SetLandmarkPose(landmark.landmark_id(),
+                               transform::ToRigid3(landmark.global_pose()),
+                               true);
+  }
+
+  mapping::MapById<mapping::SubmapId, mapping::proto::Submap>
+      submap_id_to_submap;
+  mapping::MapById<mapping::NodeId, mapping::proto::Node> node_id_to_node;
+  SerializedData proto;
+  while (deserializer.ReadNextSerializedData(&proto)) {
+    switch (proto.data_case()) {
+      case SerializedData::kPoseGraph:
+        LOG(ERROR) << "Found multiple serialized `PoseGraph`. Serialized "
+                      "stream likely corrupt!.";
+        break;
+      case SerializedData::kAllTrajectoryBuilderOptions:
+        LOG(ERROR) << "Found multiple serialized "
+                      "`AllTrajectoryBuilderOptions`. Serialized stream likely "
+                      "corrupt!.";
+        break;
+      case SerializedData::kSubmap: {
+        CHECK(proto.submap().has_submap_3d())
+            << "Converting to the new submap format only makes sense for 3D.";
+        proto.mutable_submap()->mutable_submap_id()->set_trajectory_id(
+            proto.submap().submap_id().trajectory_id());
+        submap_id_to_submap.Insert(
+            mapping::SubmapId{proto.submap().submap_id().trajectory_id(),
+                              proto.submap().submap_id().submap_index()},
+            proto.submap());
+        break;
+      }
+      case SerializedData::kNode: {
+        proto.mutable_node()->mutable_node_id()->set_trajectory_id(
+            proto.node().node_id().trajectory_id());
+        const mapping::NodeId node_id(proto.node().node_id().trajectory_id(),
+                                      proto.node().node_id().node_index());
+        const transform::Rigid3d& node_pose = node_poses.at(node_id);
+        pose_graph.AddNodeFromProto(node_pose, proto.node());
+        node_id_to_node.Insert(node_id, proto.node());
+        break;
+      }
+      case SerializedData::kTrajectoryData: {
+        proto.mutable_trajectory_data()->set_trajectory_id(
+            proto.trajectory_data().trajectory_id());
+        pose_graph.SetTrajectoryDataFromProto(proto.trajectory_data());
+        break;
+      }
+      case SerializedData::kImuData: {
+        pose_graph.AddImuData(proto.imu_data().trajectory_id(),
+                              sensor::FromProto(proto.imu_data().imu_data()));
+        break;
+      }
+      case SerializedData::kOdometryData: {
+        pose_graph.AddOdometryData(
+            proto.odometry_data().trajectory_id(),
+            sensor::FromProto(proto.odometry_data().odometry_data()));
+        break;
+      }
+      case SerializedData::kFixedFramePoseData: {
+        pose_graph.AddFixedFramePoseData(
+            proto.fixed_frame_pose_data().trajectory_id(),
+            sensor::FromProto(
+                proto.fixed_frame_pose_data().fixed_frame_pose_data()));
+        break;
+      }
+      case SerializedData::kLandmarkData: {
+        pose_graph.AddLandmarkData(
+            proto.landmark_data().trajectory_id(),
+            sensor::FromProto(proto.landmark_data().landmark_data()));
+        break;
+      }
+      default:
+        LOG(WARNING) << "Skipping unknown message type in stream: "
+                     << proto.GetTypeName();
+    }
+  }
+
+  // TODO(schwoere): Remove backwards compatibility once the pbstream format
+  // version 2 is established.
+  if (deserializer.header().format_version() ==
+      kFormatVersionWithoutSubmapHistograms) {
+    submap_id_to_submap = MigrateSubmapFormatVersion1ToVersion2(
+        submap_id_to_submap, node_id_to_node, pose_graph_proto);
+  }
+
+  for (const auto& submap_id_submap : submap_id_to_submap) {
+    pose_graph.AddSubmapFromProto(submap_poses.at(submap_id_submap.id),
+                                  submap_id_submap.data);
+  }
+
+  pose_graph.AddSerializedConstraints(
+      mapping::FromProto(pose_graph_proto.constraint()));
+  CHECK(input->eof());
+
+  WritePbStream(pose_graph, trajectory_builder_options, output,
+                include_unfinished_submaps);
 }
 
 mapping::MapById<mapping::SubmapId, mapping::proto::Submap>

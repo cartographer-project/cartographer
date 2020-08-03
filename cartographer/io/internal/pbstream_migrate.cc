@@ -21,19 +21,18 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
-DEFINE_bool(migrate_grid_format, false,
-            "Set if the submap data of the input pbstream uses the old "
-            "probability grid format.");
+DEFINE_bool(include_unfinished_submaps, true,
+            "Whether to write to include unfinished submaps in the output.");
 
 namespace cartographer {
 namespace io {
 
 int pbstream_migrate(int argc, char** argv) {
   std::stringstream ss;
-  ss << "\n\nTool for migrating files that use the serialization output of "
-        "Cartographer 0.3, to the new serialization format, which includes a "
-        "header (Version 1). You may need to specify the '--migrate_grid_format"
-        " flag if the input file contains submaps with the legacy grid format."
+  ss << "\n\nTool for migrating files that use submaps without histograms "
+        "to the new submap format, which includes a histogram. You can "
+        "set --include_unfinished_submaps to false if you want to exclude "
+        "unfinished submaps in the output."
      << "\nUsage: " << argv[0] << " " << argv[1]
      << " <input_filename> <output_filename> [flags]";
   google::SetUsageMessage(ss.str());
@@ -44,10 +43,10 @@ int pbstream_migrate(int argc, char** argv) {
   }
   cartographer::io::ProtoStreamReader input(argv[2]);
   cartographer::io::ProtoStreamWriter output(argv[3]);
-  LOG(INFO) << "Migrating old serialization format in \"" << argv[2]
-            << "\" to new serialization format in \"" << argv[3] << "\"";
-  cartographer::io::MigrateStreamFormatToVersion1(&input, &output,
-                                                  FLAGS_migrate_grid_format);
+  LOG(INFO) << "Migrating serialization format 1 in \"" << argv[2]
+            << "\" to serialization format 2 in \"" << argv[3] << "\"";
+  cartographer::io::MigrateStreamVersion1ToVersion2(
+      &input, &output, FLAGS_include_unfinished_submaps);
   CHECK(output.Close()) << "Could not write migrated pbstream file to: "
                         << argv[3];
 

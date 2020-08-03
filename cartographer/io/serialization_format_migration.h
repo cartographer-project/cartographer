@@ -24,14 +24,13 @@
 namespace cartographer {
 namespace io {
 
-// This helper function, migrates the input stream, which is supposed to match
-// to the "old" stream format order (PoseGraph, AllTrajectoryBuilderOptions,
-// SerializedData*) to the version 1 stream format (SerializationHeader,
-// SerializedData*).
-void MigrateStreamFormatToVersion1(
+// This helper function migrates the input stream, which is supposed
+// to contain submaps without histograms (stream format version 1) to
+// an output stream containing submaps with histograms (version 2).
+void MigrateStreamVersion1ToVersion2(
     cartographer::io::ProtoStreamReaderInterface* const input,
     cartographer::io::ProtoStreamWriterInterface* const output,
-    bool migrate_grid_format);
+    bool include_unfinished_submaps);
 
 mapping::MapById<mapping::SubmapId, mapping::proto::Submap>
 MigrateSubmapFormatVersion1ToVersion2(
