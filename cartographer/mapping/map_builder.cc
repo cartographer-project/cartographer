@@ -285,11 +285,13 @@ std::map<int, int> MapBuilder::LoadState(
                                  true);
   }
 
-  CHECK_NE(deserializer.header().format_version(),
-           io::kFormatVersionWithoutSubmapHistograms)
-      << "The pbstream file contains submaps without rotational histograms. "
-         "This can be converted, but the conversion was removed here due to "
-         "memory concerns.";
+  if (options_.use_trajectory_builder_3d()) {
+    CHECK_NE(deserializer.header().format_version(),
+             io::kFormatVersionWithoutSubmapHistograms)
+        << "The pbstream file contains submaps without rotational histograms. "
+           "This can be converted with the 'pbstream migrate' tool, see the "
+           "Cartographer documentation for details. ";
+  }
 
   SerializedData proto;
   while (deserializer.ReadNextSerializedData(&proto)) {
