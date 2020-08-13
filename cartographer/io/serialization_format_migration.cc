@@ -128,14 +128,12 @@ void MigrateStreamVersion1ToVersion2(
   while (deserializer.ReadNextSerializedData(&proto)) {
     switch (proto.data_case()) {
       case SerializedData::kPoseGraph:
-        LOG(ERROR) << "Found multiple serialized `PoseGraph`. Serialized "
+        LOG(FATAL) << "Found multiple serialized `PoseGraph`. Serialized "
                       "stream likely corrupt!.";
-        break;
       case SerializedData::kAllTrajectoryBuilderOptions:
-        LOG(ERROR) << "Found multiple serialized "
+        LOG(FATAL) << "Found multiple serialized "
                       "`AllTrajectoryBuilderOptions`. Serialized stream likely "
                       "corrupt!.";
-        break;
       case SerializedData::kSubmap: {
         CHECK(proto.submap().has_submap_3d())
             << "Converting to the new submap format only makes sense for 3D.";

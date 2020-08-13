@@ -22,7 +22,7 @@
 #include "glog/logging.h"
 
 DEFINE_bool(include_unfinished_submaps, true,
-            "Whether to write to include unfinished submaps in the output.");
+            "Whether to include unfinished submaps in the output.");
 
 namespace cartographer {
 namespace io {
