@@ -309,9 +309,8 @@ std::map<int, int> MapBuilder::LoadState(
         proto.mutable_submap()->mutable_submap_id()->set_trajectory_id(
             trajectory_remapping.at(
                 proto.submap().submap_id().trajectory_id()));
-        const auto submap_id =
-            SubmapId{proto.submap().submap_id().trajectory_id(),
-                     proto.submap().submap_id().submap_index()};
+        const SubmapId submap_id(proto.submap().submap_id().trajectory_id(),
+                                 proto.submap().submap_id().submap_index());
         pose_graph_->AddSubmapFromProto(submap_poses.at(submap_id),
                                         proto.submap());
         break;
