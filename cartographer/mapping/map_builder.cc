@@ -285,8 +285,14 @@ std::map<int, int> MapBuilder::LoadState(
                                  true);
   }
 
-  MapById<SubmapId, mapping::proto::Submap> submap_id_to_submap;
-  MapById<NodeId, mapping::proto::Node> node_id_to_node;
+  if (options_.use_trajectory_builder_3d()) {
+    CHECK_NE(deserializer.header().format_version(),
+             io::kFormatVersionWithoutSubmapHistograms)
+        << "The pbstream file contains submaps without rotational histograms. "
+           "This can be converted with the 'pbstream migrate' tool, see the "
+           "Cartographer documentation for details. ";
+  }
+
   SerializedData proto;
   while (deserializer.ReadNextSerializedData(&proto)) {
     switch (proto.data_case()) {
@@ -303,10 +309,10 @@ std::map<int, int> MapBuilder::LoadState(
         proto.mutable_submap()->mutable_submap_id()->set_trajectory_id(
             trajectory_remapping.at(
                 proto.submap().submap_id().trajectory_id()));
-        submap_id_to_submap.Insert(
-            SubmapId{proto.submap().submap_id().trajectory_id(),
-                     proto.submap().submap_id().submap_index()},
-            proto.submap());
+        const SubmapId submap_id(proto.submap().submap_id().trajectory_id(),
+                                 proto.submap().submap_id().submap_index());
+        pose_graph_->AddSubmapFromProto(submap_poses.at(submap_id),
+                                        proto.submap());
         break;
       }
       case SerializedData::kNode: {
@@ -316,7 +322,6 @@ std::map<int, int> MapBuilder::LoadState(
                              proto.node().node_id().node_index());
         const transform::Rigid3d& node_pose = node_poses.at(node_id);
         pose_graph_->AddNodeFromProto(node_pose, proto.node());
-        node_id_to_node.Insert(node_id, proto.node());
         break;
       }
       case SerializedData::kTrajectoryData: {
@@ -359,20 +364,6 @@ std::map<int, int> MapBuilder::LoadState(
         LOG(WARNING) << "Skipping unknown message type in stream: "
                      << proto.GetTypeName();
     }
-  }
-
-  // TODO(schwoere): Remove backwards compatibility once the pbstream format
-  // version 2 is established.
-  if (deserializer.header().format_version() ==
-      io::kFormatVersionWithoutSubmapHistograms) {
-    submap_id_to_submap =
-        cartographer::io::MigrateSubmapFormatVersion1ToVersion2(
-            submap_id_to_submap, node_id_to_node, pose_graph_proto);
-  }
-
-  for (const auto& submap_id_submap : submap_id_to_submap) {
-    pose_graph_->AddSubmapFromProto(submap_poses.at(submap_id_submap.id),
-                                    submap_id_submap.data);
   }
 
   if (load_frozen_state) {
