@@ -198,7 +198,7 @@ void OptimizingLocalTrajectoryBuilder::AddControlPoint(common::Time t) {
     if (options_.optimizing_local_trajectory_builder_options()
         .initialize_map_orientation_with_imu()) {
       Eigen::Quaterniond g = extrapolator_->EstimateGravityOrientation(t);
-      LOG(INFO) << "g " << g.vec();
+      LOG(INFO) << "g " << g.vec().transpose();
       control_points_.push_back(ControlPoint{
           t, State(Eigen::Vector3d::Zero(), g, Eigen::Vector3d::Zero())});
     } else {
