@@ -28,7 +28,6 @@
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
 #include "cartographer/mapping/internal/collated_trajectory_builder.h"
 #include "cartographer/mapping/internal/global_trajectory_builder.h"
-#include "cartographer/mapping/proto/internal/legacy_serialized_data.pb.h"
 #include "cartographer/sensor/internal/collator.h"
 #include "cartographer/sensor/internal/trajectory_collator.h"
 #include "cartographer/sensor/internal/voxel_filter.h"
