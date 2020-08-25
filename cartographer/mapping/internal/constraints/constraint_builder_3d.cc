@@ -371,7 +371,7 @@ void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
   kGlobalConstraintLowResolutionScoresMetric = scores->Add(
       {{"search_region", "global"}, {"kind", "low_resolution_score"}});
   auto* num_matchers = factory->NewGaugeFamily(
-      "constraints_constraint_builder_3d_num_submap_scan_matchers",
+      "mapping_constraints_constraint_builder_3d_num_submap_scan_matchers",
       "Current number of constructed submap scan matchers");
   kNumSubmapScanMatchersMetric = num_matchers->Add({});
 }
