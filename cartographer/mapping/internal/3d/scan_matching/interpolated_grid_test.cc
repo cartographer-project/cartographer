@@ -44,7 +44,7 @@ class InterpolatedGridTest : public ::testing::Test {
   }
 
   HybridGrid hybrid_grid_;
-  InterpolatedGrid interpolated_grid_;
+  InterpolatedProbabilityGrid interpolated_grid_;
 };
 
 TEST_F(InterpolatedGridTest, InterpolatesGridPoints) {
@@ -52,7 +52,7 @@ TEST_F(InterpolatedGridTest, InterpolatesGridPoints) {
     for (double y = 1.; y < 5.; y += hybrid_grid_.resolution()) {
       for (double x = -8.; x < -2.; x += hybrid_grid_.resolution()) {
         EXPECT_NEAR(GetHybridGridProbability(x, y, z),
-                    interpolated_grid_.GetProbability(x, y, z), 1e-6);
+                    interpolated_grid_.GetInterpolatedValue(x, y, z), 1e-6);
       }
     }
   }
@@ -73,10 +73,11 @@ TEST_F(InterpolatedGridTest, MonotonicBehaviorBetweenGridPointsInX) {
         for (double sample = kSampleStep;
              sample < hybrid_grid_.resolution() - 2 * kSampleStep;
              sample += kSampleStep) {
-          EXPECT_LT(0., grid_difference * (interpolated_grid_.GetProbability(
-                                               x + sample + kSampleStep, y, z) -
-                                           interpolated_grid_.GetProbability(
-                                               x + sample, y, z)));
+          EXPECT_LT(0.,
+                    grid_difference * (interpolated_grid_.GetInterpolatedValue(
+                                           x + sample + kSampleStep, y, z) -
+                                       interpolated_grid_.GetInterpolatedValue(
+                                           x + sample, y, z)));
         }
       }
     }

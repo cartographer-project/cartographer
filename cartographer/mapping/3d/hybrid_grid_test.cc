@@ -84,6 +84,23 @@ TEST(HybridGridTest, GetProbability) {
   }
 }
 
+TEST(HybridGridTest, GetIntensity) {
+  IntensityHybridGrid hybrid_grid(1.f);
+  const Eigen::Array3i cell_index =
+      hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 1.f, 1.f));
+  const float intensity = 58.0f;
+
+  EXPECT_NEAR(hybrid_grid.GetIntensity(cell_index), 0.0f, 1e-9);
+  hybrid_grid.AddIntensity(cell_index, intensity);
+  EXPECT_NEAR(hybrid_grid.GetIntensity(cell_index), intensity, 1e-9);
+  for (const Eigen::Array3i& index :
+       {hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 2.f, 1.f)),
+        hybrid_grid.GetCellIndex(Eigen::Vector3f(1.f, 1.f, 1.f)),
+        hybrid_grid.GetCellIndex(Eigen::Vector3f(1.f, 2.f, 1.f))}) {
+    EXPECT_NEAR(hybrid_grid.GetIntensity(index), 0.0f, 1e-9);
+  }
+}
+
 MATCHER_P(AllCwiseEqual, index, "") { return (arg == index).all(); }
 
 TEST(HybridGridTest, GetCellIndex) {
