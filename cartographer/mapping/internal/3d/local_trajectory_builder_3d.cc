@@ -25,6 +25,7 @@
 #include "cartographer/mapping/proto/3d/submaps_options_3d.pb.h"
 #include "cartographer/mapping/proto/scan_matching//ceres_scan_matcher_options_3d.pb.h"
 #include "cartographer/mapping/proto/scan_matching//real_time_correlative_scan_matcher_options.pb.h"
+#include "cartographer/transform/timestamped_transform.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -55,7 +56,6 @@ LocalTrajectoryBuilder3D::LocalTrajectoryBuilder3D(
               options_.real_time_correlative_scan_matcher_options())),
       ceres_scan_matcher_(absl::make_unique<scan_matching::CeresScanMatcher3D>(
           options_.ceres_scan_matcher_options())),
-      accumulated_range_data_{Eigen::Vector3f::Zero(), {}, {}},
       range_data_collator_(expected_range_sensor_ids) {}
 
 LocalTrajectoryBuilder3D::~LocalTrajectoryBuilder3D() {}
@@ -108,27 +108,31 @@ void LocalTrajectoryBuilder3D::AddImuData(const sensor::ImuData& imu_data) {
     extrapolator_->AddImuData(imu_data);
     return;
   }
-  // We derive velocities from poses which are at least 1 ms apart for numerical
-  // stability. Usually poses known to the extrapolator will be further apart
-  // in time and thus the last two are used.
-  constexpr double kExtrapolationEstimationTimeSec = 0.001;
-  extrapolator_ = mapping::PoseExtrapolator::InitializeWithImu(
-      ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
-      options_.imu_gravity_time_constant(), imu_data);
+  std::vector<transform::TimestampedTransform> initial_poses;
+  for (const auto& pose_proto : options_.initial_poses()) {
+    initial_poses.push_back(transform::FromProto(pose_proto));
+  }
+  std::vector<sensor::ImuData> initial_imu_data;
+  for (const auto& imu : options_.initial_imu_data()) {
+    initial_imu_data.push_back(sensor::FromProto(imu));
+  }
+  initial_imu_data.push_back(imu_data);
+
+  extrapolator_ = mapping::PoseExtrapolatorInterface::CreateWithImuData(
+      options_.pose_extrapolator_options(), initial_imu_data, initial_poses);
 }
 
 std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
 LocalTrajectoryBuilder3D::AddRangeData(
     const std::string& sensor_id,
     const sensor::TimedPointCloudData& unsynchronized_data) {
-  const auto synchronized_data =
+  auto synchronized_data =
       range_data_collator_.AddRangeData(sensor_id, unsynchronized_data);
   if (synchronized_data.ranges.empty()) {
     LOG(INFO) << "Range data collator filling buffer.";
     return nullptr;
   }
 
-  const common::Time& current_sensor_time = synchronized_data.time;
   if (extrapolator_ == nullptr) {
     // Until we've initialized the extrapolator with our first IMU message, we
     // cannot compute the orientation of the rangefinder.
@@ -139,111 +143,134 @@ LocalTrajectoryBuilder3D::AddRangeData(
   CHECK(!synchronized_data.ranges.empty());
   CHECK_LE(synchronized_data.ranges.back().point_time.time, 0.f);
   const common::Time time_first_point =
-      current_sensor_time +
+      synchronized_data.time +
       common::FromSeconds(synchronized_data.ranges.front().point_time.time);
   if (time_first_point < extrapolator_->GetLastPoseTime()) {
     LOG(INFO) << "Extrapolator is still initializing.";
     return nullptr;
   }
 
-  std::vector<sensor::TimedPointCloudOriginData::RangeMeasurement> hits =
+  if (num_accumulated_ == 0) {
+    accumulated_point_cloud_origin_data_.clear();
+  }
+
+  synchronized_data.ranges =
       sensor::VoxelFilter(0.5f * options_.voxel_filter_size())
           .Filter(synchronized_data.ranges);
-
-  std::vector<transform::Rigid3f> hits_poses;
-  hits_poses.reserve(hits.size());
-  bool warned = false;
-
-  for (const auto& hit : hits) {
-    common::Time time_point =
-        current_sensor_time + common::FromSeconds(hit.point_time.time);
-    if (time_point < extrapolator_->GetLastExtrapolatedTime()) {
-      if (!warned) {
-        LOG(ERROR)
-            << "Timestamp of individual range data point jumps backwards from "
-            << extrapolator_->GetLastExtrapolatedTime() << " to " << time_point;
-        warned = true;
-      }
-      time_point = extrapolator_->GetLastExtrapolatedTime();
-    }
-    hits_poses.push_back(
-        extrapolator_->ExtrapolatePose(time_point).cast<float>());
-  }
-
-  if (num_accumulated_ == 0) {
-    // 'accumulated_range_data_.origin' is not used.
-    accumulated_range_data_ = sensor::RangeData{{}, {}, {}};
-  }
-
-  for (size_t i = 0; i < hits.size(); ++i) {
-    sensor::RangefinderPoint hit_in_local =
-        hits_poses[i] * sensor::ToRangefinderPoint(hits[i].point_time);
-    const Eigen::Vector3f origin_in_local =
-        hits_poses[i] * synchronized_data.origins.at(hits[i].origin_index);
-    const Eigen::Vector3f delta = hit_in_local.position - origin_in_local;
-    const float range = delta.norm();
-    if (range >= options_.min_range()) {
-      if (range <= options_.max_range()) {
-        accumulated_range_data_.returns.push_back(hit_in_local);
-      } else {
-        // We insert a ray cropped to 'max_range' as a miss for hits beyond the
-        // maximum range. This way the free space up to the maximum range will
-        // be updated.
-        hit_in_local.position =
-            origin_in_local + options_.max_range() / range * delta;
-        accumulated_range_data_.misses.push_back(hit_in_local);
-      }
-    }
-  }
+  accumulated_point_cloud_origin_data_.emplace_back(
+      std::move(synchronized_data));
   ++num_accumulated_;
 
-  if (num_accumulated_ >= options_.num_accumulated_range_data()) {
-    absl::optional<common::Duration> sensor_duration;
-    if (last_sensor_time_.has_value()) {
-      sensor_duration = current_sensor_time - last_sensor_time_.value();
-    }
-    last_sensor_time_ = current_sensor_time;
-    num_accumulated_ = 0;
-
-    transform::Rigid3f current_pose =
-        extrapolator_->ExtrapolatePose(current_sensor_time).cast<float>();
-
-    const auto voxel_filter_start = std::chrono::steady_clock::now();
-    const sensor::RangeData filtered_range_data = {
-        current_pose.translation(),
-        sensor::VoxelFilter(options_.voxel_filter_size())
-            .Filter(accumulated_range_data_.returns),
-        sensor::VoxelFilter(options_.voxel_filter_size())
-            .Filter(accumulated_range_data_.misses)};
-    const auto voxel_filter_stop = std::chrono::steady_clock::now();
-    const auto voxel_filter_duration = voxel_filter_stop - voxel_filter_start;
-
-    if (sensor_duration.has_value()) {
-      const double voxel_filter_fraction =
-          common::ToSeconds(voxel_filter_duration) /
-          common::ToSeconds(sensor_duration.value());
-      kLocalSlamVoxelFilterFraction->Set(voxel_filter_fraction);
-    }
-
-    return AddAccumulatedRangeData(
-        current_sensor_time,
-        sensor::TransformRangeData(filtered_range_data, current_pose.inverse()),
-        sensor_duration);
+  if (num_accumulated_ < options_.num_accumulated_range_data()) {
+    return nullptr;
   }
-  return nullptr;
+  num_accumulated_ = 0;
+
+  bool warned = false;
+  std::vector<common::Time> hit_times;
+  common::Time prev_time_point = extrapolator_->GetLastExtrapolatedTime();
+  for (const auto& point_cloud_origin_data :
+       accumulated_point_cloud_origin_data_) {
+    for (const auto& hit : point_cloud_origin_data.ranges) {
+      common::Time time_point = point_cloud_origin_data.time +
+                                common::FromSeconds(hit.point_time.time);
+      if (time_point < prev_time_point) {
+        if (!warned) {
+          LOG(ERROR) << "Timestamp of individual range data point jumps "
+                        "backwards from "
+                     << prev_time_point << " to " << time_point;
+          warned = true;
+        }
+        time_point = prev_time_point;
+      }
+
+      hit_times.push_back(time_point);
+      prev_time_point = time_point;
+    }
+  }
+  hit_times.push_back(accumulated_point_cloud_origin_data_.back().time);
+
+  const PoseExtrapolatorInterface::ExtrapolationResult extrapolation_result =
+      extrapolator_->ExtrapolatePosesWithGravity(hit_times);
+  std::vector<transform::Rigid3f> hits_poses(
+      std::move(extrapolation_result.previous_poses));
+  hits_poses.push_back(extrapolation_result.current_pose.cast<float>());
+  CHECK_EQ(hits_poses.size(), hit_times.size());
+
+  sensor::RangeData accumulated_range_data;
+  std::vector<transform::Rigid3f>::const_iterator hits_poses_it =
+      hits_poses.begin();
+  for (const auto& point_cloud_origin_data :
+       accumulated_point_cloud_origin_data_) {
+    for (const auto& hit : point_cloud_origin_data.ranges) {
+      const Eigen::Vector3f hit_in_local =
+          *hits_poses_it * hit.point_time.position;
+      const Eigen::Vector3f origin_in_local =
+          *hits_poses_it * point_cloud_origin_data.origins.at(hit.origin_index);
+      const Eigen::Vector3f delta = hit_in_local - origin_in_local;
+      const float range = delta.norm();
+      if (range >= options_.min_range()) {
+        if (range <= options_.max_range()) {
+          accumulated_range_data.returns.push_back(
+              sensor::RangefinderPoint{hit_in_local});
+        } else {
+          // We insert a ray cropped to 'max_range' as a miss for hits beyond
+          // the maximum range. This way the free space up to the maximum range
+          // will be updated.
+          accumulated_range_data.misses.push_back(sensor::RangefinderPoint{
+              origin_in_local + options_.max_range() / range * delta});
+        }
+      }
+      ++hits_poses_it;
+    }
+  }
+  CHECK(std::next(hits_poses_it) == hits_poses.end());
+
+  const common::Time current_sensor_time = synchronized_data.time;
+  absl::optional<common::Duration> sensor_duration;
+  if (last_sensor_time_.has_value()) {
+    sensor_duration = current_sensor_time - last_sensor_time_.value();
+  }
+  last_sensor_time_ = current_sensor_time;
+
+  const common::Time current_time = hit_times.back();
+  const auto voxel_filter_start = std::chrono::steady_clock::now();
+  const sensor::RangeData filtered_range_data = {
+      extrapolation_result.current_pose.translation().cast<float>(),
+      sensor::VoxelFilter(options_.voxel_filter_size())
+          .Filter(accumulated_range_data.returns),
+      sensor::VoxelFilter(options_.voxel_filter_size())
+          .Filter(accumulated_range_data.misses)};
+  const auto voxel_filter_stop = std::chrono::steady_clock::now();
+  const auto voxel_filter_duration = voxel_filter_stop - voxel_filter_start;
+
+  if (sensor_duration.has_value()) {
+    const double voxel_filter_fraction =
+        common::ToSeconds(voxel_filter_duration) /
+        common::ToSeconds(sensor_duration.value());
+    kLocalSlamVoxelFilterFraction->Set(voxel_filter_fraction);
+  }
+
+  return AddAccumulatedRangeData(
+      current_time,
+      sensor::TransformRangeData(
+          filtered_range_data,
+          extrapolation_result.current_pose.inverse().cast<float>()),
+      sensor_duration, extrapolation_result.current_pose,
+      extrapolation_result.gravity_from_tracking);
 }
 
 std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
 LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     const common::Time time,
     const sensor::RangeData& filtered_range_data_in_tracking,
-    const absl::optional<common::Duration>& sensor_duration) {
+    const absl::optional<common::Duration>& sensor_duration,
+    const transform::Rigid3d& pose_prediction,
+    const Eigen::Quaterniond& gravity_alignment) {
   if (filtered_range_data_in_tracking.returns.empty()) {
     LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
   }
-  const transform::Rigid3d pose_prediction =
-      extrapolator_->ExtrapolatePose(time);
 
   const auto scan_matcher_start = std::chrono::steady_clock::now();
 
@@ -283,8 +310,6 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
     kLocalSlamScanMatcherFraction->Set(scan_matcher_fraction);
   }
 
-  const Eigen::Quaterniond gravity_alignment =
-      extrapolator_->EstimateGravityOrientation(time);
   sensor::RangeData filtered_range_data_in_local = sensor::TransformRangeData(
       filtered_range_data_in_tracking, pose_estimate->cast<float>());
 

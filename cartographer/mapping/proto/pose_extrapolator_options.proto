@@ -1,0 +1,48 @@
+// Copyright 2018 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+import "cartographer/common/proto/ceres_solver_options.proto";
+
+package cartographer.mapping.proto;
+
+message ConstantVelocityPoseExtrapolatorOptions {
+  // Time constant in seconds for the orientation moving average based on
+  // observed gravity via the IMU. It should be chosen so that the error
+  // 1. from acceleration measurements not due to gravity (which gets worse when
+  // the constant is reduced) and
+  // 2. from integration of angular velocities (which gets worse when the
+  // constant is increased) is balanced.
+  double imu_gravity_time_constant = 1;
+  double pose_queue_duration = 2;
+}
+
+message ImuBasedPoseExtrapolatorOptions {
+  double pose_queue_duration = 1;
+  double gravity_constant = 2;
+  double pose_translation_weight = 3;
+  double pose_rotation_weight = 4;
+  double imu_acceleration_weight = 5;
+  double imu_rotation_weight = 6;
+  cartographer.common.proto.CeresSolverOptions solver_options = 7;
+  double odometry_translation_weight = 8;
+  double odometry_rotation_weight = 9;
+}
+
+message PoseExtrapolatorOptions {
+  bool use_imu_based = 1;
+  ConstantVelocityPoseExtrapolatorOptions constant_velocity = 2;
+  ImuBasedPoseExtrapolatorOptions imu_based = 3;
+}

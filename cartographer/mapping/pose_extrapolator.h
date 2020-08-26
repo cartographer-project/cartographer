@@ -22,6 +22,7 @@
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/imu_tracker.h"
+#include "cartographer/mapping/pose_extrapolator_interface.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -32,7 +33,7 @@ namespace mapping {
 // Keep poses for a certain duration to estimate linear and angular velocity.
 // Uses the velocities to extrapolate motion. Uses IMU and/or odometry data if
 // available to improve the extrapolation.
-class PoseExtrapolator {
+class PoseExtrapolator : public PoseExtrapolatorInterface {
  public:
   explicit PoseExtrapolator(common::Duration pose_queue_duration,
                             double imu_gravity_time_constant);
@@ -46,17 +47,20 @@ class PoseExtrapolator {
 
   // Returns the time of the last added pose or Time::min() if no pose was added
   // yet.
-  common::Time GetLastPoseTime() const;
-  common::Time GetLastExtrapolatedTime() const;
+  common::Time GetLastPoseTime() const override;
+  common::Time GetLastExtrapolatedTime() const override;
 
-  void AddPose(common::Time time, const transform::Rigid3d& pose);
-  void AddImuData(const sensor::ImuData& imu_data);
-  void AddOdometryData(const sensor::OdometryData& odometry_data);
-  transform::Rigid3d ExtrapolatePose(common::Time time);
+  void AddPose(common::Time time, const transform::Rigid3d& pose) override;
+  void AddImuData(const sensor::ImuData& imu_data) override;
+  void AddOdometryData(const sensor::OdometryData& odometry_data) override;
+  transform::Rigid3d ExtrapolatePose(common::Time time) override;
+
+  ExtrapolationResult ExtrapolatePosesWithGravity(
+      const std::vector<common::Time>& times) override;
 
   // Returns the current gravity alignment estimate as a rotation from
   // the tracking frame into a gravity aligned frame.
-  Eigen::Quaterniond EstimateGravityOrientation(common::Time time);
+  Eigen::Quaterniond EstimateGravityOrientation(common::Time time) override;
 
  private:
   void UpdateVelocitiesFromPoses();
