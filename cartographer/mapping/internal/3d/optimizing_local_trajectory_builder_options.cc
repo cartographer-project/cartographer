@@ -46,6 +46,8 @@ CreateOptimizingLocalTrajectoryBuilderOptions(
       parameter_dictionary->GetDouble("ct_window_horizon"));
   options.set_ct_window_rate(
       parameter_dictionary->GetDouble("ct_window_rate"));
+  options.set_initialization_duration(
+      parameter_dictionary->GetDouble("initialization_duration"));
   const std::string imu_integrator_string =
       parameter_dictionary->GetString("imu_integrator");
   proto::IMUIntegrator imu_integrator_type;

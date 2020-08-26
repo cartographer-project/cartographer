@@ -42,4 +42,5 @@ message OptimizingLocalTrajectoryBuilderOptions {
   IMUIntegrator imu_integrator = 14;
   IMUCostTerm imu_cost_term = 15;
   bool sync_control_points_with_range_data = 16;
+  double initialization_duration = 17;
 }

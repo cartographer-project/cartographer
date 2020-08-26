@@ -38,7 +38,7 @@ class InterpolatedTSDFSpaceCostFunction3D {
       const double scaling_factor, const sensor::PointCloud& point_cloud,
       const mapping::HybridGridTSDF& hybrid_grid,
       const double interpolation_ratio) {
-    if (interpolation_ratio < 0 || interpolation_ratio > 1) {
+    if (interpolation_ratio <= 0.0 || interpolation_ratio >= 1.0) {
       LOG(WARNING) << "Extrapolating to: " << interpolation_ratio;
     }
     return new ceres::AutoDiffCostFunction<

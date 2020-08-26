@@ -98,6 +98,7 @@ TRAJECTORY_BUILDER_3D = {
       optimization_rate = 0.05,
       ct_window_horizon = 0.9,
       ct_window_rate = 0.1,
+      initialization_duration = 1.0,
       imu_integrator = "RK4",
       imu_cost_term = "DIRECT",
   },

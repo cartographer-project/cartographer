@@ -143,6 +143,7 @@ class OptimizingLocalTrajectoryBuilder {
 
   common::Duration ct_window_horizon_;
   common::Duration ct_window_rate_;
+  common::Duration initialization_duration_;
 
   bool imu_calibrated_;
   Eigen::Transform<double, 3, Eigen::Affine> linear_acceleration_calibration_;

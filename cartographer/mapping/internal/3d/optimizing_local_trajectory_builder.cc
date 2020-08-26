@@ -93,6 +93,9 @@ OptimizingLocalTrajectoryBuilder::OptimizingLocalTrajectoryBuilder(
       ct_window_rate_(common::FromSeconds(
           options.optimizing_local_trajectory_builder_options()
               .ct_window_rate())),
+      initialization_duration_(common::FromSeconds(
+          options.optimizing_local_trajectory_builder_options()
+              .initialization_duration())),
       imu_calibrated_(false),
       linear_acceleration_calibration_(
           Eigen::Transform<double, 3, Eigen::Affine>::Identity()),
@@ -223,8 +226,8 @@ void OptimizingLocalTrajectoryBuilder::RemoveObsoleteSensorData() {
     return;
   }
 
-  while (ct_window_horizon_ <
-      control_points_.back().time - control_points_.front().time) {
+  while (ct_window_horizon_ - ct_window_rate_ <
+         control_points_.back().time - control_points_.front().time) {
     control_points_.pop_front();
   }
 
@@ -259,12 +262,12 @@ void OptimizingLocalTrajectoryBuilder::TransformStates(
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
-  if (time - initial_data_time_ < 2.0 * ct_window_horizon_ ||
+  if (time - initial_data_time_ < initialization_duration_ ||
       time - last_optimization_time_ < optimization_rate_) {
     if (time - initial_data_time_ < 2.0 * ct_window_horizon_) {
       LOG(INFO) << "No Optimization - not enough time since initialization "
                 << common::ToSeconds(time - initial_data_time_) << "\t < "
-                << 2.0 * common::ToSeconds(ct_window_horizon_);
+                << common::ToSeconds(initialization_duration_);
     }
     return nullptr;
   }
@@ -300,9 +303,11 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
 
   }
   if(options_.optimizing_local_trajectory_builder_options().sync_control_points_with_range_data()) {
-    for (size_t i = 0; i < point_cloud_data_.size(); ++i) {
-      PointCloudSet &point_cloud_set = point_cloud_data_[i];
-      if(control_points_.back().time < point_cloud_set.time &&point_cloud_set.time < imu_data_.back().time) AddControlPoint(point_cloud_set.time);
+    for (auto& point_cloud_set : point_cloud_data_) {
+      if ((control_points_.back().time < point_cloud_set.time) &&
+          (point_cloud_set.time < imu_data_.back().time)) {
+        AddControlPoint(point_cloud_set.time);
+      }
     }
   }
   else {
@@ -328,8 +333,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     // solving the optimization problem.
     TransformStates(matching_submap->local_pose().inverse());
     auto next_control_point = control_points_.begin();
-    for (size_t i = 0; i < point_cloud_data_.size(); ++i) {
-      PointCloudSet& point_cloud_set = point_cloud_data_[i];
+    for (auto& point_cloud_set : point_cloud_data_) {
       if (point_cloud_set.time < control_points_.back().time) {
         while (next_control_point->time <= point_cloud_set.time) {
           CHECK(next_control_point != control_points_.end());
@@ -612,7 +616,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     }
   } else {
     CHECK(control_points_.front().time <= point_cloud_data_.front().time);
-    while (ct_window_horizon_ <
+    while (ct_window_horizon_ - ct_window_rate_ <
            control_points_.back().time - point_cloud_data_.front().time) {
       while (std::next(control_points_.begin())->time <
              point_cloud_data_.front().time) {
@@ -742,6 +746,7 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
 State OptimizingLocalTrajectoryBuilder::PredictState(
     const State& start_state, const common::Time start_time,
     const common::Time end_time) {
+  //return start_state;
   bool predict_odom = false;
   if (predict_odom) {
     return PredictStateOdom(start_state, start_time, end_time);
