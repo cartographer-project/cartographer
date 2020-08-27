@@ -544,6 +544,32 @@ class HybridGrid : public HybridGridBase<uint16> {
   std::vector<ValueType*> update_indices_;
 };
 
+struct AverageIntensityData {
+  float sum = 0.f;
+  int count = 0;
+};
+
+class IntensityHybridGrid : public HybridGridBase<AverageIntensityData> {
+ public:
+  explicit IntensityHybridGrid(const float resolution)
+      : HybridGridBase<AverageIntensityData>(resolution) {}
+
+  void AddIntensity(const Eigen::Array3i& index, const float intensity) {
+    AverageIntensityData* const cell = mutable_value(index);
+    cell->count += 1;
+    cell->sum += intensity;
+  }
+
+  float GetIntensity(const Eigen::Array3i& index) const {
+    const AverageIntensityData& cell = value(index);
+    if (cell.count == 0) {
+      return 0.f;
+    } else {
+      return cell.sum / cell.count;
+    }
+  }
+};
+
 }  // namespace mapping
 }  // namespace cartographer
 
