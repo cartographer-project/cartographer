@@ -28,11 +28,14 @@ struct TimedPointCloudData {
   common::Time time;
   Eigen::Vector3f origin;
   TimedPointCloud ranges;
+  // 'intensities' has to be same size as 'ranges', or empty.
+  std::vector<float> intensities;
 };
 
 struct TimedPointCloudOriginData {
   struct RangeMeasurement {
     TimedRangefinderPoint point_time;
+    float intensity;
     size_t origin_index;
   };
   common::Time time;

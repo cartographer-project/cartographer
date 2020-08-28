@@ -37,9 +37,11 @@ class RangeDataCollator {
       : expected_sensor_ids_(expected_range_sensor_ids.begin(),
                              expected_range_sensor_ids.end()) {}
 
+  // If timed_point_cloud_data has incomplete intensity data, we will fill the
+  // missing intensities with kDefaultIntensityValue.
   sensor::TimedPointCloudOriginData AddRangeData(
       const std::string& sensor_id,
-      const sensor::TimedPointCloudData& timed_point_cloud_data);
+      sensor::TimedPointCloudData timed_point_cloud_data);
 
  private:
   sensor::TimedPointCloudOriginData CropAndMerge();
@@ -49,6 +51,8 @@ class RangeDataCollator {
   std::map<std::string, sensor::TimedPointCloudData> id_to_pending_data_;
   common::Time current_start_ = common::Time::min();
   common::Time current_end_ = common::Time::min();
+
+  constexpr static float kDefaultIntensityValue = 0.f;
 };
 
 }  // namespace mapping
