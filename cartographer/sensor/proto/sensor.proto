@@ -41,6 +41,7 @@ message TimedPointCloudData {
   transform.proto.Vector3f origin = 2;
   repeated transform.proto.Vector4f point_data_legacy = 3;
   repeated TimedRangefinderPoint point_data = 4;
+  repeated float intensities = 5;
 }
 
 // Proto representation of ::cartographer::sensor::RangeData.
