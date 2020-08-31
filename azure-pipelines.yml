@@ -19,7 +19,7 @@ jobs:
   timeoutInMinutes: 360
   steps:
   - script: |
-      choco sources add -n=roswin -s https://roswin.azurewebsites.net/api/v2/ --priority 1
+      choco sources add -n=roswin -s https://aka.ms/ros/public --priority 1
       rem Azure VM runs out of space on C:, so use D: for ros and rosdeps
       mkdir D:\opt && mklink /J C:\opt D:\opt
       choco upgrade %ROS_METAPACKAGE% -y
