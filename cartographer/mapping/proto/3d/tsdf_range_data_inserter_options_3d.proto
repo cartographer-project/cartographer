@@ -3,6 +3,12 @@ syntax = "proto3";
 package cartographer.mapping.proto;
 
 message TSDFRangeDataInserterOptions3D {
+  enum NormalComputationMethod {
+    INVALID = 0;
+    PCL = 1;
+    OPEN3D = 2;
+    CLOUD_STRUCTURE = 3;
+  }
   // Distance to the surface within the signed distance function is evaluated.
   double relative_truncation_distance = 1;
 
@@ -31,4 +37,6 @@ message TSDFRangeDataInserterOptions3D {
   // Up to how many free space voxels are updated for scan matching.
   // 0 disables free space.
   double normal_estimate_radius = 8;
+
+  NormalComputationMethod normal_computation_method = 9;
 }

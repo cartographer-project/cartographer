@@ -61,7 +61,16 @@ proto::TSDFRangeDataInserterOptions3D CreateTSDFRangeDataInserterOptions3D(
             parameter_dictionary->GetInt("normal_estimate_max_nn"));
     options.set_normal_estimate_radius(
             parameter_dictionary->GetDouble("normal_estimate_radius"));
-  return options;
+    const std::string normal_computation_method_string =
+        parameter_dictionary->GetString("normal_computation_method");
+    proto::TSDFRangeDataInserterOptions3D::NormalComputationMethod
+        normal_computation_method;
+    CHECK(proto::TSDFRangeDataInserterOptions3D_NormalComputationMethod_Parse(
+        normal_computation_method_string, &normal_computation_method))
+        << "Unknown TSDFRangeDataInserterOptions3D::NormalComputationMethod: "
+        << normal_computation_method_string;
+    options.set_normal_computation_method(normal_computation_method);
+    return options;
 }
 
 TSDFRangeDataInserter3D::TSDFRangeDataInserter3D(
@@ -282,85 +291,150 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
   //  LOG(INFO) << "start normal computation";
   if (options_.tsdf_range_data_inserter_options_3d()
           .project_sdf_distance_to_scan_normal()) {
+    switch (options_.tsdf_range_data_inserter_options_3d()
+                .normal_computation_method()) {
+      case proto::TSDFRangeDataInserterOptions3D::PCL: {
 #ifdef USE_PCL
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(
-        new pcl::PointCloud<pcl::PointXYZ>);
-    for (const auto& point : range_data.returns) {
-      cloud->push_back(
-          {point.position[0], point.position[1], point.position[2]});
-    }
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(
+            new pcl::PointCloud<pcl::PointXYZ>);
+        for (const auto& point : range_data.returns) {
+          cloud->push_back(
+              {point.position[0], point.position[1], point.position[2]});
+        }
 
-    //    ... read, pass in or create a point cloud ...
+        //    ... read, pass in or create a point cloud ...
 
-    // Create the normal estimation class, and pass the input dataset to it
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
-    ne.setInputCloud(cloud);
+        // Create the normal estimation class, and pass the input dataset to
+        it pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+        ne.setInputCloud(cloud);
 
-    // Create an empty kdtree representation, and pass it to the normal
-    // estimation object. Its content will be filled inside the object, based on
-    // the given input dataset (as no other search surface is given).
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
-        new pcl::search::KdTree<pcl::PointXYZ>());
-    ne.setSearchMethod(tree);
+        // Create an empty kdtree representation, and pass it to the normal
+        // estimation object. Its content will be filled inside the object,
+        based on
+            // the given input dataset (as no other search surface is given).
+            pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
+                new pcl::search::KdTree<pcl::PointXYZ>());
+        ne.setSearchMethod(tree);
 
-    // Output datasets
-    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(
-        new pcl::PointCloud<pcl::Normal>);
+        // Output datasets
+        pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(
+            new pcl::PointCloud<pcl::Normal>);
 
-    // Use all neighbors in a sphere of radius 3cm
-    ne.setKSearch(10);
+        // Use all neighbors in a sphere of radius 3cm
+        ne.setKSearch(10);
 
-    // Compute the features
-    ne.compute(*cloud_normals);
+        // Compute the features
+        ne.compute(*cloud_normals);
 
-    //     cloud_normals->points.size () should have the same size as the inpu
-    //     cloud->points.size ()*
-    LOG(INFO) << "finish normal computation";
+        //     cloud_normals->points.size () should have the same size as the
+        inpu
+                //     cloud->points.size ()*
+                LOG(INFO)
+            << "finish normal computation";
 
-    int point_idx = 0;
-    //        for (const auto& hit_point : range_data.returns) {
-    //          cloud_normals->at(point_idx).x = cloud->at(point_idx).x;
-    //          cloud_normals->at(point_idx).y = cloud->at(point_idx).y;
-    //          cloud_normals->at(point_idx).z = cloud->at(point_idx).z;
-    //          ++point_idx;
-    //        }
-    //
-    //        static int cloud_idx = 0;
-    //        pcl::io::savePCDFileASCII(
-    //            "test_pcd_normals" + std::to_string(cloud_idx) + ".pcd",
-    //            *cloud_normals);
-    //        ++cloud_idx;
+        int point_idx = 0;
+        //        for (const auto& hit_point : range_data.returns) {
+        //          cloud_normals->at(point_idx).x = cloud->at(point_idx).x;
+        //          cloud_normals->at(point_idx).y = cloud->at(point_idx).y;
+        //          cloud_normals->at(point_idx).z = cloud->at(point_idx).z;
+        //          ++point_idx;
+        //        }
+        //
+        //        static int cloud_idx = 0;
+        //        pcl::io::savePCDFileASCII(
+        //            "test_pcd_normals" + std::to_string(cloud_idx) + ".pcd",
+        //            *cloud_normals);
+        //        ++cloud_idx;
 
-    point_idx = 0;
-    for (const auto& hit_point : range_data.returns) {
-      const Eigen::Vector3f hit = hit_point.position.head<3>();
-      const Eigen::Vector3f normal = {cloud_normals->at(point_idx).normal_x,
-                                      cloud_normals->at(point_idx).normal_y,
-                                      cloud_normals->at(point_idx).normal_z};
-      InsertHitWithNormal(hit, origin, normal, tsdf);
-      ++point_idx;
-    }
+        point_idx = 0;
+        for (const auto& hit_point : range_data.returns) {
+          const Eigen::Vector3f hit = hit_point.position.head<3>();
+          const Eigen::Vector3f normal = {
+              cloud_normals->at(point_idx).normal_x,
+              cloud_normals->at(point_idx).normal_y,
+              cloud_normals->at(point_idx).normal_z};
+          InsertHitWithNormal(hit, origin, normal, tsdf);
+          ++point_idx;
+        }
+#else
+        LOG(ERROR) << "Built without PCL - PCL-based normal computation not "
+                      "available.";
 #endif
+        break;
+    }
+    case proto::TSDFRangeDataInserterOptions3D::OPEN3D: {
 #ifdef WITH_OPEN3D
-    std::shared_ptr<open3d::geometry::PointCloud> cloud =
-        std::make_shared<open3d::geometry::PointCloud>();
-    for (const auto& point : range_data.returns) {
-      cloud->points_.push_back(
-          {point.position[0], point.position[1], point.position[2]});
-    }
-    cloud->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(options_.tsdf_range_data_inserter_options_3d().normal_estimate_radius(), options_.tsdf_range_data_inserter_options_3d().normal_estimate_max_nn()));
-    //    cloud->OrientNormalsTowardsCameraLocation(range_data.origin.cast<double>());
-    //    open3d::visualization::DrawGeometries({cloud});
+      std::shared_ptr<open3d::geometry::PointCloud> cloud =
+          std::make_shared<open3d::geometry::PointCloud>();
 
-    int point_idx = 0;
-    for (const auto& hit_point : range_data.returns) {
-      const Eigen::Vector3f hit = hit_point.position.head<3>();
-      const Eigen::Vector3f normal =
-          cloud->normals_[point_idx].head<3>().cast<float>();
-      InsertHitWithNormal(hit, origin, normal, tsdf);
-      ++point_idx;
-    }
+      LOG(INFO) << "range_data size " << range_data.returns.size();
+      for (const auto& point : range_data.returns) {
+        cloud->points_.push_back(
+            {point.position[0], point.position[1], point.position[2]});
+      }
+      cloud->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(
+          options_.tsdf_range_data_inserter_options_3d()
+              .normal_estimate_radius(),
+          options_.tsdf_range_data_inserter_options_3d()
+              .normal_estimate_max_nn()));
+      //        cloud->OrientNormalsTowardsCameraLocation(range_data.origin.cast<double>());
+      //    open3d::visualization::DrawGeometries({cloud});
+
+      int point_idx = 0;
+      for (const auto& hit_point : range_data.returns) {
+        const Eigen::Vector3f hit = hit_point.position.head<3>();
+        const Eigen::Vector3f normal =
+            cloud->normals_[point_idx].head<3>().cast<float>();
+        InsertHitWithNormal(hit, origin, normal, tsdf);
+        ++point_idx;
+      }
+#else
+      LOG(ERROR) << "Built without Open3D - Open3D-based normal computation "
+                    "not available.";
 #endif
+      break;
+    }
+    case proto::TSDFRangeDataInserterOptions3D::CLOUD_STRUCTURE: {
+      if (range_data.returns.size() == 28800) {
+        int NUM_ROWS = 16;
+        int NUM_POINTS_PER_LINE = 1800;
+        int NUM_POINTS = NUM_POINTS_PER_LINE * NUM_ROWS;
+        for (int point_idx = 0; point_idx < NUM_POINTS; ++point_idx) {
+          if (range_data.returns[point_idx].position.isZero()) continue;
+          int i0 = point_idx;
+          int horizontal_stride = 5;
+          int i1 = point_idx + horizontal_stride >= NUM_POINTS
+                       ? point_idx - horizontal_stride
+                       : point_idx + horizontal_stride;
+          int i2 = point_idx + NUM_POINTS_PER_LINE >= NUM_POINTS
+                       ? point_idx - NUM_POINTS_PER_LINE
+                       : point_idx + NUM_POINTS_PER_LINE;
+          Eigen::Vector3f p0 = range_data.returns[i0].position;
+          Eigen::Vector3f p1 = range_data.returns[i1].position;
+          Eigen::Vector3f p2 = range_data.returns[i2].position;
+          if (p1.isZero() || p2.isZero()) continue;
+          float r0 = p0.norm();
+          float r1 = p1.norm();
+          float r2 = p2.norm();
+          float max_range_delta = 1.f;
+          if (std::abs(r0 - r1) > max_range_delta ||
+              std::abs(r0 - r2) > max_range_delta ||
+              std::abs(r1 - r2) > max_range_delta) {
+            continue;
+          }
+          const Eigen::Vector3f normal = (p0 - p1).cross(p0 - p2).normalized();
+          InsertHitWithNormal(p0, origin, normal, tsdf);
+          ++point_idx;
+        }  // namespace mapping
+      }    // namespace cartographer
+      break;
+    }
+    default: {
+      LOG(ERROR) << "Invalid TSDFRangeDataInserterOptions3D normal "
+                    "computation method.";
+      break;
+    }
+    }
   } else {
     for (const sensor::RangefinderPoint& hit_point : range_data.returns) {
       const Eigen::Vector3f hit = hit_point.position.head<3>();
