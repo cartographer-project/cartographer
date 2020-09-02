@@ -143,12 +143,6 @@ namespace cartographer {
           if(densities_es[i] > max) max = densities_es[i];
           if(densities_es[i] < trim_surface_) density_mask[i] = true;
         }
-        std::vector<Eigen::Vector3d> densities;
-        for (std::vector<double>::iterator it = densities_es.begin() ; it != densities_es.end(); ++it) {
-          double val = *it/max;
-          densities.push_back({ val, val, val });
-        }
-        mesh_es->vertex_colors_ = densities;
         if(trim_surface_ > 0) {
           LOG(INFO) << "Trimming Mesh below density: " + std::to_string(trim_surface_);
           mesh_es->RemoveVerticesByMask(density_mask);
@@ -178,18 +172,8 @@ namespace cartographer {
         return;
       }
 
-//  std::cout << std::to_string(aggregation_counter_) << std::endl;
       if(aggregation_counter_ == 0) {
         num_points_ = 0;
-//    std::string path = name_.substr(0, name_.find(".ply")) + std::to_string(common::ToUniversal(batch->start_time));
-//    std::string plyPath = path + ".ply";
-//
-//    file_->UpdateFileName(path + ".pose");
-//    WriteBinaryPlyPointCoordinate(batch->origin, file_.get());
-//    std::cout << plyPath << std::endl;
-//    file_->UpdateFileName(plyPath);
-//    WriteBinaryPlyHeader(has_colors_, has_intensities_, comments_, 0,
-//                         file_.get());
       }
 
       if (has_colors_) {
@@ -210,29 +194,23 @@ namespace cartographer {
                                        batch->points[i].position[0],
                                        batch->points[i].position[1],
                                        batch->points[i].position[2]});
+        if(batch->colors.size() > i) {
+          pc_->colors_.push_back({
+                                         batch->colors[i][0],
+                                         batch->colors[i][1],
+                                         batch->colors[i][2]});
+        } else {
+          // LOG(INFO) << "More points than colors";
+        }
         ++num_points_;
       }
       ++aggregation_counter_;
       if(aggregation_counter_ >= aggregate_) {
         aggregation_counter_ = 0;
-        std::string path = name_.substr(0, name_.find(".ply")) + std::to_string(common::ToUniversal(batch->start_time));
-
-        size_t position = path.find_last_of("/");
-        std::string folderPath = path.substr(0, position) + "/results";
-        std::string filePath = path.substr(position, path.length());
-        struct stat buffer;
-
-
-
-        std::string plyPath = folderPath + filePath + ".ply";
         pc_->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.5, 30));
         pc_->OrientNormalsTowardsCameraLocation(batch->origin.cast<double>());
         resultpc_->operator+=(*pc_);
 
-//        if(stat(folderPath.c_str(), &buffer) != 0) {
-//          mkdir(folderPath.c_str(), 0755);
-//        }
-//        open3d::io::WritePointCloudToPLY(plyPath, *pc_);
         pc_ = std::make_shared<open3d::geometry::PointCloud>();
       }
       next_->Process(std::move(batch));
