@@ -19,6 +19,9 @@ class RangeSensor {
                                            const transform::Rigid3d& pose,
                                            const Scene& scene) const;
 
+  sensor::TimedRangeData GenerateStructuredRangeData(
+      double time, const transform::Rigid3d& pose, const Scene& scene) const;
+
  private:
   double fov_horizontal_;
   double fov_vertical_;

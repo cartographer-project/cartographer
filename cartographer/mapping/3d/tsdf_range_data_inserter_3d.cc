@@ -25,8 +25,7 @@
 #include "cartographer/mapping/probability_values.h"
 #include "glog/logging.h"
 
-//#define USE_PCL
-#ifdef USE_PCL
+#ifdef WITH_PCL
 #include "pcl/features/normal_3d.h"
 #include "pcl/io/pcd_io.h"
 #include "pcl/point_cloud.h"
@@ -411,7 +410,7 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
     switch (options_.tsdf_range_data_inserter_options_3d()
                 .normal_computation_method()) {
       case proto::TSDFRangeDataInserterOptions3D::PCL: {
-#ifdef USE_PCL
+#ifdef WITH_PCL
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(
             new pcl::PointCloud<pcl::PointXYZ>);
         for (const auto& point : range_data.returns) {

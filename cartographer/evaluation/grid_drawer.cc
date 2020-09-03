@@ -11,8 +11,8 @@ GridDrawer::GridDrawer() : scale_(4.0) {
   axis0_ = 0;
   axis1_ = 1;
   axis2_ = 2;
-  min_limits_ = {-10.0, -2.0, 0.0};
-  max_limits_ = {10.0, 2.0, 2.0};
+  min_limits_ = {-15.0, -15.0, 0.8};
+  max_limits_ = {15.0, 15.0, 0.9};
   scaled_num_cells_ =
       ((scale_ / resolution_) * (max_limits_ - min_limits_)).cast<int>();
   grid_surface_ =
@@ -35,7 +35,7 @@ GridDrawer::GridDrawer(const cartographer::mapping::HybridGridTSDF& grid)
   axis0_ = 0;
   axis1_ = 1;
   axis2_ = 2;
-  min_limits_ = {1.0, -12.0, -1.0};
+  min_limits_ = {1.0, -12.0, 1.0};
   max_limits_ = {1.1, 12.0, 2.0};
   scaled_num_cells_ =
       ((scale_ / resolution_) * (max_limits_ - min_limits_)).cast<int>();
@@ -54,8 +54,8 @@ GridDrawer::GridDrawer(const cartographer::mapping::HybridGridTSDF& grid)
 
 void GridDrawer::DrawTSD(const cartographer::mapping::HybridGridTSDF& grid,
                          double z) {
-  Eigen::Array3i zero_index =
-      grid.GetCellIndex({min_limits_[0], min_limits_[1], min_limits_[2]});
+  Eigen::Array3i zero_index = grid.GetCellIndex(
+      {min_limits_[axis0_], min_limits_[axis1_], min_limits_[axis2_]});
   for (int ix = 0; ix < scaled_num_cells_[axis0_]; ++ix) {
     for (int iy = 0; iy < scaled_num_cells_[axis1_]; ++iy) {
       float r = 1.f;
