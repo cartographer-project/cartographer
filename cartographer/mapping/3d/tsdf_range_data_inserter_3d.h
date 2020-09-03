@@ -51,6 +51,13 @@ class TSDFRangeDataInserter3D : public RangeDataInserterInterface {
                            const Eigen::Vector3f& origin,
                            const Eigen::Vector3f& normal,
                            HybridGridTSDF* tsdf) const;
+  void InsertTriangle(const Eigen::Vector3f& v0, const Eigen::Vector3f& v1,
+                      const Eigen::Vector3f& v2, const Eigen::Vector3f& origin,
+                      HybridGridTSDF* tsdf) const;
+  void RasterTriangle(const Eigen::Vector3f& v0, const Eigen::Vector3f& v1,
+                      const Eigen::Vector3f& v2,
+                      const Eigen::Vector3f& triangle_normal, float tsd_offset,
+                      HybridGridTSDF* tsdf) const;
   void UpdateCell(const Eigen::Array3i& cell, float update_sdf,
                   float update_weight, HybridGridTSDF* tsdf) const;
 

@@ -77,6 +77,123 @@ TSDFRangeDataInserter3D::TSDFRangeDataInserter3D(
     const proto::RangeDataInserterOptions3D& options)
     : options_(options) {}
 
+void TSDFRangeDataInserter3D::InsertTriangle(const Eigen::Vector3f& v0,
+                                             const Eigen::Vector3f& v1,
+                                             const Eigen::Vector3f& v2,
+                                             const Eigen::Vector3f& origin,
+                                             HybridGridTSDF* tsdf) const {
+  Eigen::Vector3f d_01 = v1 - v0;
+  Eigen::Vector3f d_02 = v2 - v0;
+  Eigen::Vector3f d_12 = v2 - v1;
+  float max_01 = d_01.cwiseAbs().maxCoeff();
+  float max_02 = d_02.cwiseAbs().maxCoeff();
+  float max_12 = d_12.cwiseAbs().maxCoeff();
+
+  Eigen::Vector3f triangle_normal = (v0 - v1).cross(v0 - v2).normalized();
+  if (triangle_normal.dot(origin - v0) < 0) triangle_normal = -triangle_normal;
+  float resolution = 0.05f;
+  int max_idx;
+
+  int relative_truncation_distance =
+      std::round(options_.tsdf_range_data_inserter_options_3d()
+                     .relative_truncation_distance());
+  for (int i = -relative_truncation_distance; i <= relative_truncation_distance;
+       ++i) {
+    float tsd_offset = resolution * i;
+    Eigen::Vector3f v_offset = tsd_offset * triangle_normal;
+
+    if ((max_01 > max_02) && (max_01 > max_12)) {
+      d_01.cwiseAbs().maxCoeff(&max_idx);
+      RasterTriangle(v0 + v_offset, v2 + v_offset, v1 + v_offset,
+                     triangle_normal, tsd_offset, tsdf);
+    } else if (max_02 > max_12) {
+      d_02.cwiseAbs().maxCoeff(&max_idx);
+      RasterTriangle(v0 + v_offset, v1 + v_offset, v2 + v_offset,
+                     triangle_normal, tsd_offset, tsdf);
+    } else {
+      d_12.cwiseAbs().maxCoeff(&max_idx);
+      RasterTriangle(v1 + v_offset, v0 + v_offset, v2 + v_offset,
+                     triangle_normal, tsd_offset, tsdf);
+    }
+  }
+}
+
+void TSDFRangeDataInserter3D::RasterTriangle(
+    const Eigen::Vector3f& v0, const Eigen::Vector3f& v1,
+    const Eigen::Vector3f& v2, const Eigen::Vector3f& triangle_normal,
+    float tsd_offset, HybridGridTSDF* tsdf) const {
+  const float truncation_distance =
+      options_.tsdf_range_data_inserter_options_3d()
+          .relative_truncation_distance() *
+      tsdf->resolution();
+
+  Eigen::Vector3f v01 = v1 - v0;
+  Eigen::Vector3f v02 = v2 - v0;
+  CHECK_LE(v01.cwiseAbs().maxCoeff(), v02.cwiseAbs().maxCoeff());
+
+  const Eigen::Array3i i_0 = tsdf->GetCellIndex(v0);
+  const Eigen::Array3i i_1 = tsdf->GetCellIndex(v1);
+  const Eigen::Array3i i_2 = tsdf->GetCellIndex(v2);
+  const Eigen::Array3i delta_i_01 = i_1 - i_0;
+  const Eigen::Array3i delta_i_02 = i_2 - i_0;
+  const Eigen::Array3i delta_i_12 = i_2 - i_1;
+  int max_coeff_idx = 0;
+  int num_samples_major = delta_i_02.cwiseAbs().maxCoeff(&max_coeff_idx);
+  int num_samples_major_seg_01 = std::abs(delta_i_01[max_coeff_idx]);
+  int num_samples_major_seg_12 = std::abs(delta_i_12[max_coeff_idx]);
+  if (num_samples_major < 1) num_samples_major = 1;
+  if (num_samples_major_seg_01 < 1) num_samples_major_seg_01 = 1;
+  if (num_samples_major_seg_12 < 1) num_samples_major_seg_12 = 1;
+  CHECK_LT(num_samples_major, 1 << 15);
+  CHECK_LT(num_samples_major_seg_01, 1 << 15);
+  CHECK_LT(num_samples_major_seg_12, 1 << 15);
+  //  CHECK_EQ(num_samples_major_seg_01 + num_samples_major_seg_12,
+  //  num_samples_major);
+
+  for (int index_major = 0; index_major <= num_samples_major; ++index_major) {
+    const Eigen::Array3i update_cell_index_row_left =
+        i_0 + (delta_i_02.cast<float>() * float(index_major) /
+               float(num_samples_major))
+                  .round()
+                  .cast<int>();
+    Eigen::Array3i update_cell_index_row_right;
+    if (index_major <= num_samples_major_seg_01) {
+      update_cell_index_row_right =
+          i_0 + (delta_i_01.cast<float>() * float(index_major) /
+                 float(num_samples_major_seg_01))
+                    .round()
+                    .cast<int>();
+    } else {
+      update_cell_index_row_right =
+          i_1 + (delta_i_12.cast<float>() *
+                 float(index_major - num_samples_major_seg_01) /
+                 float(num_samples_major_seg_12))
+                    .round()
+                    .cast<int>();
+    }
+    const Eigen::Array3i delta_col =
+        update_cell_index_row_right - update_cell_index_row_left;
+    int num_samples_col = delta_col.cwiseAbs().maxCoeff();
+    if (num_samples_col == 0) num_samples_col = 1;
+    CHECK_LT(num_samples_col, 1 << 15);
+    for (int position_index_col = 0; position_index_col <= num_samples_col;
+         ++position_index_col) {
+      const Eigen::Array3i update_cell_index =
+          update_cell_index_row_left +
+          (delta_col.cast<float>() * float(position_index_col) /
+           float(num_samples_col))
+              .round()
+              .cast<int>();
+      Eigen::Vector3f cell_center = tsdf->GetCenterOfCell(update_cell_index);
+      float update_tsd = tsd_offset + (cell_center - v0).dot(triangle_normal);
+      update_tsd =
+          common::Clamp(update_tsd, -truncation_distance, truncation_distance);
+      float update_weight = 1.0;
+      UpdateCell(update_cell_index, update_tsd, update_weight, tsdf);
+    }
+  }
+}
+
 void TSDFRangeDataInserter3D::InsertHitWithNormal(const Eigen::Vector3f& hit,
                                                   const Eigen::Vector3f& origin,
                                                   const Eigen::Vector3f& normal,
@@ -366,8 +483,6 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
 #ifdef WITH_OPEN3D
       std::shared_ptr<open3d::geometry::PointCloud> cloud =
           std::make_shared<open3d::geometry::PointCloud>();
-
-      LOG(INFO) << "range_data size " << range_data.returns.size();
       for (const auto& point : range_data.returns) {
         cloud->points_.push_back(
             {point.position[0], point.position[1], point.position[2]});
@@ -424,6 +539,42 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
           }
           const Eigen::Vector3f normal = (p0 - p1).cross(p0 - p2).normalized();
           InsertHitWithNormal(p0, origin, normal, tsdf);
+          ++point_idx;
+        }  // namespace mapping
+      }    // namespace cartographer
+      break;
+    }
+    case proto::TSDFRangeDataInserterOptions3D::TRIANGLE_FILL_IN: {
+      if (range_data.returns.size() == 28800) {
+        int NUM_ROWS = 16;
+        int NUM_POINTS_PER_LINE = 1800;
+        int NUM_POINTS = NUM_POINTS_PER_LINE * NUM_ROWS;
+        for (int point_idx = 0; point_idx < NUM_POINTS; ++point_idx) {
+          if (range_data.returns[point_idx].position.isZero()) continue;
+          int i0 = point_idx;
+          int horizontal_stride = 5;
+          int i1 = point_idx + horizontal_stride >= NUM_POINTS
+                       ? point_idx - horizontal_stride
+                       : point_idx + horizontal_stride;
+          int i2 = point_idx + NUM_POINTS_PER_LINE >= NUM_POINTS
+                       ? point_idx - NUM_POINTS_PER_LINE
+                       : point_idx + NUM_POINTS_PER_LINE;
+          Eigen::Vector3f p0 = range_data.returns[i0].position;
+          Eigen::Vector3f p1 = range_data.returns[i1].position;
+          Eigen::Vector3f p2 = range_data.returns[i2].position;
+          if (p1.isZero() || p2.isZero()) continue;
+          float r0 = p0.norm();
+          float r1 = p1.norm();
+          float r2 = p2.norm();
+          float max_range_delta = 1.f;
+          if (std::abs(r0 - r1) > max_range_delta ||
+              std::abs(r0 - r2) > max_range_delta ||
+              std::abs(r1 - r2) > max_range_delta) {
+            continue;
+          }
+          const Eigen::Vector3f normal = (p0 - p1).cross(p0 - p2).normalized();
+          //            InsertHitWithNormal(p0, origin, normal, tsdf);
+          InsertTriangle(p0, p1, p2, origin, tsdf);
           ++point_idx;
         }  // namespace mapping
       }    // namespace cartographer

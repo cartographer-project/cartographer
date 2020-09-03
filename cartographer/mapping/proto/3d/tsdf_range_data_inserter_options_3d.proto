@@ -8,6 +8,7 @@ message TSDFRangeDataInserterOptions3D {
     PCL = 1;
     OPEN3D = 2;
     CLOUD_STRUCTURE = 3;
+    TRIANGLE_FILL_IN = 4;
   }
   // Distance to the surface within the signed distance function is evaluated.
   double relative_truncation_distance = 1;
