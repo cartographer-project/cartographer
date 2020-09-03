@@ -42,6 +42,35 @@ namespace {
 
 using ::cartographer::mapping::optimization::CeresPose;
 using LandmarkNode = ::cartographer::mapping::PoseGraphInterface::LandmarkNode;
+using TrajectoryData =
+    ::cartographer::mapping::PoseGraphInterface::TrajectoryData;
+
+// For fixed frame pose.
+std::unique_ptr<transform::Rigid3d> Interpolate(
+    const sensor::MapByTime<sensor::FixedFramePoseData>& map_by_time,
+    const int trajectory_id, const common::Time time) {
+  const auto it = map_by_time.lower_bound(trajectory_id, time);
+  if (it == map_by_time.EndOfTrajectory(trajectory_id) ||
+      !it->pose.has_value()) {
+    return nullptr;
+  }
+  if (it == map_by_time.BeginOfTrajectory(trajectory_id)) {
+    if (it->time == time) {
+      return absl::make_unique<transform::Rigid3d>(it->pose.value());
+    }
+    return nullptr;
+  }
+  const auto prev_it = std::prev(it);
+  if (prev_it->pose.has_value()) {
+    return absl::make_unique<transform::Rigid3d>(
+        Interpolate(transform::TimestampedTransform{prev_it->time,
+                                                    prev_it->pose.value()},
+                    transform::TimestampedTransform{it->time, it->pose.value()},
+                    time)
+            .transform);
+  }
+  return nullptr;
+}
 
 // Converts a pose into the 3 optimization variable format used for Ceres:
 // translation in x and y, followed by the rotation angle representing the
@@ -154,20 +183,37 @@ void OptimizationProblem2D::AddOdometryData(
   odometry_data_.Append(trajectory_id, odometry_data);
 }
 
+void OptimizationProblem2D::AddFixedFramePoseData(
+    const int trajectory_id,
+    const sensor::FixedFramePoseData& fixed_frame_pose_data) {
+  fixed_frame_pose_data_.Append(trajectory_id, fixed_frame_pose_data);
+}
+
 void OptimizationProblem2D::AddTrajectoryNode(const int trajectory_id,
                                               const NodeSpec2D& node_data) {
   node_data_.Append(trajectory_id, node_data);
+  trajectory_data_[trajectory_id];
+}
+
+void OptimizationProblem2D::SetTrajectoryData(
+    int trajectory_id, const TrajectoryData& trajectory_data) {
+  trajectory_data_[trajectory_id] = trajectory_data;
 }
 
 void OptimizationProblem2D::InsertTrajectoryNode(const NodeId& node_id,
                                                  const NodeSpec2D& node_data) {
   node_data_.Insert(node_id, node_data);
+  trajectory_data_[node_id.trajectory_id];
 }
 
 void OptimizationProblem2D::TrimTrajectoryNode(const NodeId& node_id) {
   imu_data_.Trim(node_data_, node_id);
   odometry_data_.Trim(node_data_, node_id);
+  fixed_frame_pose_data_.Trim(node_data_, node_id);
   node_data_.Trim(node_id);
+  if (node_data_.SizeOfTrajectoryOrZero(node_id.trajectory_id) == 0) {
+    trajectory_data_.erase(node_id.trajectory_id);
+  }
 }
 
 void OptimizationProblem2D::AddSubmap(
@@ -301,6 +347,58 @@ void OptimizationProblem2D::Solve(
     }
   }
 
+  std::map<int, std::array<double, 3>> C_fixed_frames;
+  for (auto node_it = node_data_.begin(); node_it != node_data_.end();) {
+    const int trajectory_id = node_it->id.trajectory_id;
+    const auto trajectory_end = node_data_.EndOfTrajectory(trajectory_id);
+    if (!fixed_frame_pose_data_.HasTrajectory(trajectory_id)) {
+      node_it = trajectory_end;
+      continue;
+    }
+
+    const TrajectoryData& trajectory_data = trajectory_data_.at(trajectory_id);
+    bool fixed_frame_pose_initialized = false;
+    for (; node_it != trajectory_end; ++node_it) {
+      const NodeId node_id = node_it->id;
+      const NodeSpec2D& node_data = node_it->data;
+
+      const std::unique_ptr<transform::Rigid3d> fixed_frame_pose =
+          Interpolate(fixed_frame_pose_data_, trajectory_id, node_data.time);
+      if (fixed_frame_pose == nullptr) {
+        continue;
+      }
+
+      const Constraint::Pose constraint_pose{
+          *fixed_frame_pose, options_.fixed_frame_pose_translation_weight(),
+          options_.fixed_frame_pose_rotation_weight()};
+
+      if (!fixed_frame_pose_initialized) {
+        transform::Rigid2d fixed_frame_pose_in_map;
+        if (trajectory_data.fixed_frame_origin_in_map.has_value()) {
+          fixed_frame_pose_in_map = transform::Project2D(
+              trajectory_data.fixed_frame_origin_in_map.value());
+        } else {
+          fixed_frame_pose_in_map =
+              node_data.global_pose_2d *
+              transform::Project2D(constraint_pose.zbar_ij).inverse();
+        }
+
+        C_fixed_frames.emplace(trajectory_id,
+                               FromPose(fixed_frame_pose_in_map));
+        fixed_frame_pose_initialized = true;
+      }
+
+      problem.AddResidualBlock(
+          CreateAutoDiffSpaCostFunction(constraint_pose),
+          options_.fixed_frame_pose_use_tolerant_loss()
+              ? new ceres::TolerantLoss(
+                    options_.fixed_frame_pose_tolerant_loss_param_a(),
+                    options_.fixed_frame_pose_tolerant_loss_param_b())
+              : nullptr,
+          C_fixed_frames.at(trajectory_id).data(), C_nodes.at(node_id).data());
+    }
+  }
+
   // Solve.
   ceres::Solver::Summary summary;
   ceres::Solve(
@@ -318,6 +416,10 @@ void OptimizationProblem2D::Solve(
   for (const auto& C_node_id_data : C_nodes) {
     node_data_.at(C_node_id_data.id).global_pose_2d =
         ToPose(C_node_id_data.data);
+  }
+  for (const auto& C_fixed_frame : C_fixed_frames) {
+    trajectory_data_.at(C_fixed_frame.first).fixed_frame_origin_in_map =
+        transform::Embed3D(ToPose(C_fixed_frame.second));
   }
   for (const auto& C_landmark : C_landmarks) {
     landmark_data_[C_landmark.first] = C_landmark.second.ToRigid();

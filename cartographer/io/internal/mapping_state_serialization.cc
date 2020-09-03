@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/io/internal/mapping_state_serialization.h"
+
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/transform/transform.h"
 

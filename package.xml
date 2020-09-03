@@ -15,7 +15,7 @@
   limitations under the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>cartographer</name>
   <version>1.0.0</version>
   <description>
@@ -28,17 +28,17 @@
   </maintainer>
   <license>Apache 2.0</license>
 
-  <url>https://github.com/googlecartographer/cartographer</url>
+  <url>https://github.com/cartographer-project/cartographer</url>
 
   <author email="google-cartographer@googlegroups.com">
     The Cartographer Authors
   </author>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>cmake</buildtool_depend>
 
   <build_depend>git</build_depend>
   <build_depend>google-mock</build_depend>
-  <build_depend>python-sphinx</build_depend>
+  <build_depend>python3-sphinx</build_depend>
 
   <depend>boost</depend>
   <depend>ceres-solver</depend>

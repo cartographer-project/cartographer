@@ -242,5 +242,21 @@ Eigen::Vector3d PoseExtrapolator::ExtrapolateTranslation(common::Time time) {
   return extrapolation_delta * linear_velocity_from_odometry_;
 }
 
+PoseExtrapolator::ExtrapolationResult
+PoseExtrapolator::ExtrapolatePosesWithGravity(
+    const std::vector<common::Time>& times) {
+  std::vector<transform::Rigid3f> poses;
+  for (auto it = times.begin(); it != std::prev(times.end()); ++it) {
+    poses.push_back(ExtrapolatePose(*it).cast<float>());
+  }
+
+  const Eigen::Vector3d current_velocity = odometry_data_.size() < 2
+                                               ? linear_velocity_from_poses_
+                                               : linear_velocity_from_odometry_;
+  return ExtrapolationResult{poses, ExtrapolatePose(times.back()),
+                             current_velocity,
+                             EstimateGravityOrientation(times.back())};
+}
+
 }  // namespace mapping
 }  // namespace cartographer

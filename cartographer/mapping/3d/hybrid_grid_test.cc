@@ -84,6 +84,23 @@ TEST(HybridGridTest, GetProbability) {
   }
 }
 
+TEST(HybridGridTest, GetIntensity) {
+  IntensityHybridGrid hybrid_grid(1.f);
+  const Eigen::Array3i cell_index =
+      hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 1.f, 1.f));
+  const float intensity = 58.0f;
+
+  EXPECT_NEAR(hybrid_grid.GetIntensity(cell_index), 0.0f, 1e-9);
+  hybrid_grid.AddIntensity(cell_index, intensity);
+  EXPECT_NEAR(hybrid_grid.GetIntensity(cell_index), intensity, 1e-9);
+  for (const Eigen::Array3i& index :
+       {hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 2.f, 1.f)),
+        hybrid_grid.GetCellIndex(Eigen::Vector3f(1.f, 1.f, 1.f)),
+        hybrid_grid.GetCellIndex(Eigen::Vector3f(1.f, 2.f, 1.f))}) {
+    EXPECT_NEAR(hybrid_grid.GetIntensity(index), 0.0f, 1e-9);
+  }
+}
+
 MATCHER_P(AllCwiseEqual, index, "") { return (arg == index).all(); }
 
 TEST(HybridGridTest, GetCellIndex) {
@@ -212,11 +229,15 @@ struct EigenComparator {
 TEST_F(RandomHybridGridTest, FromProto) {
   const HybridGrid constructed_grid(hybrid_grid_.ToProto());
 
-  std::map<Eigen::Vector3i, float, EigenComparator> member_map(
-      hybrid_grid_.begin(), hybrid_grid_.end());
+  std::map<Eigen::Vector3i, float, EigenComparator> member_map;
+  for (const auto& cell : hybrid_grid_) {
+    member_map.insert(cell);
+  }
 
-  std::map<Eigen::Vector3i, float, EigenComparator> constructed_map(
-      constructed_grid.begin(), constructed_grid.end());
+  std::map<Eigen::Vector3i, float, EigenComparator> constructed_map;
+  for (const auto& cell : constructed_grid) {
+    constructed_map.insert(cell);
+  }
 
   EXPECT_EQ(member_map, constructed_map);
 }

@@ -76,7 +76,11 @@ macro(google_initialize_cartographer_project)
   if(WIN32)
     # TODO turn on equivalent warnings on Windows
   else()
-    set(GOOG_CXX_FLAGS "-pthread -std=c++11 -fPIC ${GOOG_CXX_FLAGS}")
+    set(GOOG_CXX_FLAGS "-pthread -fPIC ${GOOG_CXX_FLAGS}")
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.1)
+      google_add_flag(GOOG_CXX_FLAGS "-std=c++11")
+    endif()
 
     google_add_flag(GOOG_CXX_FLAGS "-Wall")
     google_add_flag(GOOG_CXX_FLAGS "-Wpedantic")

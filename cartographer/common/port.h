@@ -17,13 +17,12 @@
 #ifndef CARTOGRAPHER_COMMON_PORT_H_
 #define CARTOGRAPHER_COMMON_PORT_H_
 
-#include <cinttypes>
-#include <cmath>
-#include <string>
-
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#include <cinttypes>
+#include <cmath>
+#include <string>
 
 namespace cartographer {
 

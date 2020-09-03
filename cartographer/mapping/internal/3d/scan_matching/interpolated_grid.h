@@ -25,22 +25,23 @@ namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
-// Interpolates between HybridGrid probability voxels. We use the tricubic
+// Interpolates between HybridGrid voxels. We use the tricubic
 // interpolation which interpolates the values and has vanishing derivative at
 // these points.
 //
 // This class is templated to work with the autodiff that Ceres provides.
 // For this reason, it is also important that the interpolation scheme be
 // continuously differentiable.
+template <class HybridGridType>
 class InterpolatedGrid {
  public:
-  explicit InterpolatedGrid(const HybridGrid& hybrid_grid)
+  explicit InterpolatedGrid(const HybridGridType& hybrid_grid)
       : hybrid_grid_(hybrid_grid) {}
 
-  InterpolatedGrid(const InterpolatedGrid&) = delete;
-  InterpolatedGrid& operator=(const InterpolatedGrid&) = delete;
+  InterpolatedGrid(const InterpolatedGrid<HybridGridType>&) = delete;
+  InterpolatedGrid& operator=(const InterpolatedGrid<HybridGridType>&) = delete;
 
-  // Returns the interpolated probability at (x, y, z) of the HybridGrid
+  // Returns the interpolated value at (x, y, z) of the HybridGrid
   // used to perform the interpolation.
   //
   // This is a piecewise, continuously differentiable function. We use the
@@ -48,27 +49,27 @@ class InterpolatedGrid {
   // tensor product volume of piecewise cubic polynomials that interpolate
   // the values, and have vanishing derivative at the interval boundaries.
   template <typename T>
-  T GetProbability(const T& x, const T& y, const T& z) const {
+  T GetInterpolatedValue(const T& x, const T& y, const T& z) const {
     double x1, y1, z1, x2, y2, z2;
     ComputeInterpolationDataPoints(x, y, z, &x1, &y1, &z1, &x2, &y2, &z2);
 
     const Eigen::Array3i index1 =
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x1, y1, z1));
-    const double q111 = hybrid_grid_.GetProbability(index1);
+    const double q111 = GetValue(hybrid_grid_, index1);
     const double q112 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(0, 0, 1));
+        GetValue(hybrid_grid_, index1 + Eigen::Array3i(0, 0, 1));
     const double q121 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(0, 1, 0));
+        GetValue(hybrid_grid_, index1 + Eigen::Array3i(0, 1, 0));
     const double q122 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(0, 1, 1));
+        GetValue(hybrid_grid_, index1 + Eigen::Array3i(0, 1, 1));
     const double q211 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 0, 0));
+        GetValue(hybrid_grid_, index1 + Eigen::Array3i(1, 0, 0));
     const double q212 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 0, 1));
+        GetValue(hybrid_grid_, index1 + Eigen::Array3i(1, 0, 1));
     const double q221 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 1, 0));
+        GetValue(hybrid_grid_, index1 + Eigen::Array3i(1, 1, 0));
     const double q222 =
-        hybrid_grid_.GetProbability(index1 + Eigen::Array3i(1, 1, 1));
+        GetValue(hybrid_grid_, index1 + Eigen::Array3i(1, 1, 1));
 
     const T normalized_x = (x - x1) / (x2 - x1);
     const T normalized_y = (y - y1) / (y2 - y1);
@@ -145,8 +146,21 @@ class InterpolatedGrid {
     return CenterOfLowerVoxel(jet_x.a, jet_y.a, jet_z.a);
   }
 
-  const HybridGrid& hybrid_grid_;
+  static float GetValue(const HybridGrid& probability_grid,
+                        const Eigen::Array3i& index) {
+    return probability_grid.GetProbability(index);
+  }
+
+  static float GetValue(const IntensityHybridGrid& intensity_grid,
+                        const Eigen::Array3i& index) {
+    return intensity_grid.GetIntensity(index);
+  }
+
+  const HybridGridType& hybrid_grid_;
 };
+
+using InterpolatedIntensityGrid = InterpolatedGrid<IntensityHybridGrid>;
+using InterpolatedProbabilityGrid = InterpolatedGrid<HybridGrid>;
 
 }  // namespace scan_matching
 }  // namespace mapping

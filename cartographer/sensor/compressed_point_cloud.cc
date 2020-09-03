@@ -61,8 +61,8 @@ RangefinderPoint CompressedPointCloud::ConstIterator::operator*() const {
   return {current_point_};
 }
 
-CompressedPointCloud::ConstIterator& CompressedPointCloud::ConstIterator::
-operator++() {
+CompressedPointCloud::ConstIterator&
+CompressedPointCloud::ConstIterator::operator++() {
   --remaining_points_;
   if (remaining_points_ > 0) {
     ReadNextPoint();

@@ -15,6 +15,7 @@
  */
 
 #include "cartographer/io/proto_stream.h"
+
 #include "glog/logging.h"
 
 namespace cartographer {

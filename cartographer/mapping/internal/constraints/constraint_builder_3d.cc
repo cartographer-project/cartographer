@@ -54,6 +54,7 @@ static auto* kGlobalConstraintRotationalScoresMetric =
     metrics::Histogram::Null();
 static auto* kGlobalConstraintLowResolutionScoresMetric =
     metrics::Histogram::Null();
+static auto* kNumSubmapScanMatchersMetric = metrics::Gauge::Null();
 
 ConstraintBuilder3D::ConstraintBuilder3D(
     const proto::ConstraintBuilderOptions& options,
@@ -167,6 +168,7 @@ ConstraintBuilder3D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
     return &submap_scan_matchers_.at(submap_id);
   }
   auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
+  kNumSubmapScanMatchersMetric->Set(submap_scan_matchers_.size());
   submap_scan_matcher.high_resolution_hybrid_grid =
       &submap->high_resolution_hybrid_grid();
   submap_scan_matcher.low_resolution_hybrid_grid =
@@ -334,6 +336,7 @@ void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {
         << "DeleteScanMatcher was called while WhenDone was scheduled.";
   }
   submap_scan_matchers_.erase(submap_id);
+  kNumSubmapScanMatchersMetric->Set(submap_scan_matchers_.size());
 }
 
 void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
@@ -367,6 +370,10 @@ void ConstraintBuilder3D::RegisterMetrics(metrics::FamilyFactory* factory) {
       scores->Add({{"search_region", "global"}, {"kind", "rotational_score"}});
   kGlobalConstraintLowResolutionScoresMetric = scores->Add(
       {{"search_region", "global"}, {"kind", "low_resolution_score"}});
+  auto* num_matchers = factory->NewGaugeFamily(
+      "mapping_constraints_constraint_builder_3d_num_submap_scan_matchers",
+      "Current number of constructed submap scan matchers");
+  kNumSubmapScanMatchersMetric = num_matchers->Add({});
 }
 
 }  // namespace constraints

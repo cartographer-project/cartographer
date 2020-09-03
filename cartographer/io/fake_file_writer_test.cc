@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+#include "cartographer/io/fake_file_writer.h"
+
 #include <vector>
 
-#include "cartographer/io/fake_file_writer.h"
 #include "glog/logging.h"
 #include "gtest/gtest.h"
 

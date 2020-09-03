@@ -40,7 +40,16 @@ void TransformInterpolationBuffer::Push(const common::Time time,
     CHECK_GE(time, latest_time()) << "New transform is older than latest.";
   }
   timestamped_transforms_.push_back(TimestampedTransform{time, transform});
+  RemoveOldTransformsIfNeeded();
 }
+
+void TransformInterpolationBuffer::SetSizeLimit(
+    const size_t buffer_size_limit) {
+  buffer_size_limit_ = buffer_size_limit;
+  RemoveOldTransformsIfNeeded();
+}
+
+void TransformInterpolationBuffer::Clear() { timestamped_transforms_.clear(); }
 
 bool TransformInterpolationBuffer::Has(const common::Time time) const {
   if (timestamped_transforms_.empty()) {
@@ -65,6 +74,12 @@ transform::Rigid3d TransformInterpolationBuffer::Lookup(
   return Interpolate(*start, *end, time).transform;
 }
 
+void TransformInterpolationBuffer::RemoveOldTransformsIfNeeded() {
+  while (timestamped_transforms_.size() > buffer_size_limit_) {
+    timestamped_transforms_.pop_front();
+  }
+}
+
 common::Time TransformInterpolationBuffer::earliest_time() const {
   CHECK(!empty()) << "Empty buffer.";
   return timestamped_transforms_.front().time;
@@ -77,6 +92,14 @@ common::Time TransformInterpolationBuffer::latest_time() const {
 
 bool TransformInterpolationBuffer::empty() const {
   return timestamped_transforms_.empty();
+}
+
+size_t TransformInterpolationBuffer::size_limit() const {
+  return buffer_size_limit_;
+}
+
+size_t TransformInterpolationBuffer::size() const {
+  return timestamped_transforms_.size();
 }
 
 }  // namespace transform

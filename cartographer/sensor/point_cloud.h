@@ -61,11 +61,6 @@ TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
 PointCloud CropPointCloud(const PointCloud& point_cloud, float min_z,
                           float max_z);
 
-// Returns a new point cloud without points that fall outside the region defined
-// by 'min_z' and 'max_z'.
-TimedPointCloud CropTimedPointCloud(const TimedPointCloud& point_cloud,
-                                    float min_z, float max_z);
-
 }  // namespace sensor
 }  // namespace cartographer
 

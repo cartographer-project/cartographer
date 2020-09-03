@@ -67,7 +67,7 @@ float Mix(const float a, const float b, const float t) {
 }
 
 // Convert 'matrix' into a pleasing-to-look-at image.
-Image IntoImage(const PixelDataMatrix& matrix) {
+Image IntoImage(const PixelDataMatrix& matrix, double saturation_factor) {
   Image image(matrix.width(), matrix.height());
   float max = std::numeric_limits<float>::min();
   for (int y = 0; y < matrix.height(); ++y) {
@@ -92,7 +92,8 @@ Image IntoImage(const PixelDataMatrix& matrix) {
       // basic idea here was that walls (full height) are fully saturated, but
       // details like chairs and tables are still well visible.
       const float saturation =
-          std::log(cell.num_occupied_cells_in_column) / max;
+          std::min<float>(1.0, std::log(cell.num_occupied_cells_in_column) /
+                                   max * saturation_factor);
       const FloatColor color = {{Mix(1.f, cell.mean_r, saturation),
                                  Mix(1.f, cell.mean_g, saturation),
                                  Mix(1.f, cell.mean_b, saturation)}};
@@ -115,7 +116,8 @@ bool ContainedIn(const common::Time& time,
 }  // namespace
 
 XRayPointsProcessor::XRayPointsProcessor(
-    const double voxel_size, const transform::Rigid3f& transform,
+    const double voxel_size, const double saturation_factor,
+    const transform::Rigid3f& transform,
     const std::vector<mapping::Floor>& floors,
     const DrawTrajectories& draw_trajectories,
     const std::string& output_filename,
@@ -127,7 +129,8 @@ XRayPointsProcessor::XRayPointsProcessor(
       next_(next),
       floors_(floors),
       output_filename_(output_filename),
-      transform_(transform) {
+      transform_(transform),
+      saturation_factor_(saturation_factor) {
   for (size_t i = 0; i < (floors_.empty() ? 1 : floors.size()); ++i) {
     aggregations_.emplace_back(
         Aggregation{mapping::HybridGridBase<bool>(voxel_size), {}});
@@ -146,6 +149,10 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
                                   dictionary->GetBool("draw_trajectories"))
                                      ? DrawTrajectories::kYes
                                      : DrawTrajectories::kNo;
+  const double saturation_factor =
+      dictionary->HasKey("saturation_factor")
+          ? dictionary->GetDouble("saturation_factor")
+          : 1.;
   if (separate_floor) {
     CHECK_EQ(trajectories.size(), 1)
         << "Can only detect floors with a single trajectory.";
@@ -153,7 +160,7 @@ std::unique_ptr<XRayPointsProcessor> XRayPointsProcessor::FromDictionary(
   }
 
   return absl::make_unique<XRayPointsProcessor>(
-      dictionary->GetDouble("voxel_size"),
+      dictionary->GetDouble("voxel_size"), saturation_factor,
       transform::FromDictionary(dictionary->GetDictionary("transform").get())
           .cast<float>(),
       floors, draw_trajectories, dictionary->GetString("filename"),
@@ -193,7 +200,7 @@ void XRayPointsProcessor::WriteVoxels(const Aggregation& aggregation,
     ++pixel_data.num_occupied_cells_in_column;
   }
 
-  Image image = IntoImage(pixel_data_matrix);
+  Image image = IntoImage(pixel_data_matrix, saturation_factor_);
   if (draw_trajectories_ == DrawTrajectories::kYes) {
     for (size_t i = 0; i < trajectories_.size(); ++i) {
       DrawTrajectory(

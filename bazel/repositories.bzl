@@ -32,11 +32,10 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_antonovvk_bazel_rules",
-        sha256 = "ba75b07d3fd297375a6688e9a16583eb616e7a74b3d5e8791e7a222cf36ab26e",
-        strip_prefix = "bazel_rules-98ddd7e4f7c63ea0868f08bcc228463dac2f9f12",
+        sha256 = "2f5327a2dc9a0cc8ead93953a5d2ae2e0308aece685e46cc89c27538a7e9a73a",
+        strip_prefix = "bazel_rules-c76e47ebe6f0a03b9dd99e245d5a0611813c36f9",
         urls = [
-            "https://mirror.bazel.build/github.com/antonovvk/bazel_rules/archive/98ddd7e4f7c63ea0868f08bcc228463dac2f9f12.tar.gz",
-            "https://github.com/antonovvk/bazel_rules/archive/98ddd7e4f7c63ea0868f08bcc228463dac2f9f12.tar.gz",
+            "https://github.com/drigz/bazel_rules/archive/c76e47ebe6f0a03b9dd99e245d5a0611813c36f9.tar.gz",
         ],
     )
 
@@ -187,12 +186,19 @@ def cartographer_repositories():
 
     _maybe(
         http_archive,
+        name = "bazel_skylib",
+        strip_prefix = "bazel-skylib-67215655bf6ce349b2b88ae4f5945a706f8ce959",
+        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/67215655bf6ce349b2b88ae4f5945a706f8ce959.tar.gz"],
+    )
+
+    _maybe(
+        http_archive,
         name = "com_google_protobuf",
-        sha256 = "2244b0308846bb22b4ff0bcc675e99290ff9f1115553ae9671eba1030af31bc0",
-        strip_prefix = "protobuf-3.6.1.2",
+        sha256 = "f1748989842b46fa208b2a6e4e2785133cfcc3e4d43c17fecb023733f0f5443f",
+        strip_prefix = "protobuf-3.7.1",
         urls = [
-            "https://mirror.bazel.build/github.com/google/protobuf/archive/v3.6.1.2.tar.gz",
-            "https://github.com/google/protobuf/archive/v3.6.1.2.tar.gz",
+            "https://mirror.bazel.build/github.com/google/protobuf/archive/v3.7.1.tar.gz",
+            "https://github.com/google/protobuf/archive/v3.7.1.tar.gz",
         ],
     )
 
@@ -211,21 +217,21 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_grpc_grpc",
-        sha256 = "e699efa9422e071a42f052ba8369fbc810e6f7c6fb0a5b1c021f54ac1a92a1f3",
-        strip_prefix = "grpc-b250f34b1225cde1bb19496c5cc5d66e40111052",
+        sha256 = "f869c648090e8bddaa1260a271b1089caccbe735bf47ac9cd7d44d35a02fb129",
+        strip_prefix = "grpc-1.19.1",
         urls = [
-            "https://mirror.bazel.build/github.com/grpc/grpc/archive/b250f34b1225cde1bb19496c5cc5d66e40111052.tar.gz",
-            "https://github.com/grpc/grpc/archive/b250f34b1225cde1bb19496c5cc5d66e40111052.tar.gz",
+            "https://mirror.bazel.build/github.com/grpc/grpc/archive/v1.19.1.tar.gz",
+            "https://github.com/grpc/grpc/archive/v1.19.1.tar.gz",
         ],
     )
 
     _maybe(
         http_archive,
         name = "com_github_jupp0r_prometheus_cpp",
-        sha256 = "6604ea0b5ef75f405c09218f13805d4141f6506eaf0da76f5f64625f62acfcd3",
-        strip_prefix = "prometheus-cpp-4e0814ee3f93b796356a51a4795a332568940a72",
+        sha256 = "07a704819cb90ed619cbf1a2713ba39faab27b8898b4561cc11a3c8b3ace83ea",
+        strip_prefix = "prometheus-cpp-4b11ee7a0aa7157494df06c4a324bf6d11bd0eec",
         urls = [
-            "https://github.com/jupp0r/prometheus-cpp/archive/4e0814ee3f93b796356a51a4795a332568940a72.tar.gz",
+            "https://github.com/jupp0r/prometheus-cpp/archive/4b11ee7a0aa7157494df06c4a324bf6d11bd0eec.tar.gz",
         ],
     )
 
@@ -235,7 +241,7 @@ def cartographer_repositories():
         sha256 = "83c2a27c92979787f38810adc4b6bb67aa09607c53dbadca3430a5f29e0a1cd3",
         strip_prefix = "async_grpc-771af45374af7f7bfc3b622ed7efbe29a4aba403",
         urls = [
-            "https://github.com/googlecartographer/async_grpc/archive/771af45374af7f7bfc3b622ed7efbe29a4aba403.tar.gz",
+            "https://github.com/cartographer-project/async_grpc/archive/771af45374af7f7bfc3b622ed7efbe29a4aba403.tar.gz",
         ],
     )
 

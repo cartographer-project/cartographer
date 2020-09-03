@@ -48,6 +48,7 @@ static auto* kGlobalConstraintsFoundMetric = metrics::Counter::Null();
 static auto* kQueueLengthMetric = metrics::Gauge::Null();
 static auto* kConstraintScoresMetric = metrics::Histogram::Null();
 static auto* kGlobalConstraintScoresMetric = metrics::Histogram::Null();
+static auto* kNumSubmapScanMatchersMetric = metrics::Gauge::Null();
 
 transform::Rigid2d ComputeSubmapPose(const Submap2D& submap) {
   return transform::Project2D(submap.local_pose());
@@ -163,6 +164,7 @@ ConstraintBuilder2D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
     return &submap_scan_matchers_.at(submap_id);
   }
   auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
+  kNumSubmapScanMatchersMetric->Set(submap_scan_matchers_.size());
   submap_scan_matcher.grid = grid;
   auto& scan_matcher_options = options_.fast_correlative_scan_matcher_options();
   auto scan_matcher_task = absl::make_unique<common::Task>();
@@ -303,6 +305,7 @@ void ConstraintBuilder2D::DeleteScanMatcher(const SubmapId& submap_id) {
         << "DeleteScanMatcher was called while WhenDone was scheduled.";
   }
   submap_scan_matchers_.erase(submap_id);
+  kNumSubmapScanMatchersMetric->Set(submap_scan_matchers_.size());
 }
 
 void ConstraintBuilder2D::RegisterMetrics(metrics::FamilyFactory* factory) {
@@ -326,6 +329,10 @@ void ConstraintBuilder2D::RegisterMetrics(metrics::FamilyFactory* factory) {
       "Constraint scores built", boundaries);
   kConstraintScoresMetric = scores->Add({{"search_region", "local"}});
   kGlobalConstraintScoresMetric = scores->Add({{"search_region", "global"}});
+  auto* num_matchers = factory->NewGaugeFamily(
+      "mapping_constraints_constraint_builder_2d_num_submap_scan_matchers",
+      "Current number of constructed submap scan matchers");
+  kNumSubmapScanMatchersMetric = num_matchers->Add({});
 }
 
 }  // namespace constraints

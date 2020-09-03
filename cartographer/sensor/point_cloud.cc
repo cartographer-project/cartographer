@@ -67,16 +67,5 @@ PointCloud CropPointCloud(const PointCloud& point_cloud, const float min_z,
   return cropped_point_cloud;
 }
 
-TimedPointCloud CropTimedPointCloud(const TimedPointCloud& point_cloud,
-                                    const float min_z, const float max_z) {
-  TimedPointCloud cropped_point_cloud;
-  for (const TimedRangefinderPoint& point : point_cloud) {
-    if (min_z <= point.position.z() && point.position.z() <= max_z) {
-      cropped_point_cloud.push_back(point);
-    }
-  }
-  return cropped_point_cloud;
-}
-
 }  // namespace sensor
 }  // namespace cartographer

@@ -29,7 +29,7 @@ include("${PROJECT_SOURCE_DIR}/cmake/functions.cmake")
 google_initialize_cartographer_project()
 google_enable_testing()
 
-find_package(Abseil REQUIRED)
+find_package(absl REQUIRED)
 set(BOOST_COMPONENTS iostreams)
 if(WIN32)
   list(APPEND BOOST_COMPONENTS zlib)
@@ -39,10 +39,11 @@ find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
-# On Windows, Protobuf is incorrectly found by the bundled CMake module. Prefer native CMake config, if possible.
-set(protobuf_MODULE_COMPATIBLE TRUE CACHE INTERNAL "")
-find_package(Protobuf 3.0.0 CONFIG QUIET)
-if (NOT PROTOBUF_FOUND)
+if(WIN32)
+  # On Windows, Protobuf is incorrectly found by the bundled CMake module, so prefer native CMake config.
+  set(protobuf_MODULE_COMPATIBLE TRUE CACHE INTERNAL "")
+  find_package(Protobuf 3.0.0 CONFIG)
+else()
   find_package(Protobuf 3.0.0 REQUIRED)
 endif()
 
@@ -204,6 +205,11 @@ google_binary(cartographer_pbstream
   cartographer/io/pbstream_main.cc
 )
 
+google_binary(cartographer_print_configuration
+  SRCS
+  cartographer/common/print_configuration_main.cc
+)
+
 if(${BUILD_GRPC})
   google_binary(cartographer_grpc_server
     SRCS
@@ -262,7 +268,20 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   ${PROTOBUF_INCLUDE_DIR})
 # TODO(hrapp): This should not explicitly list pthread and use
 # PROTOBUF_LIBRARIES, but that failed on first try.
-target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} standalone_absl)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${PROTOBUF_LIBRARY} 
+  absl::algorithm
+  absl::base
+  absl::debugging
+  absl::flat_hash_map
+  absl::memory
+  absl::meta
+  absl::numeric
+  absl::str_format
+  absl::strings
+  absl::synchronization
+  absl::time
+  absl::utility 
+)
 if (NOT WIN32)
   target_link_libraries(${PROJECT_NAME} PUBLIC pthread)
 endif()

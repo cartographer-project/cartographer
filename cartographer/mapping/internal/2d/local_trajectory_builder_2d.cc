@@ -319,14 +319,15 @@ void LocalTrajectoryBuilder2D::InitializeExtrapolator(const common::Time time) {
   if (extrapolator_ != nullptr) {
     return;
   }
-  // We derive velocities from poses which are at least 1 ms apart for numerical
-  // stability. Usually poses known to the extrapolator will be further apart
-  // in time and thus the last two are used.
-  constexpr double kExtrapolationEstimationTimeSec = 0.001;
+  CHECK(!options_.pose_extrapolator_options().use_imu_based());
   // TODO(gaschler): Consider using InitializeWithImu as 3D does.
   extrapolator_ = absl::make_unique<PoseExtrapolator>(
-      ::cartographer::common::FromSeconds(kExtrapolationEstimationTimeSec),
-      options_.imu_gravity_time_constant());
+      ::cartographer::common::FromSeconds(options_.pose_extrapolator_options()
+                                              .constant_velocity()
+                                              .pose_queue_duration()),
+      options_.pose_extrapolator_options()
+          .constant_velocity()
+          .imu_gravity_time_constant());
   extrapolator_->AddPose(time, transform::Rigid3d::Identity());
 }
 

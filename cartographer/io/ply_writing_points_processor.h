@@ -26,6 +26,7 @@ class PlyWritingPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName = "write_ply";
   PlyWritingPointsProcessor(std::unique_ptr<FileWriter> file_writer,
+                            const std::vector<std::string>& comments,
                             PointsProcessor* next);
 
   static std::unique_ptr<PlyWritingPointsProcessor> FromDictionary(
@@ -44,6 +45,7 @@ class PlyWritingPointsProcessor : public PointsProcessor {
  private:
   PointsProcessor* const next_;
 
+  std::vector<std::string> comments_;
   int64 num_points_;
   bool has_colors_;
   bool has_intensities_;

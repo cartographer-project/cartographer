@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_MAPPING_INTERNAL_NORMAL_ESTIMATION_2D_H_
 
 #include <vector>
+
 #include "cartographer/mapping/proto/2d/normal_estimation_options_2d.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
