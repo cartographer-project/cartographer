@@ -1,0 +1,74 @@
+/*
+ * Copyright 2016 The Cartographer Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "cartographer/io/follower_filtering_points_processor.h"
+
+#include "absl/memory/memory.h"
+#include "cartographer/common/lua_parameter_dictionary.h"
+#include "cartographer/io/points_batch.h"
+
+namespace cartographer {
+namespace io {
+
+std::unique_ptr<FollowerFiteringPointsProcessor>
+FollowerFiteringPointsProcessor::FromDictionary(
+    common::LuaParameterDictionary* const dictionary,
+    PointsProcessor* const next) {
+  return absl::make_unique<FollowerFiteringPointsProcessor>(
+      dictionary->GetDouble("yaw_range"), dictionary->GetDouble("follow_distance"),
+      next);
+}
+
+FollowerFiteringPointsProcessor::FollowerFiteringPointsProcessor(
+    const double yaw_range, const double follow_distance, PointsProcessor* next)
+    : yaw_range_(yaw_range), follow_distance_(follow_distance), next_(next) {}
+
+void FollowerFiteringPointsProcessor::Process(
+    std::unique_ptr<PointsBatch> batch) {
+  absl::flat_hash_set<int> to_remove;
+
+  // TODO: get parameters from lua dictionary
+  const min_z = 0.5;
+  const max_z = 1.5;
+  const follow_distance = 3;
+
+  // we are checking 3 criteria for the follower points and remove them if all are met
+  for (size_t i = 0; i < batch->points.size(); ++i) {
+    // 1. inside certain yaw range
+
+    // 2. inside certain follow distance
+    const float actual_follow_distance = std::abs(batch->points[i].position[0] - batch->origin[0]);
+    const bool invalid_follow_distance = actual_follow_distance <= follow_distance;
+
+    // 3. inside certain z-position
+    const float z_position = batch->points[i].position[2];
+    const bool invalid_z_position = z_position >= min_z || z_position >= max_z;
+
+    if (invalid_follow_distance && invalid_z_position) {
+      to_remove.insert(i);
+    }
+  }
+
+  RemovePoints(to_remove, batch.get());
+  next_->Process(std::move(batch));
+}
+
+PointsProcessor::FlushResult FollowerFiteringPointsProcessor::Flush() {
+  return next_->Flush();
+}
+
+}  // namespace io
+}  // namespace cartographer
