@@ -206,19 +206,21 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "bazel_skylib",
-        strip_prefix = "bazel-skylib-67215655bf6ce349b2b88ae4f5945a706f8ce959",
-        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/67215655bf6ce349b2b88ae4f5945a706f8ce959.tar.gz"],
+        sha256 = "e5d90f0ec952883d56747b7604e2a15ee36e288bb556c3d0ed33e818a4d971f2",
+        strip_prefix = "bazel-skylib-1.0.2",
+        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/1.0.2.tar.gz"],
     )
 
     _maybe(
         http_archive,
         name = "com_google_protobuf",
-        sha256 = "f1748989842b46fa208b2a6e4e2785133cfcc3e4d43c17fecb023733f0f5443f",
-        strip_prefix = "protobuf-3.7.1",
+        sha256 = "1c744a6a1f2c901e68c5521bc275e22bdc66256eeb605c2781923365b7087e5f",
+        strip_prefix = "protobuf-3.13.0",
         urls = [
-            "https://mirror.bazel.build/github.com/google/protobuf/archive/v3.7.1.tar.gz",
-            "https://github.com/google/protobuf/archive/v3.7.1.tar.gz",
+            "https://mirror.bazel.build/github.com/google/protobuf/archive/v3.13.0.zip",
+            "https://github.com/google/protobuf/archive/v3.13.0.zip",
         ],
+        repo_mapping = {"@zlib": "@net_zlib_zlib"},
     )
 
     _maybe(
@@ -270,6 +272,17 @@ def cartographer_repositories():
         sha256 = "c8ba586a9ab12bc4a67bb419fc0d2146200942b072bac95f50490f977b7fb04f",
         strip_prefix = "abseil-cpp-5441bbe1db5d0f2ca24b5b60166367b0966790af",
         urls = ["https://github.com/abseil/abseil-cpp/archive/5441bbe1db5d0f2ca24b5b60166367b0966790af.tar.gz"],
+    )
+
+    _maybe(
+        http_archive,
+        name = "rules_python",
+        sha256 = "e5470e92a18aa51830db99a4d9c492cc613761d5bdb7131c04bd92b9834380f6",
+        strip_prefix = "rules_python-4b84ad270387a7c439ebdccfd530e2339601ef27",
+        urls = [
+            "https://mirror.bazel.build/github.com/bazelbuild/rules_python/archive/4b84ad270387a7c439ebdccfd530e2339601ef27.tar.gz",
+            "https://github.com/bazelbuild/rules_python/archive/4b84ad270387a7c439ebdccfd530e2339601ef27.tar.gz",
+        ],
     )
 
     # TODO(rodrigoq): remove these binds once grpc#14140 has been merged, as well
