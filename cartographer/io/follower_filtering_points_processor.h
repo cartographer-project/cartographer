@@ -29,7 +29,7 @@ class FollowerFiteringPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName =
       "follower_filter";
-  FollowerFiteringPointsProcessor(double yaw_range, double follow_distance_,
+  FollowerFiteringPointsProcessor(int yaw_range, double follow_distance_,
                                      PointsProcessor* next);
   static std::unique_ptr<FollowerFiteringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
@@ -45,12 +45,10 @@ class FollowerFiteringPointsProcessor : public PointsProcessor {
   FlushResult Flush() override;
 
  private:
-  const double yaw_range_;
+  const int yaw_range_;
   const double follow_distance_;
   PointsProcessor* const next_;
 };
 
 }  // namespace io
 }  // namespace cartographer
-
-#endif
