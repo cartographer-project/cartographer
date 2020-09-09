@@ -29,7 +29,7 @@ class FollowerFiteringPointsProcessor : public PointsProcessor {
  public:
   constexpr static const char* kConfigurationFileActionName =
       "follower_filter";
-  FollowerFiteringPointsProcessor(int yaw_range, double follow_distance_,
+  FollowerFiteringPointsProcessor(int yaw_range, double follow_distance_, double min_height_, double max_height_,
                                      PointsProcessor* next);
   static std::unique_ptr<FollowerFiteringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
@@ -47,6 +47,8 @@ class FollowerFiteringPointsProcessor : public PointsProcessor {
  private:
   const int yaw_range_;
   const double follow_distance_;
+  const double min_height_;
+  const double max_height_;
   PointsProcessor* const next_;
 };
 
