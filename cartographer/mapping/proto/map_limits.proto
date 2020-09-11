@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-import "cartographer/mapping/proto/cell_limits.proto";
+import "cartographer/mapping/proto/cell_limits_2d.proto";
 import "cartographer/transform/proto/transform.proto";
 
 package cartographer.mapping.proto;
