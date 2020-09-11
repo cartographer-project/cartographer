@@ -24,7 +24,7 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/probability_grid.h"
 #include "cartographer/mapping/2d/xy_index.h"
-#include "cartographer/mapping/proto/2d/probability_grid_range_data_inserter_options_2d.pb.h"
+#include "cartographer/mapping/proto/probability_grid_range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"

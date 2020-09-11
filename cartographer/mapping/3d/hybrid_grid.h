@@ -28,7 +28,7 @@
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/probability_values.h"
-#include "cartographer/mapping/proto/3d/hybrid_grid.pb.h"
+#include "cartographer/mapping/proto/hybrid_grid.pb.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 

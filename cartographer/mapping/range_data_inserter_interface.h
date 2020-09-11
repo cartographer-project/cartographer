@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "cartographer/mapping/grid_interface.h"
-#include "cartographer/mapping/proto/2d/submaps_options_2d.pb.h"
+#include "cartographer/mapping/proto/submaps_options_2d.pb.h"
 #include "cartographer/sensor/range_data.h"
 
 namespace cartographer {

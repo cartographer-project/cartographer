@@ -19,7 +19,7 @@
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/2d/tsdf_2d.h"
-#include "cartographer/mapping/proto/2d/tsdf_range_data_inserter_options_2d.pb.h"
+#include "cartographer/mapping/proto/tsdf_range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"
