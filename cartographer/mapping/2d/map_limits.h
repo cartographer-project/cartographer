@@ -24,7 +24,7 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/2d/xy_index.h"
-#include "cartographer/mapping/proto/2d/map_limits.pb.h"
+#include "cartographer/mapping/proto/map_limits.pb.h"
 #include "cartographer/mapping/trajectory_node.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/sensor/range_data.h"

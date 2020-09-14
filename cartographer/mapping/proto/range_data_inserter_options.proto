@@ -14,8 +14,8 @@
 
 syntax = "proto3";
 
-import "cartographer/mapping/proto/2d/probability_grid_range_data_inserter_options_2d.proto";
-import "cartographer/mapping/proto/2d/tsdf_range_data_inserter_options_2d.proto";
+import "cartographer/mapping/proto/probability_grid_range_data_inserter_options_2d.proto";
+import "cartographer/mapping/proto/tsdf_range_data_inserter_options_2d.proto";
 
 package cartographer.mapping.proto;
 

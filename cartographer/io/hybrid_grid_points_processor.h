@@ -11,7 +11,7 @@
 #include "cartographer/io/points_processor.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/mapping/3d/range_data_inserter_3d.h"
-#include "cartographer/mapping/proto/3d/range_data_inserter_options_3d.pb.h"
+#include "cartographer/mapping/proto/range_data_inserter_options_3d.pb.h"
 
 namespace cartographer {
 namespace io {

@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package cartographer.mapping.proto;
 
-import "cartographer/mapping/proto/2d/normal_estimation_options_2d.proto";
+import "cartographer/mapping/proto/normal_estimation_options_2d.proto";
 
 message TSDFRangeDataInserterOptions2D {
   // Distance to the surface within the signed distance function is evaluated.
