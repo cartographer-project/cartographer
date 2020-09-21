@@ -47,7 +47,6 @@ void FollowerFiteringPointsProcessor::Process(
   // we are checking 3 criteria for the follower points and remove them if all are met
   for (size_t i = 0; i < batch->points.size(); ++i) {
     // 1. inside certain yaw range
-    //TODO : remove batch->origin from topBoundary and it is the same as topVec
     const Eigen::Vector3f topBoundary = batch->origin + Eigen::Vector3f(follow_distance_ * std::cos(yaw_range_/2), follow_distance_ * -std::sin(yaw_range_/2), 0);
     const Eigen::Vector3f bottomBoundary = batch->origin + Eigen::Vector3f(follow_distance_ * std::cos(yaw_range_/2), follow_distance_ * std::sin(yaw_range_/2), 0);
     const Eigen::Vector3f topVec = topBoundary - batch->origin;
