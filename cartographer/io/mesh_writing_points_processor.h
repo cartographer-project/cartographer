@@ -17,26 +17,32 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_processor.h"
+#include "Open3D/Open3D.h"
 
 namespace cartographer {
   namespace io {
 
-// Streams a PLY file to disk. The header is written in 'Flush'.
-    class PlyWritingPointsProcessor : public PointsProcessor {
+    // Streams a PLY file to disk. The header is written in 'Flush'.
+    class MeshWritingPointsProcessor : public PointsProcessor {
     public:
-      constexpr static const char* kConfigurationFileActionName = "write_ply";
-      PlyWritingPointsProcessor(std::unique_ptr<FileWriter> file_writer,
+      constexpr static const char* kConfigurationFileActionName = "write_mesh";
+      MeshWritingPointsProcessor(std::unique_ptr<FileWriter> file_writer,
+                                const size_t &aggregate,
+                                const int64 &poisson_depth,
+                                const double &trim_surface,
+                                const int64 &statistical_outlier_neighbours,
+                                const double &statistical_outlier_radius,
                                 const std::vector<std::string>& comments,
                                 PointsProcessor* next);
 
-      static std::unique_ptr<PlyWritingPointsProcessor> FromDictionary(
+      static std::unique_ptr<MeshWritingPointsProcessor> FromDictionary(
               const FileWriterFactory& file_writer_factory,
               common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
-      ~PlyWritingPointsProcessor() override {}
+      ~MeshWritingPointsProcessor() override {}
 
-      PlyWritingPointsProcessor(const PlyWritingPointsProcessor&) = delete;
-      PlyWritingPointsProcessor& operator=(const PlyWritingPointsProcessor&) =
+      MeshWritingPointsProcessor(const MeshWritingPointsProcessor&) = delete;
+      MeshWritingPointsProcessor& operator=(const MeshWritingPointsProcessor&) =
       delete;
 
       void Process(std::unique_ptr<PointsBatch> batch) override;
@@ -44,12 +50,21 @@ namespace cartographer {
 
     private:
       PointsProcessor* const next_;
-
+      size_t aggregate_;
+      int64 poisson_depth_;
+      double trim_surface_;
+      int64 statistical_outlier_neighbours_;
+      double statistical_outlier_radius_;
+      int64 aggregation_counter_ = 0;
       std::vector<std::string> comments_;
       int64 num_points_;
+      std::string name_;
+      common::Time currentTime_;
       bool has_colors_;
       bool has_intensities_;
       std::unique_ptr<FileWriter> file_;
+      std::shared_ptr<open3d::geometry::PointCloud> pc_;
+      std::shared_ptr<open3d::geometry::PointCloud> resultpc_;
     };
 
   }  // namespace io
