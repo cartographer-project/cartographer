@@ -41,9 +41,9 @@
   <build_depend>python3-sphinx</build_depend>
 
   <depend>boost</depend>
-  <depend>ceres-solver</depend>
   <depend>eigen</depend>
   <depend>libcairo2-dev</depend>
+  <depend>libceres-dev</depend>
   <depend>libgflags-dev</depend>
   <depend>libgoogle-glog-dev</depend>
   <depend>lua5.2-dev</depend>
