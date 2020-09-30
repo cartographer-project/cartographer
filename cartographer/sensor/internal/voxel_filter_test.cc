@@ -24,33 +24,38 @@ namespace cartographer {
 namespace sensor {
 namespace {
 
-using ::testing::ContainerEq;
+using ::testing::Contains;
 
-TEST(VoxelFilterTest, ReturnsTheFirstPointInEachVoxel) {
-  PointCloud point_cloud = {{Eigen::Vector3f{0.f, 0.f, 0.f}},
-                            {Eigen::Vector3f{0.1f, -0.1f, 0.1f}},
-                            {Eigen::Vector3f{0.3f, -0.1f, 0.f}},
-                            {Eigen::Vector3f{0.f, 0.f, 0.1f}}};
-  EXPECT_THAT(VoxelFilter(0.3f).Filter(point_cloud),
-              ContainerEq(PointCloud{point_cloud[0], point_cloud[2]}));
+TEST(VoxelFilterTest, ReturnsOnePointInEachVoxel) {
+  const PointCloud point_cloud({{{0.f, 0.f, 0.f}},
+                                {{0.1f, -0.1f, 0.1f}},
+                                {{0.3f, -0.1f, 0.f}},
+                                {{0.f, 0.f, 0.1f}}});
+  const PointCloud result = VoxelFilter(point_cloud, 0.3f);
+  ASSERT_EQ(result.size(), 2);
+  EXPECT_THAT(point_cloud, Contains(result[0]));
+  EXPECT_THAT(point_cloud, Contains(result[1]));
+  EXPECT_THAT(result, Contains(point_cloud[2]));
 }
 
 TEST(VoxelFilterTest, HandlesLargeCoordinates) {
-  PointCloud point_cloud = {{Eigen::Vector3f{100000.f, 0.f, 0.f}},
-                            {Eigen::Vector3f{100000.001f, -0.0001f, 0.0001f}},
-                            {Eigen::Vector3f{100000.003f, -0.0001f, 0.f}},
-                            {Eigen::Vector3f{-200000.f, 0.f, 0.f}}};
-  EXPECT_THAT(VoxelFilter(0.01f).Filter(point_cloud),
-              ContainerEq(PointCloud{point_cloud[0], point_cloud[3]}));
+  const PointCloud point_cloud({{{100000.f, 0.f, 0.f}},
+                                {{100000.001f, -0.0001f, 0.0001f}},
+                                {{100000.003f, -0.0001f, 0.f}},
+                                {{-200000.f, 0.f, 0.f}}});
+  const PointCloud result = VoxelFilter(point_cloud, 0.01f);
+  EXPECT_EQ(result.size(), 2);
+  EXPECT_THAT(result, Contains(point_cloud[3]));
 }
 
 TEST(VoxelFilterTest, IgnoresTime) {
   TimedPointCloud timed_point_cloud;
   for (int i = 0; i < 100; ++i) {
-    timed_point_cloud.push_back({Eigen::Vector3f{-100.f, 0.3f, 0.4f}, 1.f * i});
+    timed_point_cloud.push_back({{-100.f, 0.3f, 0.4f}, 1.f * i});
   }
-  EXPECT_THAT(VoxelFilter(0.3f).Filter(timed_point_cloud),
-              ContainerEq(TimedPointCloud{timed_point_cloud[0]}));
+  const TimedPointCloud result = VoxelFilter(timed_point_cloud, 0.3f);
+  ASSERT_EQ(result.size(), 1);
+  EXPECT_THAT(timed_point_cloud, Contains(result[0]));
 }
 
 }  // namespace

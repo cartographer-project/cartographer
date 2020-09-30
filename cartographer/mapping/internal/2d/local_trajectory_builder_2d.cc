@@ -58,8 +58,8 @@ LocalTrajectoryBuilder2D::TransformToGravityAlignedFrameAndFilter(
                             options_.min_z(), options_.max_z());
   return sensor::RangeData{
       cropped.origin,
-      sensor::VoxelFilter(options_.voxel_filter_size()).Filter(cropped.returns),
-      sensor::VoxelFilter(options_.voxel_filter_size()).Filter(cropped.misses)};
+      sensor::VoxelFilter(cropped.returns, options_.voxel_filter_size()),
+      sensor::VoxelFilter(cropped.misses, options_.voxel_filter_size())};
 }
 
 std::unique_ptr<transform::Rigid2d> LocalTrajectoryBuilder2D::ScanMatch(
@@ -226,8 +226,8 @@ LocalTrajectoryBuilder2D::AddAccumulatedRangeData(
       non_gravity_aligned_pose_prediction * gravity_alignment.inverse());
 
   const sensor::PointCloud& filtered_gravity_aligned_point_cloud =
-      sensor::AdaptiveVoxelFilter(options_.adaptive_voxel_filter_options())
-          .Filter(gravity_aligned_range_data.returns);
+      sensor::AdaptiveVoxelFilter(gravity_aligned_range_data.returns,
+                                  options_.adaptive_voxel_filter_options());
   if (filtered_gravity_aligned_point_cloud.empty()) {
     return nullptr;
   }

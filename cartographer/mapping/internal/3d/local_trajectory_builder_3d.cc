@@ -154,9 +154,8 @@ LocalTrajectoryBuilder3D::AddRangeData(
     accumulated_point_cloud_origin_data_.clear();
   }
 
-  synchronized_data.ranges =
-      sensor::VoxelFilter(0.5f * options_.voxel_filter_size())
-          .Filter(synchronized_data.ranges);
+  synchronized_data.ranges = sensor::VoxelFilter(
+      synchronized_data.ranges, 0.5f * options_.voxel_filter_size());
   accumulated_point_cloud_origin_data_.emplace_back(
       std::move(synchronized_data));
   ++num_accumulated_;
@@ -237,10 +236,10 @@ LocalTrajectoryBuilder3D::AddRangeData(
   const auto voxel_filter_start = std::chrono::steady_clock::now();
   const sensor::RangeData filtered_range_data = {
       extrapolation_result.current_pose.translation().cast<float>(),
-      sensor::VoxelFilter(options_.voxel_filter_size())
-          .Filter(accumulated_range_data.returns),
-      sensor::VoxelFilter(options_.voxel_filter_size())
-          .Filter(accumulated_range_data.misses)};
+      sensor::VoxelFilter(accumulated_range_data.returns,
+                          options_.voxel_filter_size()),
+      sensor::VoxelFilter(accumulated_range_data.misses,
+                          options_.voxel_filter_size())};
   const auto voxel_filter_stop = std::chrono::steady_clock::now();
   const auto voxel_filter_duration = voxel_filter_stop - voxel_filter_start;
 
@@ -274,19 +273,18 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData(
 
   const auto scan_matcher_start = std::chrono::steady_clock::now();
 
-  sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
-      options_.high_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud high_resolution_point_cloud_in_tracking =
-      adaptive_voxel_filter.Filter(filtered_range_data_in_tracking.returns);
+      sensor::AdaptiveVoxelFilter(
+          filtered_range_data_in_tracking.returns,
+          options_.high_resolution_adaptive_voxel_filter_options());
   if (high_resolution_point_cloud_in_tracking.empty()) {
     LOG(WARNING) << "Dropped empty high resolution point cloud data.";
     return nullptr;
   }
-  sensor::AdaptiveVoxelFilter low_resolution_adaptive_voxel_filter(
-      options_.low_resolution_adaptive_voxel_filter_options());
   const sensor::PointCloud low_resolution_point_cloud_in_tracking =
-      low_resolution_adaptive_voxel_filter.Filter(
-          filtered_range_data_in_tracking.returns);
+      sensor::AdaptiveVoxelFilter(
+          filtered_range_data_in_tracking.returns,
+          options_.low_resolution_adaptive_voxel_filter_options());
   if (low_resolution_point_cloud_in_tracking.empty()) {
     LOG(WARNING) << "Dropped empty low resolution point cloud data.";
     return nullptr;
