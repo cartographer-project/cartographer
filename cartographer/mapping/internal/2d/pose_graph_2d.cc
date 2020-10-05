@@ -1264,6 +1264,9 @@ void PoseGraph2D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
       }
     }
     // Delete scan matchers of the submaps that lost all constraints.
+    // TODO(wohe): An improvement to this implementation would be to add the
+    // caching logic at the constraint builder which could keep around only
+    // recently used scan matchers.
     for (const SubmapId& submap_id : other_submap_ids_losing_constraints) {
       parent_->constraint_builder_.DeleteScanMatcher(submap_id);
     }
