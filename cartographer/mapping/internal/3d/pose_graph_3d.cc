@@ -1218,14 +1218,38 @@ void PoseGraph3D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
     parent_->data_.constraints = std::move(constraints);
   }
   // Remove all 'data_.constraints' related to 'nodes_to_remove'.
+  // If the removal lets other submaps lose all their inter-submap constraints,
+  // delete their corresponding constraint submap matchers to save memory.
   {
     std::vector<Constraint> constraints;
+    std::set<SubmapId> other_submap_ids_losing_constraints;
     for (const Constraint& constraint : parent_->data_.constraints) {
       if (nodes_to_remove.count(constraint.node_id) == 0) {
         constraints.push_back(constraint);
+      } else {
+        // A constraint to another submap will be removed, mark it as affected.
+        other_submap_ids_losing_constraints.insert(constraint.submap_id);
       }
     }
     parent_->data_.constraints = std::move(constraints);
+    // Go through the remaining constraints to ensure we only delete scan
+    // matchers of other submaps that have no inter-submap constraints left.
+    for (const Constraint& constraint : parent_->data_.constraints) {
+      if (constraint.tag == Constraint::Tag::INTRA_SUBMAP) {
+        continue;
+      } else if (other_submap_ids_losing_constraints.count(
+                     constraint.submap_id)) {
+        // This submap still has inter-submap constraints - ignore it.
+        other_submap_ids_losing_constraints.erase(constraint.submap_id);
+      }
+    }
+    // Delete scan matchers of the submaps that lost all constraints.
+    // TODO(wohe): An improvement to this implementation would be to add the
+    // caching logic at the constraint builder which could keep around only
+    // recently used scan matchers.
+    for (const SubmapId& submap_id : other_submap_ids_losing_constraints) {
+      parent_->constraint_builder_.DeleteScanMatcher(submap_id);
+    }
   }
 
   // Mark the submap with 'submap_id' as trimmed and remove its data.
