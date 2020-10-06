@@ -175,9 +175,8 @@ OptimizationProblem2D::~OptimizationProblem2D() {}
 
 void OptimizationProblem2D::AddImuData(const int trajectory_id,
                                        const sensor::ImuData& imu_data) {
-  // TODO(MichaelGrupp): IMU data is currently not used in 2D optimization
-  // and just accumulates memory, so we ignore it for now.
-  // imu_data_.Append(trajectory_id, imu_data);
+  // IMU data is currently not used in 2D optimization, so we ignore this part
+  // of the interface for now.
 }
 
 void OptimizationProblem2D::AddOdometryData(
