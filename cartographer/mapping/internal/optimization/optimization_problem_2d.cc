@@ -208,7 +208,7 @@ void OptimizationProblem2D::InsertTrajectoryNode(const NodeId& node_id,
 }
 
 void OptimizationProblem2D::TrimTrajectoryNode(const NodeId& node_id) {
-  imu_data_.Trim(node_data_, node_id);
+  empty_imu_data_.Trim(node_data_, node_id);
   odometry_data_.Trim(node_data_, node_id);
   fixed_frame_pose_data_.Trim(node_data_, node_id);
   node_data_.Trim(node_id);
