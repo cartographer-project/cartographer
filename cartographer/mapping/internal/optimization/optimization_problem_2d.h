@@ -128,7 +128,6 @@ class OptimizationProblem2D
   MapById<NodeId, NodeSpec2D> node_data_;
   MapById<SubmapId, SubmapSpec2D> submap_data_;
   std::map<std::string, transform::Rigid3d> landmark_data_;
-  // IMU data is not used in 2D optimization currently and will be empty.
   sensor::MapByTime<sensor::ImuData> empty_imu_data_;
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
   sensor::MapByTime<sensor::FixedFramePoseData> fixed_frame_pose_data_;
