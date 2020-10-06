@@ -175,7 +175,8 @@ OptimizationProblem2D::~OptimizationProblem2D() {}
 
 void OptimizationProblem2D::AddImuData(const int trajectory_id,
                                        const sensor::ImuData& imu_data) {
-  imu_data_.Append(trajectory_id, imu_data);
+  // IMU data is not used in 2D optimization, so we ignore this part of the
+  // interface.
 }
 
 void OptimizationProblem2D::AddOdometryData(
@@ -207,7 +208,7 @@ void OptimizationProblem2D::InsertTrajectoryNode(const NodeId& node_id,
 }
 
 void OptimizationProblem2D::TrimTrajectoryNode(const NodeId& node_id) {
-  imu_data_.Trim(node_data_, node_id);
+  empty_imu_data_.Trim(node_data_, node_id);
   odometry_data_.Trim(node_data_, node_id);
   fixed_frame_pose_data_.Trim(node_data_, node_id);
   node_data_.Trim(node_id);
