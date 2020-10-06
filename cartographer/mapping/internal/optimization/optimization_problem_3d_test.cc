@@ -39,8 +39,8 @@ class OptimizationProblem3DTest : public ::testing::Test {
   optimization::proto::OptimizationProblemOptions CreateOptions() {
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
-          acceleration_weight = 1e-4,
-          rotation_weight = 1e-2,
+          acceleration_weight = 2e-5,
+          rotation_weight = 1e-3,
           huber_scale = 1.,
           local_slam_pose_translation_weight = 1e-2,
           local_slam_pose_rotation_weight = 1e-2,
@@ -134,7 +134,7 @@ TEST_F(OptimizationProblem3DTest, ReducesNoise) {
                                        Eigen::Vector3d::Zero()});
     optimization_problem_.AddTrajectoryNode(kTrajectoryId,
                                             NodeSpec3D{now, pose, pose});
-    now += common::FromSeconds(0.01);
+    now += common::FromSeconds(0.1);
   }
 
   std::vector<OptimizationProblem3D::Constraint> constraints;
