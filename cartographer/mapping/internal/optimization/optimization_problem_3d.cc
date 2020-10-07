@@ -395,14 +395,14 @@ void OptimizationProblem3D::Solve(
         const IntegrateImuResult<double> result = IntegrateImu(
             imu_data, first_node_data.time, second_node_data.time, &imu_it);
         const auto next_node_it = std::next(node_it);
+        const common::Time first_time = first_node_data.time;
+        const common::Time second_time = second_node_data.time;
+        const common::Duration first_duration = second_time - first_time;
         if (next_node_it != trajectory_end &&
             next_node_it->id.node_index == second_node_id.node_index + 1) {
           const NodeId third_node_id = next_node_it->id;
           const NodeSpec3D& third_node_data = next_node_it->data;
-          const common::Time first_time = first_node_data.time;
-          const common::Time second_time = second_node_data.time;
           const common::Time third_time = third_node_data.time;
-          const common::Duration first_duration = second_time - first_time;
           const common::Duration second_duration = third_time - second_time;
           const common::Time first_center = first_time + first_duration / 2;
           const common::Time second_center = second_time + second_duration / 2;
@@ -421,8 +421,9 @@ void OptimizationProblem3D::Solve(
               result_center_to_center.delta_velocity;
           problem.AddResidualBlock(
               AccelerationCostFunction3D::CreateAutoDiffCostFunction(
-                  options_.acceleration_weight(), delta_velocity,
-                  common::ToSeconds(first_duration),
+                  options_.acceleration_weight() /
+                      common::ToSeconds(first_duration + second_duration),
+                  delta_velocity, common::ToSeconds(first_duration),
                   common::ToSeconds(second_duration)),
               nullptr /* loss function */,
               C_nodes.at(second_node_id).rotation(),
@@ -434,7 +435,8 @@ void OptimizationProblem3D::Solve(
         }
         problem.AddResidualBlock(
             RotationCostFunction3D::CreateAutoDiffCostFunction(
-                options_.rotation_weight(), result.delta_rotation),
+                options_.rotation_weight() / common::ToSeconds(first_duration),
+                result.delta_rotation),
             nullptr /* loss function */, C_nodes.at(first_node_id).rotation(),
             C_nodes.at(second_node_id).rotation(),
             trajectory_data.imu_calibration.data());
