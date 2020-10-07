@@ -441,6 +441,9 @@ void OptimizationProblem3D::Solve(
             C_nodes.at(second_node_id).rotation(),
             trajectory_data.imu_calibration.data());
       }
+
+      // Force gravity constant to be positive.
+      problem.SetParameterLowerBound(&trajectory_data.gravity_constant, 0, 0.0);
     }
   }
 
