@@ -126,10 +126,15 @@ std::vector<T> RandomizedVoxelFilter(const std::vector<T>& point_cloud,
 
 }  // namespace
 
-PointCloud VoxelFilter(const PointCloud& point_cloud, const float resolution) {
+std::vector<RangefinderPoint> VoxelFilter(
+    const std::vector<RangefinderPoint>& points, const float resolution) {
   return RandomizedVoxelFilter(
-      point_cloud, resolution,
+      points, resolution,
       [](const RangefinderPoint& point) { return point.position; });
+}
+
+PointCloud VoxelFilter(const PointCloud& point_cloud, const float resolution) {
+  return PointCloud(VoxelFilter(point_cloud.points(), resolution));
 }
 
 TimedPointCloud VoxelFilter(const TimedPointCloud& timed_point_cloud,

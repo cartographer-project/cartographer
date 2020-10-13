@@ -142,9 +142,11 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
   std::vector<float> normals;
   if (options_.project_sdf_distance_to_scan_normal() ||
       scale_update_weight_angle_scan_normal_to_ray) {
-    std::sort(sorted_range_data.returns.begin(),
-              sorted_range_data.returns.end(),
+    std::vector<sensor::RangefinderPoint> returns =
+        sorted_range_data.returns.points();
+    std::sort(returns.begin(), returns.end(),
               RangeDataSorter(sorted_range_data.origin));
+    sorted_range_data.returns = sensor::PointCloud(std::move(returns));
     normals = EstimateNormals(sorted_range_data,
                               options_.normal_estimation_options());
   }

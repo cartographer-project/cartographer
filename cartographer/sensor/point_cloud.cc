@@ -22,14 +22,35 @@
 namespace cartographer {
 namespace sensor {
 
+PointCloud::PointCloud() {}
+PointCloud::PointCloud(std::vector<PointCloud::PointType> points)
+    : points_(std::move(points)) {}
+
+size_t PointCloud::size() const { return points_.size(); }
+bool PointCloud::empty() const { return points_.empty(); }
+
+const std::vector<PointCloud::PointType>& PointCloud::points() const {
+  return points_;
+}
+const PointCloud::PointType& PointCloud::operator[](const size_t index) const {
+  return points_[index];
+}
+
+PointCloud::ConstIterator PointCloud::begin() const { return points_.begin(); }
+PointCloud::ConstIterator PointCloud::end() const { return points_.end(); }
+
+void PointCloud::push_back(PointCloud::PointType value) {
+  points_.push_back(std::move(value));
+}
+
 PointCloud TransformPointCloud(const PointCloud& point_cloud,
                                const transform::Rigid3f& transform) {
-  PointCloud result;
-  result.reserve(point_cloud.size());
-  for (const RangefinderPoint& point : point_cloud) {
-    result.emplace_back(transform * point);
+  std::vector<RangefinderPoint> points;
+  points.reserve(point_cloud.size());
+  for (const RangefinderPoint& point : point_cloud.points()) {
+    points.emplace_back(transform * point);
   }
-  return result;
+  return PointCloud(points);
 }
 
 TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,

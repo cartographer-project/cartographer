@@ -27,8 +27,8 @@ namespace {
 
 TEST(PointCloudTest, TransformPointCloud) {
   PointCloud point_cloud;
-  point_cloud.push_back({Eigen::Vector3f{0.5f, 0.5f, 1.f}});
-  point_cloud.push_back({Eigen::Vector3f{3.5f, 0.5f, 42.f}});
+  point_cloud.push_back({{Eigen::Vector3f{0.5f, 0.5f, 1.f}}});
+  point_cloud.push_back({{Eigen::Vector3f{3.5f, 0.5f, 42.f}}});
   const PointCloud transformed_point_cloud = TransformPointCloud(
       point_cloud, transform::Embed3D(transform::Rigid2f::Rotation(M_PI_2)));
   EXPECT_NEAR(-0.5f, transformed_point_cloud[0].position.x(), 1e-6);

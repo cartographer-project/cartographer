@@ -28,9 +28,34 @@
 namespace cartographer {
 namespace sensor {
 
-// Stores 3D positions of points.
-// For 2D points, the third entry is 0.f.
-using PointCloud = std::vector<RangefinderPoint>;
+// Stores 3D positions of points together with some additional data, e.g.
+// intensities.
+struct PointCloud {
+ public:
+  using PointType = RangefinderPoint;
+
+  PointCloud();
+  explicit PointCloud(std::vector<PointType> points);
+
+  // Returns the number of points in the point cloud.
+  size_t size() const;
+  // Checks whether there are any points in the point cloud.
+  bool empty() const;
+
+  const std::vector<PointType>& points() const;
+  const PointType& operator[](const size_t index) const;
+
+  // Iterator over the points in the point cloud.
+  using ConstIterator = std::vector<PointType>::const_iterator;
+  ConstIterator begin() const;
+  ConstIterator end() const;
+
+  void push_back(PointType value);
+
+ private:
+  // For 2D points, the third entry is 0.f.
+  std::vector<PointType> points_;
+};
 
 // Stores 3D positions of points with their relative measurement time in the
 // fourth entry. Time is in seconds, increasing and relative to the moment when
@@ -39,6 +64,8 @@ using PointCloud = std::vector<RangefinderPoint>;
 // third entry is 0.f (and the fourth entry is time).
 using TimedPointCloud = std::vector<TimedRangefinderPoint>;
 
+// TODO(wohe): Retained for cartographer_ros. To be removed once it is no
+// longer used there.
 struct PointCloudWithIntensities {
   TimedPointCloud points;
   std::vector<float> intensities;

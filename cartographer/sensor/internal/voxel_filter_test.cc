@@ -33,9 +33,9 @@ TEST(VoxelFilterTest, ReturnsOnePointInEachVoxel) {
                                 {{0.f, 0.f, 0.1f}}});
   const PointCloud result = VoxelFilter(point_cloud, 0.3f);
   ASSERT_EQ(result.size(), 2);
-  EXPECT_THAT(point_cloud, Contains(result[0]));
-  EXPECT_THAT(point_cloud, Contains(result[1]));
-  EXPECT_THAT(result, Contains(point_cloud[2]));
+  EXPECT_THAT(point_cloud.points(), Contains(result[0]));
+  EXPECT_THAT(point_cloud.points(), Contains(result[1]));
+  EXPECT_THAT(result.points(), Contains(point_cloud[2]));
 }
 
 TEST(VoxelFilterTest, HandlesLargeCoordinates) {
@@ -45,7 +45,7 @@ TEST(VoxelFilterTest, HandlesLargeCoordinates) {
                                 {{-200000.f, 0.f, 0.f}}});
   const PointCloud result = VoxelFilter(point_cloud, 0.01f);
   EXPECT_EQ(result.size(), 2);
-  EXPECT_THAT(result, Contains(point_cloud[3]));
+  EXPECT_THAT(result.points(), Contains(point_cloud[3]));
 }
 
 TEST(VoxelFilterTest, IgnoresTime) {
