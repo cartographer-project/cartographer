@@ -29,6 +29,11 @@ namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
+// Computes a cost for matching the 'point_cloud' to the 'hybrid_grid' with a
+// 'translation' and 'rotation'. The cost increases when points fall into space
+// for which different intensity has been observed, i.e. at voxels with different
+// values. Only points up to a certain threshold are evaluated which is intended
+// to ignore data from retroreflections.
 class IntensityCostFunction3D {
  public:
   static ceres::CostFunction* CreateAutoDiffCostFunction(
