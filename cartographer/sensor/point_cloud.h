@@ -30,12 +30,13 @@ namespace sensor {
 
 // Stores 3D positions of points together with some additional data, e.g.
 // intensities.
-struct PointCloud {
+class PointCloud {
  public:
   using PointType = RangefinderPoint;
 
   PointCloud();
   explicit PointCloud(std::vector<PointType> points);
+  PointCloud(std::vector<PointType> points, std::vector<float> intensities);
 
   // Returns the number of points in the point cloud.
   size_t size() const;
@@ -43,6 +44,7 @@ struct PointCloud {
   bool empty() const;
 
   const std::vector<PointType>& points() const;
+  const std::vector<float>& intensities() const;
   const PointType& operator[](const size_t index) const;
 
   // Iterator over the points in the point cloud.
@@ -55,6 +57,9 @@ struct PointCloud {
  private:
   // For 2D points, the third entry is 0.f.
   std::vector<PointType> points_;
+  // Intensities are optional. If non-empty, they must have the same size as
+  // points.
+  std::vector<float> intensities_;
 };
 
 // Stores 3D positions of points with their relative measurement time in the
