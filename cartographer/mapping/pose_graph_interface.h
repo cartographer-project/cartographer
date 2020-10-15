@@ -96,6 +96,10 @@ class PoseGraphInterface {
   // Waits for all computations to finish and computes optimized poses.
   virtual void RunFinalOptimization() = 0;
 
+  // Wait for all computations to complete
+  virtual void WaitForAllComputations() = 0;
+
+
   // Returns data for all submaps.
   virtual MapById<SubmapId, SubmapData> GetAllSubmapData() const = 0;
 
