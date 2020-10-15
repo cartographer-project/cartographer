@@ -37,16 +37,14 @@ struct PixelData {
 };
 
 // Filters 'range_data', retaining only the returns that have no more than
-// 'max_range' distance from the origin. Removes misses and reflectivity
-// information.
+// 'max_range' distance from the origin. Removes misses.
 sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
                                             const float max_range) {
   sensor::RangeData result{range_data.origin, {}, {}};
-  for (const sensor::RangefinderPoint& hit : range_data.returns) {
-    if ((hit.position - range_data.origin).norm() <= max_range) {
-      result.returns.push_back(hit);
-    }
-  }
+  result.returns =
+      range_data.returns.copy_if([&](const sensor::RangefinderPoint& point) {
+        return (point.position - range_data.origin).norm() <= max_range;
+      });
   return result;
 }
 

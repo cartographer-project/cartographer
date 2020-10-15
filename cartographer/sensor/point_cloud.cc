@@ -60,7 +60,7 @@ PointCloud TransformPointCloud(const PointCloud& point_cloud,
   for (const RangefinderPoint& point : point_cloud.points()) {
     points.emplace_back(transform * point);
   }
-  return PointCloud(points);
+  return PointCloud(points, point_cloud.intensities());
 }
 
 TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
@@ -75,13 +75,9 @@ TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
 
 PointCloud CropPointCloud(const PointCloud& point_cloud, const float min_z,
                           const float max_z) {
-  PointCloud cropped_point_cloud;
-  for (const RangefinderPoint& point : point_cloud) {
-    if (min_z <= point.position.z() && point.position.z() <= max_z) {
-      cropped_point_cloud.push_back(point);
-    }
-  }
-  return cropped_point_cloud;
+  return point_cloud.copy_if([min_z, max_z](const RangefinderPoint& point) {
+    return min_z <= point.position.z() && point.position.z() <= max_z;
+  });
 }
 
 }  // namespace sensor

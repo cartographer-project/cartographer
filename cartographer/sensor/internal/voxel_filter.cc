@@ -30,13 +30,9 @@ namespace {
 
 PointCloud FilterByMaxRange(const PointCloud& point_cloud,
                             const float max_range) {
-  PointCloud result;
-  for (const RangefinderPoint& point : point_cloud) {
-    if (point.position.norm() <= max_range) {
-      result.push_back(point);
-    }
-  }
-  return result;
+  return point_cloud.copy_if([max_range](const RangefinderPoint& point) {
+    return point.position.norm() <= max_range;
+  });
 }
 
 PointCloud AdaptivelyVoxelFiltered(
