@@ -267,9 +267,11 @@ void ConstraintBuilder3D::ComputeConstraint(
   ceres_scan_matcher_.Match(match_result->pose_estimate.translation(),
                             match_result->pose_estimate,
                             {{&constant_data->high_resolution_point_cloud,
-                              submap_scan_matcher.high_resolution_hybrid_grid},
+                              submap_scan_matcher.high_resolution_hybrid_grid,
+                              /*intensity_hybrid_grid=*/nullptr},
                              {&constant_data->low_resolution_point_cloud,
-                              submap_scan_matcher.low_resolution_hybrid_grid}},
+                              submap_scan_matcher.low_resolution_hybrid_grid,
+                              /*intensity_hybrid_grid=*/nullptr}},
                             &constraint_transform, &unused_summary);
 
   constraint->reset(new Constraint{

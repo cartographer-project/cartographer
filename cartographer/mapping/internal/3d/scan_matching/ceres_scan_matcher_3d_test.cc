@@ -35,21 +35,35 @@ class CeresScanMatcher3DTest : public ::testing::Test {
  protected:
   CeresScanMatcher3DTest()
       : hybrid_grid_(1.f),
+        intensity_hybrid_grid_(1.f),
         expected_pose_(
             transform::Rigid3d::Translation(Eigen::Vector3d(-1., 0., 0.))) {
+    std::vector<sensor::RangefinderPoint> points;
+    std::vector<float> intensities;
     for (const Eigen::Vector3f& point :
          {Eigen::Vector3f(-3.f, 2.f, 0.f), Eigen::Vector3f(-4.f, 2.f, 0.f),
           Eigen::Vector3f(-5.f, 2.f, 0.f), Eigen::Vector3f(-6.f, 2.f, 0.f),
           Eigen::Vector3f(-6.f, 3.f, 1.f), Eigen::Vector3f(-6.f, 4.f, 2.f),
           Eigen::Vector3f(-7.f, 3.f, 1.f)}) {
-      point_cloud_.push_back({point});
+      points.push_back({point});
+      intensities.push_back(50);
       hybrid_grid_.SetProbability(
           hybrid_grid_.GetCellIndex(expected_pose_.cast<float>() * point), 1.);
+      intensity_hybrid_grid_.AddIntensity(
+          intensity_hybrid_grid_.GetCellIndex(expected_pose_.cast<float>() *
+                                              point),
+          50);
     }
+    point_cloud_ = sensor::PointCloud(points, intensities);
 
     auto parameter_dictionary = common::MakeDictionary(R"text(
         return {
           occupied_space_weight_0 = 1.,
+          intensity_cost_function_options_0 = {
+            weight = 0.5,
+            huber_scale = 55,
+            intensity_threshold = 100,
+          },
           translation_weight = 0.01,
           rotation_weight = 0.1,
           only_optimize_yaw = false,
@@ -67,14 +81,20 @@ class CeresScanMatcher3DTest : public ::testing::Test {
     transform::Rigid3d pose;
 
     ceres::Solver::Summary summary;
-    ceres_scan_matcher_->Match(initial_pose.translation(), initial_pose,
-                               {{&point_cloud_, &hybrid_grid_}}, &pose,
-                               &summary);
+
+    IntensityHybridGrid* intensity_hybrid_grid_ptr =
+        point_cloud_.intensities().empty() ? nullptr : &intensity_hybrid_grid_;
+
+    ceres_scan_matcher_->Match(
+        initial_pose.translation(), initial_pose,
+        {{&point_cloud_, &hybrid_grid_, intensity_hybrid_grid_ptr}}, &pose,
+        &summary);
     EXPECT_NEAR(0., summary.final_cost, 1e-2) << summary.FullReport();
     EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 3e-2));
   }
 
   HybridGrid hybrid_grid_;
+  IntensityHybridGrid intensity_hybrid_grid_;
   transform::Rigid3d expected_pose_;
   sensor::PointCloud point_cloud_;
   proto::CeresScanMatcherOptions3D options_;

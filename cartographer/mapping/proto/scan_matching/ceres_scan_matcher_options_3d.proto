@@ -18,9 +18,16 @@ package cartographer.mapping.scan_matching.proto;
 
 import "cartographer/common/proto/ceres_solver_options.proto";
 
-// NEXT ID: 7
+message IntensityCostFunctionOptions {
+  double weight = 1;
+  double huber_scale = 2;
+  // Ignore ranges with intensity above this threshold.
+  float intensity_threshold = 3;
+}
+
+// NEXT ID: 8
 message CeresScanMatcherOptions3D {
-  // Scaling parameters for each cost functor.
+  // Scaling parameters for each occupied space cost functor.
   repeated double occupied_space_weight = 1;
   double translation_weight = 2;
   double rotation_weight = 3;
@@ -31,4 +38,7 @@ message CeresScanMatcherOptions3D {
   // Configure the Ceres solver. See the Ceres documentation for more
   // information: https://code.google.com/p/ceres-solver/
   common.proto.CeresSolverOptions ceres_solver_options = 6;
+
+  // Scaling parameters for each intensity cost functor.
+  repeated IntensityCostFunctionOptions intensity_cost_function_options = 7;
 }
