@@ -54,6 +54,35 @@ class PointCloud {
 
   void push_back(PointType value);
 
+  // Creates a PointCloud consisting of all the points for which `predicate`
+  // returns true, together with the corresponding intensities.
+  template <class UnaryPredicate>
+  PointCloud copy_if(UnaryPredicate predicate) const {
+    std::vector<PointType> points;
+    std::vector<float> intensities;
+
+    // Note: benchmarks show that it is better to have this conditional outside
+    // the loop.
+    if (intensities_.empty()) {
+      for (size_t index = 0; index < size(); ++index) {
+        const PointType& point = points_[index];
+        if (predicate(point)) {
+          points.push_back(point);
+        }
+      }
+    } else {
+      for (size_t index = 0; index < size(); ++index) {
+        const PointType& point = points_[index];
+        if (predicate(point)) {
+          points.push_back(point);
+          intensities.push_back(intensities_[index]);
+        }
+      }
+    }
+
+    return PointCloud(points, intensities);
+  }
+
  private:
   // For 2D points, the third entry is 0.f.
   std::vector<PointType> points_;
