@@ -45,6 +45,9 @@ TEST(VoxelFilterTest, CorrectIntensities) {
   std::vector<float> intensities;
   for (int i = 0; i < 100; ++i) {
     const float value = 0.1f * i;
+    // We add points with intensity equal to the z coordinate, so we can later
+    // verify that the resulting intensities are corresponding to the filtered
+    // points.
     points.push_back({{-100.f, 0.3f, value}});
     intensities.push_back(value);
   }
