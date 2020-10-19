@@ -94,6 +94,7 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
         "hit_probability = 0.7, "
         "miss_probability = 0.4, "
         "num_free_space_voxels = 5, "
+        "intensity_threshold = 100.0, "
         "}");
     return CreateRangeDataInserterOptions3D(parameter_dictionary.get());
   }
@@ -106,7 +107,8 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
         sensor::RangeData{pose.translation(),
                           sensor::TransformPointCloud(point_cloud_, pose),
                           {}},
-        hybrid_grid_.get());
+        hybrid_grid_.get(),
+        /*intensity_hybrid_grid=*/nullptr);
     hybrid_grid_->FinishUpdate();
 
     return absl::make_unique<FastCorrelativeScanMatcher3D>(

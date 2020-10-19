@@ -60,6 +60,14 @@ class Submap3D : public Submap {
   const HybridGrid& low_resolution_hybrid_grid() const {
     return *low_resolution_hybrid_grid_;
   }
+  const IntensityHybridGrid& high_resolution_intensity_hybrid_grid() const {
+    CHECK(high_resolution_intensity_hybrid_grid_ != nullptr);
+    return *high_resolution_intensity_hybrid_grid_;
+  }
+  void ForgetIntensityHybridGrid() {
+    high_resolution_intensity_hybrid_grid_.reset();
+  }
+
   const Eigen::VectorXf& rotational_scan_matcher_histogram() const {
     return rotational_scan_matcher_histogram_;
   }
@@ -79,6 +87,7 @@ class Submap3D : public Submap {
 
   std::unique_ptr<HybridGrid> high_resolution_hybrid_grid_;
   std::unique_ptr<HybridGrid> low_resolution_hybrid_grid_;
+  std::unique_ptr<IntensityHybridGrid> high_resolution_intensity_hybrid_grid_;
   Eigen::VectorXf rotational_scan_matcher_histogram_;
 };
 

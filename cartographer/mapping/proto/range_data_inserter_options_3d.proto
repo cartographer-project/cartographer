@@ -28,4 +28,7 @@ message RangeDataInserterOptions3D {
   // Up to how many free space voxels are updated for scan matching.
   // 0 disables free space.
   int32 num_free_space_voxels = 3;
+
+  // Do not insert intensities above this threshold into IntensityHybridGrid.
+  float intensity_threshold = 4;
 }

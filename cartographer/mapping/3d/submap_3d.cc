@@ -202,6 +202,8 @@ Submap3D::Submap3D(const float high_resolution, const float low_resolution,
           absl::make_unique<HybridGrid>(high_resolution)),
       low_resolution_hybrid_grid_(
           absl::make_unique<HybridGrid>(low_resolution)),
+      high_resolution_intensity_hybrid_grid_(
+          absl::make_unique<IntensityHybridGrid>(high_resolution)),
       rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram) {}
 
 Submap3D::Submap3D(const proto::Submap3D& proto)
@@ -278,9 +280,11 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   range_data_inserter.Insert(
       FilterRangeDataByMaxRange(transformed_range_data,
                                 high_resolution_max_range),
-      high_resolution_hybrid_grid_.get());
+      high_resolution_hybrid_grid_.get(),
+      high_resolution_intensity_hybrid_grid_.get());
   range_data_inserter.Insert(transformed_range_data,
-                             low_resolution_hybrid_grid_.get());
+                             low_resolution_hybrid_grid_.get(),
+                             /*intensity_hybrid_grid=*/nullptr);
   set_num_range_data(num_range_data() + 1);
   const float yaw_in_submap_from_gravity = transform::GetYaw(
       local_pose().inverse().rotation() * local_from_gravity_aligned);
@@ -332,6 +336,11 @@ void ActiveSubmaps3D::AddSubmap(
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
     CHECK(submaps_.front()->insertion_finished());
+    // We do `ForgetIntensityHybridGrid` in order to reduce memory usage.
+    // As we use active submaps, in particular intensity hybrid grids associated
+    // with them, for scan matching, thus we call `ForgetIntensityHybridGrid`
+    // only when we are about to remove the submap from active submaps.
+    submaps_.front()->ForgetIntensityHybridGrid();
     submaps_.erase(submaps_.begin());
   }
   const Eigen::VectorXf initial_rotational_scan_matcher_histogram =

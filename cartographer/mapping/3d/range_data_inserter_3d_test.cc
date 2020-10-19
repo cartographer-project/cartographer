@@ -28,12 +28,13 @@ namespace {
 
 class RangeDataInserter3DTest : public ::testing::Test {
  protected:
-  RangeDataInserter3DTest() : hybrid_grid_(1.f) {
+  RangeDataInserter3DTest() : hybrid_grid_(1.f), intensity_hybrid_grid_(1.f) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
         "hit_probability = 0.7, "
         "miss_probability = 0.4, "
         "num_free_space_voxels = 1000, "
+        "intensity_threshold = 100, "
         "}");
     options_ = CreateRangeDataInserterOptions3D(parameter_dictionary.get());
     range_data_inserter_.reset(new RangeDataInserter3D(options_));
@@ -41,19 +42,38 @@ class RangeDataInserter3DTest : public ::testing::Test {
 
   void InsertPointCloud() {
     const Eigen::Vector3f origin = Eigen::Vector3f(0.f, 0.f, -4.f);
-    std::vector<sensor::RangefinderPoint> returns = {
+    const std::vector<sensor::RangefinderPoint> returns = {
         {Eigen::Vector3f{-3.f, -1.f, 4.f}},
         {Eigen::Vector3f{-2.f, 0.f, 4.f}},
         {Eigen::Vector3f{-1.f, 1.f, 4.f}},
         {Eigen::Vector3f{0.f, 2.f, 4.f}}};
     range_data_inserter_->Insert(
         sensor::RangeData{origin, sensor::PointCloud(returns), {}},
-        &hybrid_grid_);
+        &hybrid_grid_,
+        /*intensity_hybrid_grid=*/nullptr);
+  }
+
+  void InsertPointCloudWithIntensities() {
+    const Eigen::Vector3f origin = Eigen::Vector3f(0.f, 0.f, -4.f);
+    const std::vector<sensor::RangefinderPoint> returns = {
+        {Eigen::Vector3f{-3.f, -1.f, 4.f}},
+        {Eigen::Vector3f{-2.f, 0.f, 4.f}},
+        {Eigen::Vector3f{-1.f, 1.f, 4.f}},
+        {Eigen::Vector3f{0.f, 2.f, 4.f}}};
+    const std::vector<float> intensities{7.f, 8.f, 9.f, 10.f};
+    range_data_inserter_->Insert(
+        sensor::RangeData{origin, sensor::PointCloud(returns, intensities), {}},
+        &hybrid_grid_, &intensity_hybrid_grid_);
   }
 
   float GetProbability(float x, float y, float z) const {
     return hybrid_grid_.GetProbability(
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x, y, z)));
+  }
+
+  float GetIntensity(float x, float y, float z) const {
+    return intensity_hybrid_grid_.GetIntensity(
+        intensity_hybrid_grid_.GetCellIndex(Eigen::Vector3f(x, y, z)));
   }
 
   float IsKnown(float x, float y, float z) const {
@@ -65,6 +85,7 @@ class RangeDataInserter3DTest : public ::testing::Test {
 
  private:
   HybridGrid hybrid_grid_;
+  IntensityHybridGrid intensity_hybrid_grid_;
   std::unique_ptr<RangeDataInserter3D> range_data_inserter_;
   proto::RangeDataInserterOptions3D options_;
 };
@@ -84,6 +105,28 @@ TEST_F(RangeDataInserter3DTest, InsertPointCloud) {
       } else {
         EXPECT_NEAR(options().hit_probability(), GetProbability(x, y, 4.f),
                     1e-4);
+      }
+    }
+  }
+}
+
+TEST_F(RangeDataInserter3DTest, InsertPointCloudWithIntensities) {
+  InsertPointCloudWithIntensities();
+  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -4.f),
+              1e-4);
+  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -3.f),
+              1e-4);
+  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -2.f),
+              1e-4);
+  for (int x = -4; x <= 4; ++x) {
+    for (int y = -4; y <= 4; ++y) {
+      if (x < -3 || x > 0 || y != x + 2) {
+        EXPECT_FALSE(IsKnown(x, y, 4.f));
+        EXPECT_NEAR(0.f, GetIntensity(x, y, 4.f), 1e-6);
+      } else {
+        EXPECT_NEAR(options().hit_probability(), GetProbability(x, y, 4.f),
+                    1e-4);
+        EXPECT_NEAR(10 + x, GetIntensity(x, y, 4.f), 1e-6);
       }
     }
   }
