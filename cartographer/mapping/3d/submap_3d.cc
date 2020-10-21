@@ -42,6 +42,11 @@ struct PixelData {
 sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
                                             const float max_range) {
   sensor::RangeData result{range_data.origin, {}, {}};
+  if(max_range == 0.f) {
+    result.returns = range_data.returns;
+    return result;
+  }
+
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
     if ((hit.position - range_data.origin).norm() <= max_range) {
       result.returns.push_back(hit);
