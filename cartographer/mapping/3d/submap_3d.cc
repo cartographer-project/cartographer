@@ -336,10 +336,10 @@ void ActiveSubmaps3D::AddSubmap(
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
     CHECK(submaps_.front()->insertion_finished());
-    // We do `ForgetIntensityHybridGrid` in order to reduce memory usage.
-    // As we use active submaps, in particular intensity hybrid grids associated
-    // with them, for scan matching, thus we call `ForgetIntensityHybridGrid`
-    // only when we are about to remove the submap from active submaps.
+    // We use `ForgetIntensityHybridGrid` to reduce memory usage. Since we use
+    // active submaps and their associated intensity hybrid grids for scan
+    // matching, we call `ForgetIntensityHybridGrid` once we remove the submap
+    // from active submaps and no longer need the intensity hybrid grid.
     submaps_.front()->ForgetIntensityHybridGrid();
     submaps_.erase(submaps_.begin());
   }
