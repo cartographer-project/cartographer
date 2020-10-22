@@ -36,9 +36,10 @@ class RangeDataInserter3D {
   RangeDataInserter3D(const RangeDataInserter3D&) = delete;
   RangeDataInserter3D& operator=(const RangeDataInserter3D&) = delete;
 
-  // Inserts 'range_data' into 'hybrid_grid'.
-  void Insert(const sensor::RangeData& range_data,
-              HybridGrid* hybrid_grid) const;
+  // Inserts 'range_data' into 'hybrid_grid' and optionally into
+  // 'intensity_hybrid_grid'.
+  void Insert(const sensor::RangeData& range_data, HybridGrid* hybrid_grid,
+              IntensityHybridGrid* intensity_hybrid_grid) const;
 
  private:
   const proto::RangeDataInserterOptions3D options_;

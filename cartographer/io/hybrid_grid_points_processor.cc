@@ -40,7 +40,8 @@ HybridGridPointsProcessor::FromDictionary(
 
 void HybridGridPointsProcessor::Process(std::unique_ptr<PointsBatch> batch) {
   range_data_inserter_.Insert(
-      {batch->origin, sensor::PointCloud(batch->points), {}}, &hybrid_grid_);
+      {batch->origin, sensor::PointCloud(batch->points), {}}, &hybrid_grid_,
+      /*intensity_hybrid_grid=*/nullptr);
   next_->Process(std::move(batch));
 }
 

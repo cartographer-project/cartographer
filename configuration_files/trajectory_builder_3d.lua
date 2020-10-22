@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 MAX_3D_RANGE = 60.
+INTENSITY_THRESHOLD = 40
 
 TRAJECTORY_BUILDER_3D = {
   min_range = 1.,
@@ -96,6 +97,7 @@ TRAJECTORY_BUILDER_3D = {
       hit_probability = 0.55,
       miss_probability = 0.49,
       num_free_space_voxels = 2,
+      intensity_threshold = INTENSITY_THRESHOLD,
     },
   },
 }
