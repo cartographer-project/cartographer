@@ -160,6 +160,7 @@ OptimizingLocalTrajectoryBuilder::AddRangeData(
   point_cloud_set.time = range_data_in_tracking.time;
   point_cloud_set.origin = range_data_in_tracking.origin;
   for (const auto& hit : range_data_in_tracking.ranges) {
+    point_cloud_set.original_cloud.push_back({hit.position});
     const Eigen::Vector3f delta = hit.position - range_data_in_tracking.origin;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
@@ -264,7 +265,7 @@ std::unique_ptr<OptimizingLocalTrajectoryBuilder::MatchingResult>
 OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
   if (time - initial_data_time_ < initialization_duration_ ||
       time - last_optimization_time_ < optimization_rate_) {
-    if (time - initial_data_time_ < 2.0 * ct_window_horizon_) {
+    if (time - initial_data_time_ < initialization_duration_) {
       LOG(INFO) << "No Optimization - not enough time since initialization "
                 << common::ToSeconds(time - initial_data_time_) << "\t < "
                 << common::ToSeconds(initialization_duration_);
@@ -286,7 +287,6 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     imu_integrator_->SetAngularVelocityCalibration(
         angular_velocity_calibration_);
     imu_calibrated_ = true;
-
     constexpr double kExtrapolationEstimationTimeSec = 0.001;
     sensor::ImuData debiased_imu_data = imu_data_.front();
     debiased_imu_data.linear_acceleration = linear_acceleration_calibration_ * debiased_imu_data.linear_acceleration;
@@ -606,7 +606,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
             control_points_iterator->time, point_cloud_set.time);
         const transform::Rigid3f transform =
             (optimized_pose.inverse() * transform_cloud).cast<float>();
-        for (const auto& point : point_cloud_set.points) {
+        for (const auto& point : point_cloud_set.original_cloud) {
           accumulated_range_data_in_tracking.returns.push_back(transform *
                                                                point);
         }
@@ -631,7 +631,7 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
           point_cloud_data_.front().time);
       const transform::Rigid3f transform =
           (optimized_pose.inverse() * transform_cloud).cast<float>();
-      for (const auto& point : point_cloud_data_.front().points) {
+      for (const auto& point : point_cloud_data_.front().original_cloud) {
         accumulated_range_data_in_tracking.returns.push_back(transform * point);
       }
       accumulated_range_data_in_tracking.origin =
@@ -666,8 +666,10 @@ OptimizingLocalTrajectoryBuilder::AddAccumulatedRangeData(
     LOG(WARNING) << "Dropped empty range data.";
     return nullptr;
   }
+//  sensor::RangeData filtered_range_data_in_local = sensor::TransformRangeData(
+//      filtered_range_data_in_tracking, optimized_pose.cast<float>());
   sensor::RangeData filtered_range_data_in_local = sensor::TransformRangeData(
-      filtered_range_data_in_tracking, optimized_pose.cast<float>());
+      range_data_in_tracking, optimized_pose.cast<float>());
 
   sensor::AdaptiveVoxelFilter adaptive_voxel_filter(
       options_.high_resolution_adaptive_voxel_filter_options());

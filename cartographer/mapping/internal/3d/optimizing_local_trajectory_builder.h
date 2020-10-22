@@ -90,6 +90,7 @@ class OptimizingLocalTrajectoryBuilder {
     sensor::PointCloud points;
     sensor::PointCloud high_resolution_filtered_points;
     sensor::PointCloud low_resolution_filtered_points;
+    sensor::PointCloud original_cloud;
   };
 
   struct ControlPoint {

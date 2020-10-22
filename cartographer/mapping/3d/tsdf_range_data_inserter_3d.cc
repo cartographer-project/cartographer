@@ -128,7 +128,7 @@ void TSDFRangeDataInserter3D::RasterTriangle(
 
   Eigen::Vector3f v01 = v1 - v0;
   Eigen::Vector3f v02 = v2 - v0;
-  CHECK_LE(v01.cwiseAbs().maxCoeff(), v02.cwiseAbs().maxCoeff());
+//  CHECK_LE(v01.cwiseAbs().maxCoeff(), v02.cwiseAbs().maxCoeff());
 
   const Eigen::Array3i i_0 = tsdf->GetCellIndex(v0);
   const Eigen::Array3i i_1 = tsdf->GetCellIndex(v1);
@@ -509,74 +509,104 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
       break;
     }
     case proto::TSDFRangeDataInserterOptions3D::CLOUD_STRUCTURE: {
-      if (range_data.returns.size() == 28800) {
-        int NUM_ROWS = 16;
-        int NUM_POINTS_PER_LINE = 1800;
-        int NUM_POINTS = NUM_POINTS_PER_LINE * NUM_ROWS;
-        for (int point_idx = 0; point_idx < NUM_POINTS; ++point_idx) {
-          if (range_data.returns[point_idx].position.isZero()) continue;
-          int i0 = point_idx;
-          int horizontal_stride = 5;
-          int i1 = point_idx + horizontal_stride >= NUM_POINTS
-                       ? point_idx - horizontal_stride
-                       : point_idx + horizontal_stride;
-          int i2 = point_idx + NUM_POINTS_PER_LINE >= NUM_POINTS
-                       ? point_idx - NUM_POINTS_PER_LINE
-                       : point_idx + NUM_POINTS_PER_LINE;
-          Eigen::Vector3f p0 = range_data.returns[i0].position;
-          Eigen::Vector3f p1 = range_data.returns[i1].position;
-          Eigen::Vector3f p2 = range_data.returns[i2].position;
-          if (p1.isZero() || p2.isZero()) continue;
-          float r0 = p0.norm();
-          float r1 = p1.norm();
-          float r2 = p2.norm();
-          float max_range_delta = 1.f;
-          if (std::abs(r0 - r1) > max_range_delta ||
-              std::abs(r0 - r2) > max_range_delta ||
-              std::abs(r1 - r2) > max_range_delta) {
-            continue;
+      int NUM_ROWS = 16;
+      int NUM_POINTS_PER_LINE = 1800;
+      int NUM_POINTS_PER_CLOUD = NUM_POINTS_PER_LINE * NUM_ROWS;
+      if (range_data.returns.size() % NUM_POINTS_PER_CLOUD == 0) {
+        int NUM_CLOUDS = range_data.returns.size()/NUM_POINTS_PER_CLOUD;
+        for (int cloud_idx = 0; cloud_idx < NUM_CLOUDS; ++cloud_idx) {
+          for (int relative_point_idx = 0; relative_point_idx < NUM_POINTS_PER_CLOUD; ++relative_point_idx) {
+            int point_idx = relative_point_idx + cloud_idx * NUM_POINTS_PER_CLOUD;
+            if (range_data.returns[point_idx].position.isZero()) continue;
+            int i0 = point_idx;
+            int horizontal_stride = 5;
+            int i1 = relative_point_idx + horizontal_stride >= NUM_POINTS_PER_CLOUD
+                     ? point_idx - horizontal_stride
+                     : point_idx + horizontal_stride;
+            int i2 = relative_point_idx + NUM_POINTS_PER_LINE >= NUM_POINTS_PER_CLOUD
+                     ? point_idx - NUM_POINTS_PER_LINE
+                     : point_idx + NUM_POINTS_PER_LINE;
+            Eigen::Vector3f p0 = range_data.returns[i0].position;
+            Eigen::Vector3f p1 = range_data.returns[i1].position;
+            Eigen::Vector3f p2 = range_data.returns[i2].position;
+            if (p1.isZero() || p2.isZero()) continue;
+            float r0 = p0.norm();
+            float r1 = p1.norm();
+            float r2 = p2.norm();
+            float max_range_delta = 1.f * tsdf->resolution() / 0.05f;
+            if (std::abs(r0 - r1) > max_range_delta ||
+                std::abs(r0 - r2) > max_range_delta ||
+                std::abs(r1 - r2) > max_range_delta ||
+                (p0 - p1).isZero() ||
+                (p0 - p2).isZero()) {
+              continue;
+            }
+            const Eigen::Vector3f normal = (p0 - p1).cross(p0 - p2).normalized();
+            if (normal.isZero()) {
+              continue;
+            }
+            InsertHitWithNormal(p0, origin, normal, tsdf);
           }
-          const Eigen::Vector3f normal = (p0 - p1).cross(p0 - p2).normalized();
-          InsertHitWithNormal(p0, origin, normal, tsdf);
-          ++point_idx;
-        }  // namespace mapping
-      }    // namespace cartographer
+        }
+      }
+      else {
+        LOG(WARNING)<<"INVALID CLOUD SIZE "<< range_data.returns.size()<<" - Cloud not inserted!";
+      }
       break;
     }
     case proto::TSDFRangeDataInserterOptions3D::TRIANGLE_FILL_IN: {
-      if (range_data.returns.size() == 28800) {
-        int NUM_ROWS = 16;
-        int NUM_POINTS_PER_LINE = 1800;
-        int NUM_POINTS = NUM_POINTS_PER_LINE * NUM_ROWS;
-        for (int point_idx = 0; point_idx < NUM_POINTS; ++point_idx) {
-          if (range_data.returns[point_idx].position.isZero()) continue;
-          int i0 = point_idx;
-          int horizontal_stride = 5;
-          int i1 = point_idx + horizontal_stride >= NUM_POINTS
-                       ? point_idx - horizontal_stride
-                       : point_idx + horizontal_stride;
-          int i2 = point_idx + NUM_POINTS_PER_LINE >= NUM_POINTS
-                       ? point_idx - NUM_POINTS_PER_LINE
-                       : point_idx + NUM_POINTS_PER_LINE;
-          Eigen::Vector3f p0 = range_data.returns[i0].position;
-          Eigen::Vector3f p1 = range_data.returns[i1].position;
-          Eigen::Vector3f p2 = range_data.returns[i2].position;
-          if (p1.isZero() || p2.isZero()) continue;
-          float r0 = p0.norm();
-          float r1 = p1.norm();
-          float r2 = p2.norm();
-          float max_range_delta = 1.f;
-          if (std::abs(r0 - r1) > max_range_delta ||
-              std::abs(r0 - r2) > max_range_delta ||
-              std::abs(r1 - r2) > max_range_delta) {
-            continue;
+      if (range_data.returns.size() % 28800 == 0) {
+        const int num_pointclouds = range_data.returns.size() /28800;
+        const int NUM_ROWS = 16;
+        const int NUM_POINTS_PER_LINE = 1800;
+        const int NUM_POINTS_PER_CLOUD = NUM_POINTS_PER_LINE * NUM_ROWS;
+        for(int pointcloud_idx = 0; pointcloud_idx < num_pointclouds; ++pointcloud_idx) {
+          int pointcloud_offset = pointcloud_idx * NUM_POINTS_PER_CLOUD;
+          for (int point_idx = pointcloud_offset; point_idx < NUM_POINTS_PER_CLOUD + pointcloud_offset; ++point_idx) {
+            if (range_data.returns[point_idx].position.isZero()) continue;
+            int i0 = point_idx;
+            int horizontal_stride = 5;
+            int i1 = point_idx + horizontal_stride >= NUM_POINTS_PER_CLOUD
+                     ? point_idx - horizontal_stride
+                     : point_idx + horizontal_stride;
+            int i2 = point_idx + NUM_POINTS_PER_LINE >= NUM_POINTS_PER_CLOUD
+                     ? point_idx - NUM_POINTS_PER_LINE
+                     : point_idx + NUM_POINTS_PER_LINE;
+            Eigen::Vector3f p0 = range_data.returns[i0].position;
+            Eigen::Vector3f p1 = range_data.returns[i1].position;
+            Eigen::Vector3f p2 = range_data.returns[i2].position;
+            if (p1.isZero() || p2.isZero()) continue;
+            float r0 = p0.norm();
+            float r1 = p1.norm();
+            float r2 = p2.norm();
+            float max_range_delta = 1.f;
+            float min_range = 1.5f;
+            float max_range = 50.f;
+            if (std::abs(r0 - r1) > max_range_delta ||
+                std::abs(r0 - r2) > max_range_delta ||
+                std::abs(r1 - r2) > max_range_delta) {
+              continue;
+            }
+            if (std::abs(r0) < min_range ||
+                std::abs(r1) < min_range ||
+                std::abs(r2) < min_range) {
+              continue;
+            }
+            if (std::abs(r0) > max_range ||
+                std::abs(r1) < max_range ||
+                std::abs(r2) > max_range) {
+              continue;
+            }
+//          const Eigen::Vector3f normal = (p0 - p1).cross(p0 - p2).normalized();
+            //            InsertHitWithNormal(p0, origin, normal, tsdf);
+            InsertTriangle(p0, p1, p2, origin, tsdf);
+            ++point_idx;
           }
-          const Eigen::Vector3f normal = (p0 - p1).cross(p0 - p2).normalized();
-          //            InsertHitWithNormal(p0, origin, normal, tsdf);
-          InsertTriangle(p0, p1, p2, origin, tsdf);
-          ++point_idx;
-        }  // namespace mapping
-      }    // namespace cartographer
+        }
+      }
+      else {
+        LOG(INFO)<<"No map update : incomplete pointcloud "<<range_data.returns.size();
+      }
       break;
     }
     default: {
