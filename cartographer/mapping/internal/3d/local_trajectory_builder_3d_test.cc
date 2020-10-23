@@ -132,6 +132,8 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
               intensity_threshold = 100.0,
             },
           },
+
+          use_intensities = false,
         }
         )text");
     return mapping::CreateLocalTrajectoryBuilderOptions3D(
