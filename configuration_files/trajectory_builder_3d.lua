@@ -44,6 +44,11 @@ TRAJECTORY_BUILDER_3D = {
   ceres_scan_matcher = {
     occupied_space_weight_0 = 1.,
     occupied_space_weight_1 = 6.,
+    intensity_cost_function_options_0 = {
+        weight = 0.5,
+        huber_scale = 0.3,
+        intensity_threshold = INTENSITY_THRESHOLD,
+    },
     translation_weight = 5.,
     rotation_weight = 4e2,
     only_optimize_yaw = false,
@@ -100,4 +105,9 @@ TRAJECTORY_BUILDER_3D = {
       intensity_threshold = INTENSITY_THRESHOLD,
     },
   },
+
+  -- When setting use_intensites to true, the intensity_cost_function_options_0
+  -- parameter in ceres_scan_matcher has to be set up as well or otherwise
+  -- CeresScanMatcher will CHECK-fail.
+  use_intensities = false,
 }

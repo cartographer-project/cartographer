@@ -66,6 +66,7 @@ proto::LocalTrajectoryBuilderOptions3D CreateLocalTrajectoryBuilderOptions3D(
       parameter_dictionary->GetInt("rotational_histogram_size"));
   *options.mutable_submaps_options() = CreateSubmapsOptions3D(
       parameter_dictionary->GetDictionary("submaps").get());
+  options.set_use_intensities(parameter_dictionary->GetBool("use_intensities"));
   return options;
 }
 
