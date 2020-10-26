@@ -55,6 +55,25 @@ sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
   return result;
 }
 
+// Filters structured 'range_data', setting all points with a distance from the
+// origin smaller than 'max_range' to the origin. Therby the cloud size and
+// structure is preserved. Removes misses and reflectivity information.
+sensor::RangeData FilterStructuredRangeDataByMaxRange(
+    const sensor::RangeData& range_data, const float max_range) {
+  sensor::RangeData result{range_data.origin, range_data.returns, {}};
+  if (max_range == 0.f) {
+    result.returns = range_data.returns;
+    return result;
+  }
+
+  for (sensor::RangefinderPoint& hit : result.returns) {
+    if ((hit.position - result.origin).norm() > max_range) {
+      hit.position = result.origin;
+    }
+  }
+  return result;
+}
+
 std::vector<PixelData> AccumulatePixelData(
     const int width, const int height, const Eigen::Array2i& min_index,
     const Eigen::Array2i& max_index,
@@ -385,10 +404,18 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   // Transform range data into submap frame.
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data_in_local, local_pose().inverse().cast<float>());
-  range_data_inserter->Insert(
-      FilterRangeDataByMaxRange(transformed_range_data,
-                                high_resolution_max_range),
-      high_resolution_grid_.get());
+  if (range_data_inserter->RequiresStructuredData()) {
+    range_data_inserter->Insert(
+        FilterStructuredRangeDataByMaxRange(transformed_range_data,
+                                            high_resolution_max_range),
+        high_resolution_grid_.get());
+  } else {
+    range_data_inserter->Insert(
+        FilterRangeDataByMaxRange(transformed_range_data,
+                                  high_resolution_max_range),
+        high_resolution_grid_.get());
+  }
+
   range_data_inserter->Insert(transformed_range_data,
                               low_resolution_grid_.get());
   set_num_range_data(num_range_data() + 1);

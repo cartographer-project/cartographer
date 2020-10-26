@@ -41,6 +41,7 @@ class RangeDataInserterInterface {
   // Inserts 'range_data' into 'grid'.
   virtual void Insert(const sensor::RangeData& range_data,
                       GridInterface* grid) const = 0;
+  virtual bool RequiresStructuredData() const { return false; };
 };
 
 }  // namespace mapping

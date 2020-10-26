@@ -61,6 +61,8 @@ class TSDFRangeDataInserter3D : public RangeDataInserterInterface {
   void UpdateCell(const Eigen::Array3i& cell, float update_sdf,
                   float update_weight, HybridGridTSDF* tsdf) const;
 
+  virtual bool RequiresStructuredData() const override { return true; };
+
   const proto::RangeDataInserterOptions3D options_;
 };
 
