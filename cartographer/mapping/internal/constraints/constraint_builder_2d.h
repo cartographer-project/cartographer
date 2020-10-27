@@ -21,6 +21,7 @@
 #include <deque>
 #include <functional>
 #include <limits>
+#include <map>
 #include <vector>
 
 #include "Eigen/Core"
@@ -160,8 +161,8 @@ class ConstraintBuilder2D {
   // Map of dispatched or constructed scan matchers by 'submap_id'.
   std::map<SubmapId, SubmapScanMatcher> submap_scan_matchers_
       GUARDED_BY(mutex_);
+  std::map<SubmapId, common::FixedRatioSampler> per_submap_sampler_;
 
-  common::FixedRatioSampler sampler_;
   scan_matching::CeresScanMatcher2D ceres_scan_matcher_;
 
   // Histogram of scan matcher scores.

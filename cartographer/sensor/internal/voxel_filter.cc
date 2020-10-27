@@ -30,13 +30,9 @@ namespace {
 
 PointCloud FilterByMaxRange(const PointCloud& point_cloud,
                             const float max_range) {
-  PointCloud result;
-  for (const RangefinderPoint& point : point_cloud) {
-    if (point.position.norm() <= max_range) {
-      result.push_back(point);
-    }
-  }
-  return result;
+  return point_cloud.copy_if([max_range](const RangefinderPoint& point) {
+    return point.position.norm() <= max_range;
+  });
 }
 
 PointCloud AdaptivelyVoxelFiltered(
@@ -90,9 +86,9 @@ VoxelKeyType GetVoxelCellIndex(const Eigen::Vector3f& point,
 }
 
 template <class T, class PointFunction>
-std::vector<T> RandomizedVoxelFilter(const std::vector<T>& point_cloud,
-                                     const float resolution,
-                                     PointFunction&& point_function) {
+std::vector<bool> RandomizedVoxelFilterIndices(
+    const std::vector<T>& point_cloud, const float resolution,
+    PointFunction&& point_function) {
   // According to https://en.wikipedia.org/wiki/Reservoir_sampling
   std::minstd_rand0 generator;
   absl::flat_hash_map<VoxelKeyType, std::pair<int, int>>
@@ -114,6 +110,15 @@ std::vector<T> RandomizedVoxelFilter(const std::vector<T>& point_cloud,
   for (const auto& voxel_and_index : voxel_count_and_point_index) {
     points_used[voxel_and_index.second.second] = true;
   }
+  return points_used;
+}
+
+template <class T, class PointFunction>
+std::vector<T> RandomizedVoxelFilter(const std::vector<T>& point_cloud,
+                                     const float resolution,
+                                     PointFunction&& point_function) {
+  const std::vector<bool> points_used =
+      RandomizedVoxelFilterIndices(point_cloud, resolution, point_function);
 
   std::vector<T> results;
   for (size_t i = 0; i < point_cloud.size(); i++) {
@@ -126,10 +131,33 @@ std::vector<T> RandomizedVoxelFilter(const std::vector<T>& point_cloud,
 
 }  // namespace
 
-PointCloud VoxelFilter(const PointCloud& point_cloud, const float resolution) {
+std::vector<RangefinderPoint> VoxelFilter(
+    const std::vector<RangefinderPoint>& points, const float resolution) {
   return RandomizedVoxelFilter(
-      point_cloud, resolution,
+      points, resolution,
       [](const RangefinderPoint& point) { return point.position; });
+}
+
+PointCloud VoxelFilter(const PointCloud& point_cloud, const float resolution) {
+  const std::vector<bool> points_used = RandomizedVoxelFilterIndices(
+      point_cloud.points(), resolution,
+      [](const RangefinderPoint& point) { return point.position; });
+
+  std::vector<RangefinderPoint> filtered_points;
+  for (size_t i = 0; i < point_cloud.size(); i++) {
+    if (points_used[i]) {
+      filtered_points.push_back(point_cloud[i]);
+    }
+  }
+  std::vector<float> filtered_intensities;
+  CHECK_LE(point_cloud.intensities().size(), point_cloud.points().size());
+  for (size_t i = 0; i < point_cloud.intensities().size(); i++) {
+    if (points_used[i]) {
+      filtered_intensities.push_back(point_cloud.intensities()[i]);
+    }
+  }
+  return PointCloud(std::move(filtered_points),
+                    std::move(filtered_intensities));
 }
 
 TimedPointCloud VoxelFilter(const TimedPointCloud& timed_point_cloud,

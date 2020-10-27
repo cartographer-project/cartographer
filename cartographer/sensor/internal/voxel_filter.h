@@ -27,6 +27,8 @@
 namespace cartographer {
 namespace sensor {
 
+std::vector<RangefinderPoint> VoxelFilter(
+    const std::vector<RangefinderPoint>& points, const float resolution);
 PointCloud VoxelFilter(const PointCloud& point_cloud, const float resolution);
 TimedPointCloud VoxelFilter(const TimedPointCloud& timed_point_cloud,
                             const float resolution);

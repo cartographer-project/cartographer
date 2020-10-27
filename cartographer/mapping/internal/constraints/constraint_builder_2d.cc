@@ -24,6 +24,8 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <tuple>
+#include <utility>
 
 #include "Eigen/Eigenvalues"
 #include "absl/memory/memory.h"
@@ -61,7 +63,6 @@ ConstraintBuilder2D::ConstraintBuilder2D(
       thread_pool_(thread_pool),
       finish_node_task_(absl::make_unique<common::Task>()),
       when_done_task_(absl::make_unique<common::Task>()),
-      sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options()) {}
 
 ConstraintBuilder2D::~ConstraintBuilder2D() {
@@ -81,7 +82,12 @@ void ConstraintBuilder2D::MaybeAddConstraint(
       options_.max_constraint_distance()) {
     return;
   }
-  if (!sampler_.Pulse()) return;
+  if (!per_submap_sampler_
+           .emplace(std::piecewise_construct, std::forward_as_tuple(submap_id),
+                    std::forward_as_tuple(options_.sampling_ratio()))
+           .first->second.Pulse()) {
+    return;
+  }
 
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
@@ -305,6 +311,7 @@ void ConstraintBuilder2D::DeleteScanMatcher(const SubmapId& submap_id) {
         << "DeleteScanMatcher was called while WhenDone was scheduled.";
   }
   submap_scan_matchers_.erase(submap_id);
+  per_submap_sampler_.erase(submap_id);
   kNumSubmapScanMatchersMetric->Set(submap_scan_matchers_.size());
 }
 

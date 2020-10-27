@@ -37,16 +37,14 @@ struct PixelData {
 };
 
 // Filters 'range_data', retaining only the returns that have no more than
-// 'max_range' distance from the origin. Removes misses and reflectivity
-// information.
+// 'max_range' distance from the origin. Removes misses.
 sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
                                             const float max_range) {
   sensor::RangeData result{range_data.origin, {}, {}};
-  for (const sensor::RangefinderPoint& hit : range_data.returns) {
-    if ((hit.position - range_data.origin).norm() <= max_range) {
-      result.returns.push_back(hit);
-    }
-  }
+  result.returns =
+      range_data.returns.copy_if([&](const sensor::RangefinderPoint& point) {
+        return (point.position - range_data.origin).norm() <= max_range;
+      });
   return result;
 }
 
@@ -204,6 +202,8 @@ Submap3D::Submap3D(const float high_resolution, const float low_resolution,
           absl::make_unique<HybridGrid>(high_resolution)),
       low_resolution_hybrid_grid_(
           absl::make_unique<HybridGrid>(low_resolution)),
+      high_resolution_intensity_hybrid_grid_(
+          absl::make_unique<IntensityHybridGrid>(high_resolution)),
       rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram) {}
 
 Submap3D::Submap3D(const proto::Submap3D& proto)
@@ -280,9 +280,11 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   range_data_inserter.Insert(
       FilterRangeDataByMaxRange(transformed_range_data,
                                 high_resolution_max_range),
-      high_resolution_hybrid_grid_.get());
+      high_resolution_hybrid_grid_.get(),
+      high_resolution_intensity_hybrid_grid_.get());
   range_data_inserter.Insert(transformed_range_data,
-                             low_resolution_hybrid_grid_.get());
+                             low_resolution_hybrid_grid_.get(),
+                             /*intensity_hybrid_grid=*/nullptr);
   set_num_range_data(num_range_data() + 1);
   const float yaw_in_submap_from_gravity = transform::GetYaw(
       local_pose().inverse().rotation() * local_from_gravity_aligned);
@@ -334,6 +336,11 @@ void ActiveSubmaps3D::AddSubmap(
     // This will crop the finished Submap before inserting a new Submap to
     // reduce peak memory usage a bit.
     CHECK(submaps_.front()->insertion_finished());
+    // We use `ForgetIntensityHybridGrid` to reduce memory usage. Since we use
+    // active submaps and their associated intensity hybrid grids for scan
+    // matching, we call `ForgetIntensityHybridGrid` once we remove the submap
+    // from active submaps and no longer need the intensity hybrid grid.
+    submaps_.front()->ForgetIntensityHybridGrid();
     submaps_.erase(submaps_.begin());
   }
   const Eigen::VectorXf initial_rotational_scan_matcher_histogram =

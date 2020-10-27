@@ -25,6 +25,7 @@ namespace sensor {
 namespace {
 
 using ::testing::Contains;
+using ::testing::IsEmpty;
 
 TEST(VoxelFilterTest, ReturnsOnePointInEachVoxel) {
   const PointCloud point_cloud({{{0.f, 0.f, 0.f}},
@@ -33,9 +34,30 @@ TEST(VoxelFilterTest, ReturnsOnePointInEachVoxel) {
                                 {{0.f, 0.f, 0.1f}}});
   const PointCloud result = VoxelFilter(point_cloud, 0.3f);
   ASSERT_EQ(result.size(), 2);
-  EXPECT_THAT(point_cloud, Contains(result[0]));
-  EXPECT_THAT(point_cloud, Contains(result[1]));
-  EXPECT_THAT(result, Contains(point_cloud[2]));
+  EXPECT_THAT(result.intensities(), IsEmpty());
+  EXPECT_THAT(point_cloud.points(), Contains(result[0]));
+  EXPECT_THAT(point_cloud.points(), Contains(result[1]));
+  EXPECT_THAT(result.points(), Contains(point_cloud[2]));
+}
+
+TEST(VoxelFilterTest, CorrectIntensities) {
+  std::vector<RangefinderPoint> points;
+  std::vector<float> intensities;
+  for (int i = 0; i < 100; ++i) {
+    const float value = 0.1f * i;
+    // We add points with intensity equal to the z coordinate, so we can later
+    // verify that the resulting intensities are corresponding to the filtered
+    // points.
+    points.push_back({{-100.f, 0.3f, value}});
+    intensities.push_back(value);
+  }
+  const PointCloud point_cloud(points, intensities);
+  const PointCloud result = VoxelFilter(point_cloud, 0.3f);
+
+  ASSERT_EQ(result.intensities().size(), result.points().size());
+  for (size_t i = 0; i < result.size(); ++i) {
+    ASSERT_NEAR(result[i].position.z(), result.intensities()[i], 1e-6);
+  }
 }
 
 TEST(VoxelFilterTest, HandlesLargeCoordinates) {
@@ -45,7 +67,8 @@ TEST(VoxelFilterTest, HandlesLargeCoordinates) {
                                 {{-200000.f, 0.f, 0.f}}});
   const PointCloud result = VoxelFilter(point_cloud, 0.01f);
   EXPECT_EQ(result.size(), 2);
-  EXPECT_THAT(result, Contains(point_cloud[3]));
+  EXPECT_THAT(result.intensities(), IsEmpty());
+  EXPECT_THAT(result.points(), Contains(point_cloud[3]));
 }
 
 TEST(VoxelFilterTest, IgnoresTime) {

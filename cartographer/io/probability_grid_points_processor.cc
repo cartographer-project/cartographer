@@ -126,8 +126,9 @@ ProbabilityGridPointsProcessor::FromDictionary(
 
 void ProbabilityGridPointsProcessor::Process(
     std::unique_ptr<PointsBatch> batch) {
-  range_data_inserter_.Insert({batch->origin, batch->points, {}},
-                              &probability_grid_);
+  range_data_inserter_.Insert(
+      {batch->origin, sensor::PointCloud(batch->points), {}},
+      &probability_grid_);
   next_->Process(std::move(batch));
 }
 

@@ -179,7 +179,7 @@ def GenerateDocumentation(output_file, root):
     assert message.name not in output_dict
     output_dict[message.name] = content
     if message.preceding_comments:
-      content.extend(preceding_comments)
+      content.extend(message.preceding_comments)
       content.append('')
     for option_type, option_name, option_comments in message.options:
       # TODO(whess): For now we exclude InitialTrajectoryPose from the

@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 MAX_3D_RANGE = 60.
+INTENSITY_THRESHOLD = 40
 
 TRAJECTORY_BUILDER_3D = {
   min_range = 1.,
@@ -43,6 +44,11 @@ TRAJECTORY_BUILDER_3D = {
   ceres_scan_matcher = {
     occupied_space_weight_0 = 1.,
     occupied_space_weight_1 = 6.,
+    intensity_cost_function_options_0 = {
+        weight = 0.5,
+        huber_scale = 0.3,
+        intensity_threshold = INTENSITY_THRESHOLD,
+    },
     translation_weight = 5.,
     rotation_weight = 4e2,
     only_optimize_yaw = false,
@@ -96,6 +102,12 @@ TRAJECTORY_BUILDER_3D = {
       hit_probability = 0.55,
       miss_probability = 0.49,
       num_free_space_voxels = 2,
+      intensity_threshold = INTENSITY_THRESHOLD,
     },
   },
+
+  -- When setting use_intensites to true, the intensity_cost_function_options_0
+  -- parameter in ceres_scan_matcher has to be set up as well or otherwise
+  -- CeresScanMatcher will CHECK-fail.
+  use_intensities = false,
 }

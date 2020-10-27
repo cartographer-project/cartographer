@@ -129,8 +129,11 @@ class LocalTrajectoryBuilderTest : public ::testing::Test {
               hit_probability = 0.7,
               miss_probability = 0.4,
               num_free_space_voxels = 0,
+              intensity_threshold = 100.0,
             },
           },
+
+          use_intensities = false,
         }
         )text");
     return mapping::CreateLocalTrajectoryBuilderOptions3D(

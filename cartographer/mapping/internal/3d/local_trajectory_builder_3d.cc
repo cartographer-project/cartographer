@@ -82,13 +82,18 @@ std::unique_ptr<transform::Rigid3d> LocalTrajectoryBuilder3D::ScanMatch(
 
   transform::Rigid3d pose_observation_in_submap;
   ceres::Solver::Summary summary;
+  const auto* high_resolution_intensity_hybrid_grid =
+      options_.use_intensities()
+          ? &matching_submap->high_resolution_intensity_hybrid_grid()
+          : nullptr;
   ceres_scan_matcher_->Match(
       (matching_submap->local_pose().inverse() * pose_prediction).translation(),
-      initial_ceres_pose,
-      {{&high_resolution_point_cloud_in_tracking,
-        &matching_submap->high_resolution_hybrid_grid()},
-       {&low_resolution_point_cloud_in_tracking,
-        &matching_submap->low_resolution_hybrid_grid()}},
+      initial_ceres_pose, {{&high_resolution_point_cloud_in_tracking,
+                            &matching_submap->high_resolution_hybrid_grid(),
+                            high_resolution_intensity_hybrid_grid},
+                           {&low_resolution_point_cloud_in_tracking,
+                            &matching_submap->low_resolution_hybrid_grid(),
+                            /*intensity_hybrid_grid=*/nullptr}},
       &pose_observation_in_submap, &summary);
   kCeresScanMatcherCostMetric->Observe(summary.final_cost);
   const double residual_distance = (pose_observation_in_submap.translation() -
@@ -117,7 +122,6 @@ void LocalTrajectoryBuilder3D::AddImuData(const sensor::ImuData& imu_data) {
     initial_imu_data.push_back(sensor::FromProto(imu));
   }
   initial_imu_data.push_back(imu_data);
-
   extrapolator_ = mapping::PoseExtrapolatorInterface::CreateWithImuData(
       options_.pose_extrapolator_options(), initial_imu_data, initial_poses);
 }
@@ -126,6 +130,12 @@ std::unique_ptr<LocalTrajectoryBuilder3D::MatchingResult>
 LocalTrajectoryBuilder3D::AddRangeData(
     const std::string& sensor_id,
     const sensor::TimedPointCloudData& unsynchronized_data) {
+  if (options_.use_intensities()) {
+    CHECK_EQ(unsynchronized_data.ranges.size(),
+             unsynchronized_data.intensities.size())
+        << "Passed point cloud has inconsistent number of intensities and "
+           "ranges.";
+  }
   auto synchronized_data =
       range_data_collator_.AddRangeData(sensor_id, unsynchronized_data);
   if (synchronized_data.ranges.empty()) {
@@ -196,7 +206,14 @@ LocalTrajectoryBuilder3D::AddRangeData(
   hits_poses.push_back(extrapolation_result.current_pose.cast<float>());
   CHECK_EQ(hits_poses.size(), hit_times.size());
 
-  sensor::RangeData accumulated_range_data;
+  const size_t max_possible_number_of_accumulated_points = hit_times.size();
+  std::vector<sensor::RangefinderPoint> accumulated_points;
+  std::vector<float> accumulated_intensities;
+  accumulated_points.reserve(max_possible_number_of_accumulated_points);
+  if (options_.use_intensities()) {
+    accumulated_intensities.reserve(max_possible_number_of_accumulated_points);
+  }
+  sensor::PointCloud misses;
   std::vector<transform::Rigid3f>::const_iterator hits_poses_it =
       hits_poses.begin();
   for (const auto& point_cloud_origin_data :
@@ -210,13 +227,17 @@ LocalTrajectoryBuilder3D::AddRangeData(
       const float range = delta.norm();
       if (range >= options_.min_range()) {
         if (range <= options_.max_range()) {
-          accumulated_range_data.returns.push_back(
-              sensor::RangefinderPoint{hit_in_local});
+          accumulated_points.push_back(sensor::RangefinderPoint{hit_in_local});
+          if (options_.use_intensities()) {
+            accumulated_intensities.push_back(hit.intensity);
+          }
         } else {
           // We insert a ray cropped to 'max_range' as a miss for hits beyond
           // the maximum range. This way the free space up to the maximum range
           // will be updated.
-          accumulated_range_data.misses.push_back(sensor::RangefinderPoint{
+          // TODO(wohe): since `misses` are not used anywhere in 3D, consider
+          // removing `misses` from `range_data` and/or everywhere in 3D.
+          misses.push_back(sensor::RangefinderPoint{
               origin_in_local + options_.max_range() / range * delta});
         }
       }
@@ -224,6 +245,8 @@ LocalTrajectoryBuilder3D::AddRangeData(
     }
   }
   CHECK(std::next(hits_poses_it) == hits_poses.end());
+  const sensor::PointCloud returns(std::move(accumulated_points),
+                                   std::move(accumulated_intensities));
 
   const common::Time current_sensor_time = synchronized_data.time;
   absl::optional<common::Duration> sensor_duration;
@@ -236,10 +259,8 @@ LocalTrajectoryBuilder3D::AddRangeData(
   const auto voxel_filter_start = std::chrono::steady_clock::now();
   const sensor::RangeData filtered_range_data = {
       extrapolation_result.current_pose.translation().cast<float>(),
-      sensor::VoxelFilter(accumulated_range_data.returns,
-                          options_.voxel_filter_size()),
-      sensor::VoxelFilter(accumulated_range_data.misses,
-                          options_.voxel_filter_size())};
+      sensor::VoxelFilter(returns, options_.voxel_filter_size()),
+      sensor::VoxelFilter(misses, options_.voxel_filter_size())};
   const auto voxel_filter_stop = std::chrono::steady_clock::now();
   const auto voxel_filter_duration = voxel_filter_stop - voxel_filter_start;
 
