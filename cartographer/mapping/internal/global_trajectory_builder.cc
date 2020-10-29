@@ -101,6 +101,9 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
     if (local_trajectory_builder_) {
       local_trajectory_builder_->AddOdometryData(odometry_data);
     }
+    // TODO(MichaelGrupp): Instead of having an optional filter on this level,
+    // odometry could be marginalized between nodes in the pose graph.
+    // Related issue: cartographer-project/cartographer/#1768
     if (pose_graph_odometry_motion_filter_.has_value() &&
         pose_graph_odometry_motion_filter_.value().IsSimilar(
             odometry_data.time, odometry_data.pose)) {
