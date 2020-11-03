@@ -40,6 +40,7 @@ class ProbabilityGridRangeDataInserter2D : public RangeDataInserterInterface {
  public:
   explicit ProbabilityGridRangeDataInserter2D(
       const proto::ProbabilityGridRangeDataInserterOptions2D& options);
+  virtual ~ProbabilityGridRangeDataInserter2D() {}
 
   ProbabilityGridRangeDataInserter2D(
       const ProbabilityGridRangeDataInserter2D&) = delete;

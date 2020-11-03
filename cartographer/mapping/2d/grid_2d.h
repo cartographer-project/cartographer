@@ -42,6 +42,7 @@ class Grid2D : public GridInterface {
          ValueConversionTables* conversion_tables);
   explicit Grid2D(const proto::Grid2D& proto,
                   ValueConversionTables* conversion_tables);
+  virtual ~Grid2D() {}
 
   // Returns the limits of this Grid2D.
   const MapLimits& limits() const { return limits_; }

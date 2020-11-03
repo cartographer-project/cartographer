@@ -34,6 +34,7 @@ class ProbabilityGrid : public Grid2D {
                            ValueConversionTables* conversion_tables);
   explicit ProbabilityGrid(const proto::Grid2D& proto,
                            ValueConversionTables* conversion_tables);
+  virtual ~ProbabilityGrid() {}
 
   // Sets the probability of the cell at 'cell_index' to the given
   // 'probability'. Only allowed if the cell was unknown before.
