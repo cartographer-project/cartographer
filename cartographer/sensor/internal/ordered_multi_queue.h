@@ -23,7 +23,7 @@
 #include <string>
 #include <tuple>
 
-#include "cartographer/common/blocking_queue.h"
+#include "cartographer/common/internal/blocking_queue.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/internal/dispatchable.h"

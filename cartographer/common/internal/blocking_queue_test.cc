@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/common/blocking_queue.h"
+#include "cartographer/common/internal/blocking_queue.h"
 
 #include <memory>
 #include <thread>

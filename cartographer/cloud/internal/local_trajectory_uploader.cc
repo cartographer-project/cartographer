@@ -25,7 +25,7 @@
 #include "cartographer/cloud/internal/handlers/add_trajectory_handler.h"
 #include "cartographer/cloud/internal/handlers/finish_trajectory_handler.h"
 #include "cartographer/cloud/internal/sensor/serialization.h"
-#include "cartographer/common/blocking_queue.h"
+#include "cartographer/common/internal/blocking_queue.h"
 #include "glog/logging.h"
 #include "grpc++/grpc++.h"
 

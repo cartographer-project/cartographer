@@ -23,8 +23,8 @@
 #include <set>
 #include <string>
 
+#include "cartographer/common/internal/rate_timer.h"
 #include "cartographer/common/port.h"
-#include "cartographer/common/rate_timer.h"
 #include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"

@@ -23,7 +23,7 @@
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/map_builder_server_interface.h"
 #include "cartographer/cloud/proto/map_builder_server_options.pb.h"
-#include "cartographer/common/blocking_queue.h"
+#include "cartographer/common/internal/blocking_queue.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/2d/submap_2d.h"
 #include "cartographer/mapping/3d/submap_3d.h"

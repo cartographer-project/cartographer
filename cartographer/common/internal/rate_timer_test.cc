@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/common/rate_timer.h"
+#include "cartographer/common/internal/rate_timer.h"
 
 #include "gtest/gtest.h"
 
