@@ -17,6 +17,7 @@
 #include "cartographer/mapping/map_builder.h"
 
 #include "absl/memory/memory.h"
+#include "absl/types/optional.h"
 #include "cartographer/common/time.h"
 #include "cartographer/io/internal/mapping_state_serialization.h"
 #include "cartographer/io/proto_stream.h"
@@ -28,6 +29,7 @@
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
 #include "cartographer/mapping/internal/collated_trajectory_builder.h"
 #include "cartographer/mapping/internal/global_trajectory_builder.h"
+#include "cartographer/mapping/internal/motion_filter.h"
 #include "cartographer/sensor/internal/collator.h"
 #include "cartographer/sensor/internal/trajectory_collator.h"
 #include "cartographer/sensor/internal/voxel_filter.h"
@@ -120,6 +122,14 @@ int MapBuilder::AddTrajectoryBuilder(
     const proto::TrajectoryBuilderOptions& trajectory_options,
     LocalSlamResultCallback local_slam_result_callback) {
   const int trajectory_id = trajectory_builders_.size();
+
+  absl::optional<MotionFilter> pose_graph_odometry_motion_filter;
+  if (trajectory_options.has_pose_graph_odometry_motion_filter()) {
+    LOG(INFO) << "Using a motion filter for adding odometry to the pose graph.";
+    pose_graph_odometry_motion_filter.emplace(
+        MotionFilter(trajectory_options.pose_graph_odometry_motion_filter()));
+  }
+
   if (options_.use_trajectory_builder_3d()) {
     std::unique_ptr<LocalTrajectoryBuilder3D> local_trajectory_builder;
     if (trajectory_options.has_trajectory_builder_3d_options()) {
@@ -134,7 +144,7 @@ int MapBuilder::AddTrajectoryBuilder(
         CreateGlobalTrajectoryBuilder3D(
             std::move(local_trajectory_builder), trajectory_id,
             static_cast<PoseGraph3D*>(pose_graph_.get()),
-            local_slam_result_callback)));
+            local_slam_result_callback, pose_graph_odometry_motion_filter)));
   } else {
     std::unique_ptr<LocalTrajectoryBuilder2D> local_trajectory_builder;
     if (trajectory_options.has_trajectory_builder_2d_options()) {
@@ -149,7 +159,7 @@ int MapBuilder::AddTrajectoryBuilder(
         CreateGlobalTrajectoryBuilder2D(
             std::move(local_trajectory_builder), trajectory_id,
             static_cast<PoseGraph2D*>(pose_graph_.get()),
-            local_slam_result_callback)));
+            local_slam_result_callback, pose_graph_odometry_motion_filter)));
   }
   MaybeAddPureLocalizationTrimmer(trajectory_id, trajectory_options,
                                   pose_graph_.get());
