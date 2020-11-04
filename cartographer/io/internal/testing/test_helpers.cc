@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/io/testing/test_helpers.h"
+#include "cartographer/io/internal/testing/test_helpers.h"
 
 #include "cartographer/mapping/proto/serialization.pb.h"
 
