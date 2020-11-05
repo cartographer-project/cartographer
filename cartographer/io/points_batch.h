@@ -26,6 +26,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/io/color.h"
 #include "cartographer/sensor/point_cloud.h"
+#include "cartographer/transform/transform.h"
 
 namespace cartographer {
 namespace io {
@@ -64,6 +65,8 @@ struct PointsBatch {
 
   // Colors are optional. If set, they are RGB values.
   std::vector<FloatColor> colors;
+
+  transform::Rigid3f sensor_to_map;
 };
 
 // Removes the indices in 'to_remove' from 'batch'.

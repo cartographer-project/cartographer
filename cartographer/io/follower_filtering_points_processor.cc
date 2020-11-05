@@ -15,7 +15,7 @@
  */
 
 #include "cartographer/io/follower_filtering_points_processor.h"
-
+#include "cartographer/common/math.h"
 #include "absl/memory/memory.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_batch.h"
@@ -41,27 +41,26 @@ FollowerFiteringPointsProcessor::FollowerFiteringPointsProcessor(
     : yaw_range_(yaw_range), follow_distance_(follow_distance), min_height_(min_height), max_height_(max_height), next_(next) {}
 
 void FollowerFiteringPointsProcessor::Process(
-    std::unique_ptr<PointsBatch> batch) {
+  std::unique_ptr<PointsBatch> batch) {
   absl::flat_hash_set<int> to_remove;
 
   // we are checking 3 criteria for the follower points and remove them if all are met
   for (size_t i = 0; i < batch->points.size(); ++i) {
     // 1. inside certain yaw range
-    const Eigen::Vector3f topBoundary = batch->origin + Eigen::Vector3f(follow_distance_ * std::cos(yaw_range_/2), follow_distance_ * -std::sin(yaw_range_/2), 0);
-    const Eigen::Vector3f bottomBoundary = batch->origin + Eigen::Vector3f(follow_distance_ * std::cos(yaw_range_/2), follow_distance_ * std::sin(yaw_range_/2), 0);
-    const Eigen::Vector3f topVec = topBoundary - batch->origin;
-    const Eigen::Vector3f bottomVec = bottomBoundary - batch->origin;
-    const float skalarTop = topVec[0] * (batch->points[i].position[1] - batch->origin[1]) - topVec[1] * (batch->points[i].position[0] - batch->origin[0]);
-    const float skalarBottom = bottomVec[0] * (batch->points[i].position[1] - batch->origin[1]) - bottomVec[1] * (batch->points[i].position[0] - batch->origin[0]);
-    const bool invalid_yaw = skalarBottom < 0 && skalarTop > 0;
-
+    // we use inverse sensor_to_map matrix to transform points from world space to robot space
+    Eigen::Vector3f point = batch->sensor_to_map.inverse() * batch->points[i].position;
+    // we add 180 here because atan2 is calculating angle to x-axis
+    // and we want to include points on both sides of the axis
+    float angle = common::RadToDeg(std::atan2(point[1], point[0])) + 180;
+    const bool invalid_yaw = angle < yaw_range_;
     // 2. inside certain follow distance
-    const float actual_follow_distance = std::abs(batch->points[i].position[0] - batch->origin[0]);
+    // calculate 2d distance, since z is not interesting here
+    const float actual_follow_distance = std::sqrt(pow(batch->points[i].position[0] - batch->origin[0], 2) + pow(batch->points[i].position[1] - batch->origin[1], 2));
     const bool invalid_follow_distance = actual_follow_distance <= follow_distance_;
 
     // 3. inside certain z-position
     const float z_position = batch->points[i].position[2];
-    const bool invalid_z_position = z_position >= min_height_ || z_position >= max_height_;
+    const bool invalid_z_position = z_position >= min_height_ || z_position <= max_height_;
 
     if (invalid_yaw && invalid_follow_distance && invalid_z_position) {
       to_remove.insert(i);
