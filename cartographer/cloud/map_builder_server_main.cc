@@ -50,7 +50,7 @@ void Run(const std::string& configuration_directory,
   proto::MapBuilderServerOptions map_builder_server_options =
       LoadMapBuilderServerOptions(configuration_directory,
                                   configuration_basename);
-  auto map_builder = absl::make_unique<mapping::MapBuilder>(
+  auto map_builder = mapping::CreateMapBuilder(
       map_builder_server_options.map_builder_options());
   std::unique_ptr<MapBuilderServerInterface> map_builder_server =
       CreateMapBuilderServer(map_builder_server_options,

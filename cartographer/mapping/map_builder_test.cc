@@ -64,7 +64,7 @@ class MapBuilderTestBase : public T {
   }
 
   void BuildMapBuilder() {
-    map_builder_ = absl::make_unique<MapBuilder>(map_builder_options_);
+    map_builder_ = CreateMapBuilder(map_builder_options_);
   }
 
   void SetOptionsTo3D() {

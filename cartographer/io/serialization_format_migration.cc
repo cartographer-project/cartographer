@@ -28,7 +28,6 @@
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotational_scan_matcher.h"
-#include "cartographer/mapping/map_builder.h"
 #include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/probability_values.h"

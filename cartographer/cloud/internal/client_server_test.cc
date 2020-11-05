@@ -29,12 +29,13 @@
 #include "cartographer/mapping/internal/testing/mock_trajectory_builder.h"
 #include "cartographer/mapping/internal/testing/test_helpers.h"
 #include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer/mapping/map_builder.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 using ::cartographer::io::testing::ProtoReaderFromStrings;
-using ::cartographer::mapping::MapBuilder;
+using ::cartographer::mapping::CreateMapBuilder;
 using ::cartographer::mapping::MapBuilderInterface;
 using ::cartographer::mapping::PoseGraphInterface;
 using ::cartographer::mapping::TrajectoryBuilderInterface;
@@ -139,15 +140,15 @@ class ClientServerTestBase : public T {
   }
 
   void InitializeRealServer() {
-    auto map_builder = absl::make_unique<MapBuilder>(
-        map_builder_server_options_.map_builder_options());
+    auto map_builder =
+        CreateMapBuilder(map_builder_server_options_.map_builder_options());
     server_ = absl::make_unique<MapBuilderServer>(map_builder_server_options_,
                                                   std::move(map_builder));
     EXPECT_TRUE(server_ != nullptr);
   }
 
   void InitializeRealUploadingServer() {
-    auto map_builder = absl::make_unique<MapBuilder>(
+    auto map_builder = CreateMapBuilder(
         uploading_map_builder_server_options_.map_builder_options());
     uploading_server_ = absl::make_unique<MapBuilderServer>(
         uploading_map_builder_server_options_, std::move(map_builder));

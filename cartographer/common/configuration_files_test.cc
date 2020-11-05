@@ -20,7 +20,7 @@
 #include "cartographer/common/config.h"
 #include "cartographer/common/configuration_file_resolver.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/map_builder.h"
+#include "cartographer/mapping/map_builder_interface.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {

@@ -27,6 +27,7 @@
 #include "cartographer/io/proto_stream_interface.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/pose_graph_interface.h"
+#include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/submaps.h"
@@ -34,6 +35,9 @@
 
 namespace cartographer {
 namespace mapping {
+
+proto::MapBuilderOptions CreateMapBuilderOptions(
+    common::LuaParameterDictionary* const parameter_dictionary);
 
 // This interface is used for both library and RPC implementations.
 // Implementations wire up the complete SLAM stack.

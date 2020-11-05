@@ -18,7 +18,7 @@
 
 #include "absl/memory/memory.h"
 #include "cartographer/common/configuration_file_resolver.h"
-#include "cartographer/mapping/map_builder.h"
+#include "cartographer/mapping/map_builder_interface.h"
 
 namespace cartographer {
 namespace cloud {
