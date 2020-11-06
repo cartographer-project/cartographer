@@ -29,7 +29,6 @@
 #include "cartographer/mapping/3d/submap_3d.h"
 #include "cartographer/mapping/internal/submap_controller.h"
 #include "cartographer/mapping/local_slam_result_data.h"
-#include "cartographer/mapping/map_builder.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/metrics/family_factory.h"
 #include "cartographer/sensor/internal/dispatchable.h"

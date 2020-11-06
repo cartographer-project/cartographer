@@ -28,9 +28,6 @@
 namespace cartographer {
 namespace mapping {
 
-proto::MapBuilderOptions CreateMapBuilderOptions(
-    common::LuaParameterDictionary *const parameter_dictionary);
-
 // Wires up the complete SLAM stack with TrajectoryBuilders (for local submaps)
 // and a PoseGraph for loop closure.
 class MapBuilder : public MapBuilderInterface {
@@ -97,6 +94,9 @@ class MapBuilder : public MapBuilderInterface {
   std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>
       all_trajectory_builder_options_;
 };
+
+std::unique_ptr<MapBuilderInterface> CreateMapBuilder(
+    const proto::MapBuilderOptions& options);
 
 }  // namespace mapping
 }  // namespace cartographer

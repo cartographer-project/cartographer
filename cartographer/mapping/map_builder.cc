@@ -74,24 +74,6 @@ void MaybeAddPureLocalizationTrimmer(
 
 }  // namespace
 
-proto::MapBuilderOptions CreateMapBuilderOptions(
-    common::LuaParameterDictionary* const parameter_dictionary) {
-  proto::MapBuilderOptions options;
-  options.set_use_trajectory_builder_2d(
-      parameter_dictionary->GetBool("use_trajectory_builder_2d"));
-  options.set_use_trajectory_builder_3d(
-      parameter_dictionary->GetBool("use_trajectory_builder_3d"));
-  options.set_num_background_threads(
-      parameter_dictionary->GetNonNegativeInt("num_background_threads"));
-  options.set_collate_by_trajectory(
-      parameter_dictionary->GetBool("collate_by_trajectory"));
-  *options.mutable_pose_graph_options() = CreatePoseGraphOptions(
-      parameter_dictionary->GetDictionary("pose_graph").get());
-  CHECK_NE(options.use_trajectory_builder_2d(),
-           options.use_trajectory_builder_3d());
-  return options;
-}
-
 MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
     : options_(options), thread_pool_(options.num_background_threads()) {
   CHECK(options.use_trajectory_builder_2d() ^
@@ -412,6 +394,11 @@ std::map<int, int> MapBuilder::LoadStateFromFile(
   LOG(INFO) << "Loading saved state '" << state_filename << "'...";
   io::ProtoStreamReader stream(state_filename);
   return LoadState(&stream, load_frozen_state);
+}
+
+std::unique_ptr<MapBuilderInterface> CreateMapBuilder(
+    const proto::MapBuilderOptions& options) {
+  return absl::make_unique<MapBuilder>(options);
 }
 
 }  // namespace mapping
