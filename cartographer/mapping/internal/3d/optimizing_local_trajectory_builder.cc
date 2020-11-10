@@ -334,9 +334,9 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
     TransformStates(matching_submap->local_pose().inverse());
     auto next_control_point = control_points_.begin();
     for (auto& point_cloud_set : point_cloud_data_) {
-      if (point_cloud_set.time < control_points_.back().time) {
+      if (point_cloud_set.time <= control_points_.back().time) {
         while (next_control_point->time <= point_cloud_set.time) {
-          CHECK(next_control_point != control_points_.end());
+          if(std::next(next_control_point) == control_points_.end()) break;
           next_control_point++;
         }
         CHECK(next_control_point != control_points_.begin());
@@ -388,6 +388,22 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                   std::prev(next_control_point)->state.translation.data(),
                   std::prev(next_control_point)->state.rotation.data());
               }
+              else if(next_control_point->time == point_cloud_set.time) {
+                problem.AddResidualBlock(
+                    scan_matching::TSDFSpaceCostFunction3D::
+                    CreateAutoDiffCostFunction(
+                        options_.optimizing_local_trajectory_builder_options()
+                            .high_resolution_grid_weight() /
+                            std::sqrt(static_cast<double>(
+                                          point_cloud_set
+                                              .high_resolution_filtered_points.size())),
+                        point_cloud_set.high_resolution_filtered_points,
+                        static_cast<const HybridGridTSDF&>(
+                            matching_submap->high_resolution_hybrid_grid())),
+                    nullptr,
+                    next_control_point->state.translation.data(),
+                    next_control_point->state.rotation.data());
+              }
               else {
                 problem.AddResidualBlock(
                     scan_matching::InterpolatedTSDFSpaceCostFunction3D::
@@ -410,7 +426,6 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
             }
             if (options_.optimizing_local_trajectory_builder_options()
                     .low_resolution_grid_weight() > 0.0) {
-
               if(std::prev(next_control_point)->time == point_cloud_set.time) {
                 problem.AddResidualBlock(
                     scan_matching::TSDFSpaceCostFunction3D::
@@ -426,6 +441,22 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
                     nullptr,
                     std::prev(next_control_point)->state.translation.data(),
                     std::prev(next_control_point)->state.rotation.data());
+              }
+              else if(next_control_point->time == point_cloud_set.time) {
+                problem.AddResidualBlock(
+                    scan_matching::TSDFSpaceCostFunction3D::
+                    CreateAutoDiffCostFunction(
+                        options_.optimizing_local_trajectory_builder_options()
+                            .low_resolution_grid_weight() /
+                            std::sqrt(static_cast<double>(
+                                          point_cloud_set
+                                              .low_resolution_filtered_points.size())),
+                        point_cloud_set.low_resolution_filtered_points,
+                        static_cast<const HybridGridTSDF&>(
+                            matching_submap->low_resolution_hybrid_grid())),
+                    nullptr,
+                    next_control_point->state.translation.data(),
+                    next_control_point->state.rotation.data());
               }
               else {
               problem.AddResidualBlock(
