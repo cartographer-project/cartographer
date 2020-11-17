@@ -25,11 +25,13 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_batch.h"
 #include "glog/logging.h"
+
+#ifdef WITH_OPEN3D
 #include "Open3D/Open3D.h"
+#endif
 
 namespace cartographer {
   namespace io {
-
 
     std::unique_ptr<MeshWritingPointsProcessor>
     MeshWritingPointsProcessor::FromDictionary(
@@ -66,11 +68,14 @@ namespace cartographer {
               has_colors_(false),
               file_(std::move(file_writer)) {
       name_ = file_->GetFilename();
+#ifdef WITH_OPEN3D
       pc_ = std::make_shared<open3d::geometry::PointCloud>();
       resultpc_ = std::make_shared<open3d::geometry::PointCloud>();
+#endif
     }
 
     PointsProcessor::FlushResult MeshWritingPointsProcessor::Flush() {
+#ifdef WITH_OPEN3D
       if(statistical_outlier_neighbours_ != 0 && statistical_outlier_radius_ != 0) {
         LOG(INFO) << "Removing statistical outliers using: " << std::to_string(statistical_outlier_neighbours_) << " " << std::to_string(statistical_outlier_radius_);
         std::vector<size_t> outliers;
@@ -112,6 +117,7 @@ namespace cartographer {
           LOG(FATAL) << "Mesh generation must be configured to occur after any "
                         "stages that require multiple passes.";
       }
+#endif
       LOG(FATAL);
     }
 
@@ -125,6 +131,7 @@ namespace cartographer {
         num_points_ = 0;
       }
 
+#ifdef WITH_OPEN3D
       for (size_t i = 0; i < batch->points.size(); ++i) {
         pc_->points_.push_back({
                                        batch->points[i].position[0],
@@ -149,6 +156,7 @@ namespace cartographer {
 
         pc_ = std::make_shared<open3d::geometry::PointCloud>();
       }
+#endif
       next_->Process(std::move(batch));
     }
 

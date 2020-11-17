@@ -17,7 +17,9 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_processor.h"
+#ifdef WITH_OPEN3D
 #include "Open3D/Open3D.h"
+#endif
 
 namespace cartographer {
   namespace io {
@@ -63,8 +65,11 @@ namespace cartographer {
       bool has_colors_;
       bool has_intensities_;
       std::unique_ptr<FileWriter> file_;
+
+#ifdef WITH_OPEN3D
       std::shared_ptr<open3d::geometry::PointCloud> pc_;
       std::shared_ptr<open3d::geometry::PointCloud> resultpc_;
+#endif
     };
 
   }  // namespace io
