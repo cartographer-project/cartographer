@@ -24,9 +24,11 @@ set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VE
 option(BUILD_GRPC "build Cartographer gRPC support" false)
 set(CARTOGRAPHER_HAS_GRPC ${BUILD_GRPC})
 option(BUILD_PROMETHEUS "build Prometheus monitoring support" false)
+
 option(WITH_OPEN3D "build with open3d support" false)
 option(WITH_PCL "build with pcl support" false)
 option(BUILD_EVALUATION_TOOLS "build with evaluation tool" false)
+
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -237,6 +239,7 @@ google_binary(cartographer_pbstream
   cartographer/io/pbstream_main.cc
 )
 
+
 if(${BUILD_EVALUATION_TOOLS})
 google_binary(cartographer_scan_matching_evaluation
         SRCS
@@ -290,6 +293,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC ${imu_integrator_rk4_LIBRARIES})
 
 # PCL
+
 if(${WITH_PCL})
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PCL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PCL_LIBRARIES})
@@ -303,7 +307,7 @@ foreach(DEFINITION ${PCL_DEFINITIONS})
 endforeach()
 endif()
 
-# Temporary fix vor alignment issues #todo(kdaun) check if needed
+# Temporary fix alignment issues #todo(kdaun) check if needed
 add_definitions(-DEIGEN_MAX_ALIGN_BYTES=16)
 
 

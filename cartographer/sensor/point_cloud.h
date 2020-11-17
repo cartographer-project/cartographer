@@ -18,6 +18,7 @@
 #define CARTOGRAPHER_SENSOR_POINT_CLOUD_H_
 
 #include <vector>
+#include <array>
 
 #include "Eigen/Core"
 #include "cartographer/sensor/proto/sensor.pb.h"
@@ -27,6 +28,8 @@
 
 namespace cartographer {
 namespace sensor {
+
+using Uint8Color = std::array<uint8, 3>;
 
 // Stores 3D positions of points.
 // For 2D points, the third entry is 0.f.
@@ -42,6 +45,7 @@ using TimedPointCloud = std::vector<TimedRangefinderPoint>;
 struct PointCloudWithIntensities {
   TimedPointCloud points;
   std::vector<float> intensities;
+  std::vector<Uint8Color> colors;
 };
 
 // Transforms 'point_cloud' according to 'transform'.
