@@ -24,7 +24,7 @@ set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VE
 option(BUILD_GRPC "build Cartographer gRPC support" false)
 set(CARTOGRAPHER_HAS_GRPC ${BUILD_GRPC})
 option(BUILD_PROMETHEUS "build Prometheus monitoring support" false)
-option(WITH_OPEN3D "build with open3d support" true)
+option(WITH_OPEN3D "build with open3d support" false)
 option(WITH_PCL "build with pcl support" false)
 option(BUILD_EVALUATION_TOOLS "build with evaluation tool" false)
 

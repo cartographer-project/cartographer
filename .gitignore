@@ -1,3 +1,5 @@
 build
 bazel-*
 .idea/
+
+cmake-build-release/abseil/src/abseil-build/
