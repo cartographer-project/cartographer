@@ -22,6 +22,7 @@
 
 #include "cartographer/mapping/grid_interface.h"
 #include "cartographer/mapping/proto/2d/submaps_options_2d.pb.h"
+#include "cartographer/mapping/proto/3d/submaps_options_3d.pb.h"
 #include "cartographer/sensor/range_data.h"
 
 namespace cartographer {
@@ -30,6 +31,9 @@ namespace mapping {
 proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
     common::LuaParameterDictionary* const parameter_dictionary);
 
+proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
+    common::LuaParameterDictionary* parameter_dictionary);
+
 class RangeDataInserterInterface {
  public:
   virtual ~RangeDataInserterInterface() {}
@@ -37,6 +41,7 @@ class RangeDataInserterInterface {
   // Inserts 'range_data' into 'grid'.
   virtual void Insert(const sensor::RangeData& range_data,
                       GridInterface* grid) const = 0;
+  virtual bool RequiresStructuredData() const { return false; };
 };
 
 }  // namespace mapping

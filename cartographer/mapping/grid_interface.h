@@ -23,9 +23,12 @@
 namespace cartographer {
 namespace mapping {
 
+enum class GridType { NONE, PROBABILITY_GRID, TSDF };
+
 class GridInterface {
   // todo(kdaun) move mutual functions of Grid2D/3D here
  public:
+  virtual GridType GetGridType() const = 0;
   virtual ~GridInterface() {}
 };
 

@@ -41,13 +41,16 @@
   <build_depend>python-sphinx</build_depend>
 
   <depend>boost</depend>
-  <depend>ceres-solver</depend>
-  <depend>eigen</depend>
+  <depend>ceres_catkin</depend>
+  <depend>eigen_catkin</depend>
   <depend>libcairo2-dev</depend>
-  <depend>libgflags-dev</depend>
-  <depend>libgoogle-glog-dev</depend>
+  <depend>libpcl-all-dev</depend>
+  <depend>gflags_catkin</depend>
+  <depend>glog_catkin</depend>
   <depend>lua5.2-dev</depend>
-  <depend>protobuf-dev</depend>
+  <depend>ninja-build</depend>
+  <depend>python2</depend>
+  <depend>imu_integrator_rk4</depend>
 
   <export>
     <build_type>cmake</build_type>

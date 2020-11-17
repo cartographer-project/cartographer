@@ -167,9 +167,9 @@ ConstraintBuilder3D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
     return &submap_scan_matchers_.at(submap_id);
   }
   auto& submap_scan_matcher = submap_scan_matchers_[submap_id];
-  submap_scan_matcher.high_resolution_hybrid_grid =
+  submap_scan_matcher.high_resolution_grid =
       &submap->high_resolution_hybrid_grid();
-  submap_scan_matcher.low_resolution_hybrid_grid =
+  submap_scan_matcher.low_resolution_grid =
       &submap->low_resolution_hybrid_grid();
   auto& scan_matcher_options =
       options_.fast_correlative_scan_matcher_options_3d();
@@ -180,8 +180,8 @@ ConstraintBuilder3D::DispatchScanMatcherConstruction(const SubmapId& submap_id,
       [&submap_scan_matcher, &scan_matcher_options, histogram]() {
         submap_scan_matcher.fast_correlative_scan_matcher =
             absl::make_unique<scan_matching::FastCorrelativeScanMatcher3D>(
-                *submap_scan_matcher.high_resolution_hybrid_grid,
-                submap_scan_matcher.low_resolution_hybrid_grid, histogram,
+                *submap_scan_matcher.high_resolution_grid,
+                submap_scan_matcher.low_resolution_grid, histogram,
                 scan_matcher_options);
       });
   submap_scan_matcher.creation_task_handle =
@@ -259,9 +259,9 @@ void ConstraintBuilder3D::ComputeConstraint(
   ceres_scan_matcher_.Match(match_result->pose_estimate.translation(),
                             match_result->pose_estimate,
                             {{&constant_data->high_resolution_point_cloud,
-                              submap_scan_matcher.high_resolution_hybrid_grid},
+                              submap_scan_matcher.high_resolution_grid},
                              {&constant_data->low_resolution_point_cloud,
-                              submap_scan_matcher.low_resolution_hybrid_grid}},
+                              submap_scan_matcher.low_resolution_grid}},
                             &constraint_transform, &unused_summary);
 
   constraint->reset(new Constraint{

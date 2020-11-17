@@ -22,14 +22,14 @@
 
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "gmock/gmock.h"
-
 namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 namespace {
 
 TEST(PrecomputedGridGenerator3DTest, TestAgainstNaiveAlgorithm) {
-  HybridGrid hybrid_grid(2.f);
+  ValueConversionTables conversion_tables_;
+  HybridGrid hybrid_grid(2.f, &conversion_tables_);
 
   std::mt19937 rng(23847);
   std::uniform_int_distribution<int> coordinate_distribution(-50, 49);

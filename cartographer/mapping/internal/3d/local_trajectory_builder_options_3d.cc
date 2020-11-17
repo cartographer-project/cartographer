@@ -17,6 +17,7 @@
 #include "cartographer/mapping/internal/3d/local_trajectory_builder_options_3d.h"
 
 #include "cartographer/mapping/3d/submap_3d.h"
+#include "cartographer/mapping/internal/3d/optimizing_local_trajectory_builder_options.h"
 #include "cartographer/mapping/internal/3d/scan_matching/ceres_scan_matcher_3d.h"
 #include "cartographer/mapping/internal/motion_filter.h"
 #include "cartographer/mapping/internal/scan_matching/real_time_correlative_scan_matcher.h"
@@ -63,6 +64,11 @@ proto::LocalTrajectoryBuilderOptions3D CreateLocalTrajectoryBuilderOptions3D(
       parameter_dictionary->GetInt("rotational_histogram_size"));
   *options.mutable_submaps_options() = CreateSubmapsOptions3D(
       parameter_dictionary->GetDictionary("submaps").get());
+  *options.mutable_optimizing_local_trajectory_builder_options() =
+      CreateOptimizingLocalTrajectoryBuilderOptions(
+          parameter_dictionary
+              ->GetDictionary("optimizing_local_trajectory_builder")
+              .get());
   return options;
 }
 

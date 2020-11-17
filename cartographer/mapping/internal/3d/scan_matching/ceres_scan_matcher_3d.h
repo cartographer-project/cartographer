@@ -23,6 +23,7 @@
 #include "Eigen/Core"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
+#include "cartographer/mapping/internal/optimization/ceres_pose.h"
 #include "cartographer/mapping/proto/scan_matching/ceres_scan_matcher_options_3d.pb.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/rigid_transform.h"
@@ -35,7 +36,7 @@ proto::CeresScanMatcherOptions3D CreateCeresScanMatcherOptions3D(
     common::LuaParameterDictionary* parameter_dictionary);
 
 using PointCloudAndHybridGridPointers =
-    std::pair<const sensor::PointCloud*, const HybridGrid*>;
+    std::pair<const sensor::PointCloud*, const GridInterface*>;
 
 // This scan matcher uses Ceres to align scans with an existing map.
 class CeresScanMatcher3D {
@@ -54,6 +55,20 @@ class CeresScanMatcher3D {
                  point_clouds_and_hybrid_grids,
              transform::Rigid3d* pose_estimate,
              ceres::Solver::Summary* summary);
+
+  void Evaluate(const Eigen::Vector3d& target_translation,
+                const transform::Rigid3d& initial_pose_estimate,
+                const std::vector<PointCloudAndHybridGridPointers>&
+                    point_clouds_and_hybrid_grids,
+                double* cost, std::vector<double>* residuals,
+                std::vector<double>* jacobians) const;
+
+  void SetupProblem(const Eigen::Vector3d& target_translation,
+                    const transform::Rigid3d& initial_pose_estimate,
+                    const std::vector<PointCloudAndHybridGridPointers>&
+                        point_clouds_and_hybrid_grids,
+                    optimization::CeresPose* ceres_pose,
+                    ceres::Problem* problem) const;
 
  private:
   const proto::CeresScanMatcherOptions3D options_;

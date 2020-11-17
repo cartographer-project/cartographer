@@ -28,7 +28,7 @@ namespace {
 
 class RangeDataInserter3DTest : public ::testing::Test {
  protected:
-  RangeDataInserter3DTest() : hybrid_grid_(1.f) {
+  RangeDataInserter3DTest() : hybrid_grid_(1.f, &conversion_tables_) {
     auto parameter_dictionary = common::MakeDictionary(
         "return { "
         "hit_probability = 0.7, "
@@ -36,7 +36,7 @@ class RangeDataInserter3DTest : public ::testing::Test {
         "num_free_space_voxels = 1000, "
         "}");
     options_ = CreateRangeDataInserterOptions3D(parameter_dictionary.get());
-    range_data_inserter_.reset(new RangeDataInserter3D(options_));
+    range_data_inserter_.reset(new OccupancyGridRangeDataInserter3D(options_));
   }
 
   void InsertPointCloud() {
@@ -62,26 +62,35 @@ class RangeDataInserter3DTest : public ::testing::Test {
   const proto::RangeDataInserterOptions3D& options() const { return options_; }
 
  private:
+  ValueConversionTables conversion_tables_;
   HybridGrid hybrid_grid_;
-  std::unique_ptr<RangeDataInserter3D> range_data_inserter_;
+  std::unique_ptr<OccupancyGridRangeDataInserter3D> range_data_inserter_;
   proto::RangeDataInserterOptions3D options_;
 };
 
 TEST_F(RangeDataInserter3DTest, InsertPointCloud) {
   InsertPointCloud();
-  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -4.f),
-              1e-4);
-  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -3.f),
-              1e-4);
-  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -2.f),
-              1e-4);
+  EXPECT_NEAR(options()
+                  .probability_grid_range_data_inserter_options_3d()
+                  .miss_probability(),
+              GetProbability(0.f, 0.f, -4.f), 1e-4);
+  EXPECT_NEAR(options()
+                  .probability_grid_range_data_inserter_options_3d()
+                  .miss_probability(),
+              GetProbability(0.f, 0.f, -3.f), 1e-4);
+  EXPECT_NEAR(options()
+                  .probability_grid_range_data_inserter_options_3d()
+                  .miss_probability(),
+              GetProbability(0.f, 0.f, -2.f), 1e-4);
   for (int x = -4; x <= 4; ++x) {
     for (int y = -4; y <= 4; ++y) {
       if (x < -3 || x > 0 || y != x + 2) {
         EXPECT_FALSE(IsKnown(x, y, 4.f));
       } else {
-        EXPECT_NEAR(options().hit_probability(), GetProbability(x, y, 4.f),
-                    1e-4);
+        EXPECT_NEAR(options()
+                        .probability_grid_range_data_inserter_options_3d()
+                        .hit_probability(),
+                    GetProbability(x, y, 4.f), 1e-4);
       }
     }
   }
@@ -89,12 +98,18 @@ TEST_F(RangeDataInserter3DTest, InsertPointCloud) {
 
 TEST_F(RangeDataInserter3DTest, ProbabilityProgression) {
   InsertPointCloud();
-  EXPECT_NEAR(options().hit_probability(), GetProbability(-2.f, 0.f, 4.f),
-              1e-4);
-  EXPECT_NEAR(options().miss_probability(), GetProbability(-2.f, 0.f, 3.f),
-              1e-4);
-  EXPECT_NEAR(options().miss_probability(), GetProbability(0.f, 0.f, -3.f),
-              1e-4);
+  EXPECT_NEAR(options()
+                  .probability_grid_range_data_inserter_options_3d()
+                  .hit_probability(),
+              GetProbability(-2.f, 0.f, 4.f), 1e-4);
+  EXPECT_NEAR(options()
+                  .probability_grid_range_data_inserter_options_3d()
+                  .miss_probability(),
+              GetProbability(-2.f, 0.f, 3.f), 1e-4);
+  EXPECT_NEAR(options()
+                  .probability_grid_range_data_inserter_options_3d()
+                  .miss_probability(),
+              GetProbability(0.f, 0.f, -3.f), 1e-4);
 
   for (int i = 0; i < 1000; ++i) {
     InsertPointCloud();

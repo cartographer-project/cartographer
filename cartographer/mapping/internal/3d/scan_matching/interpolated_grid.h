@@ -25,7 +25,7 @@ namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
-// Interpolates between HybridGrid probability voxels. We use the tricubic
+// Interpolates between OccupancyGrid probability voxels. We use the tricubic
 // interpolation which interpolates the values and has vanishing derivative at
 // these points.
 //
@@ -51,7 +51,6 @@ class InterpolatedGrid {
   T GetProbability(const T& x, const T& y, const T& z) const {
     double x1, y1, z1, x2, y2, z2;
     ComputeInterpolationDataPoints(x, y, z, &x1, &y1, &z1, &x2, &y2, &z2);
-
     const Eigen::Array3i index1 =
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x1, y1, z1));
     const double q111 = hybrid_grid_.GetProbability(index1);

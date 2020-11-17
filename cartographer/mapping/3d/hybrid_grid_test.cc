@@ -27,7 +27,8 @@ namespace mapping {
 namespace {
 
 TEST(HybridGridTest, ApplyOdds) {
-  HybridGrid hybrid_grid(1.f);
+  ValueConversionTables conversion_tables_;
+  HybridGrid hybrid_grid(1.f, &conversion_tables_);
 
   EXPECT_FALSE(hybrid_grid.IsKnown(Eigen::Array3i(0, 0, 0)));
   EXPECT_FALSE(hybrid_grid.IsKnown(Eigen::Array3i(0, 1, 0)));
@@ -68,7 +69,8 @@ TEST(HybridGridTest, ApplyOdds) {
 }
 
 TEST(HybridGridTest, GetProbability) {
-  HybridGrid hybrid_grid(1.f);
+  ValueConversionTables conversion_tables_;
+  HybridGrid hybrid_grid(1.f, &conversion_tables_);
 
   hybrid_grid.SetProbability(
       hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 1.f, 1.f)),
@@ -87,7 +89,8 @@ TEST(HybridGridTest, GetProbability) {
 MATCHER_P(AllCwiseEqual, index, "") { return (arg == index).all(); }
 
 TEST(HybridGridTest, GetCellIndex) {
-  HybridGrid hybrid_grid(2.f);
+  ValueConversionTables conversion_tables_;
+  HybridGrid hybrid_grid(2.f, &conversion_tables_);
 
   EXPECT_THAT(hybrid_grid.GetCellIndex(Eigen::Vector3f(0.f, 0.f, 0.f)),
               AllCwiseEqual(Eigen::Array3i(0, 0, 0)));
@@ -110,7 +113,8 @@ TEST(HybridGridTest, GetCellIndex) {
 }
 
 TEST(HybridGridTest, GetCenterOfCell) {
-  HybridGrid hybrid_grid(2.f);
+  ValueConversionTables conversion_tables_;
+  HybridGrid hybrid_grid(2.f, &conversion_tables_);
 
   const Eigen::Array3i index(3, 2, 1);
   const Eigen::Vector3f center = hybrid_grid.GetCenterOfCell(index);
@@ -122,7 +126,7 @@ TEST(HybridGridTest, GetCenterOfCell) {
 
 class RandomHybridGridTest : public ::testing::Test {
  public:
-  RandomHybridGridTest() : hybrid_grid_(2.f), values_() {
+  RandomHybridGridTest() : hybrid_grid_(2.f, &conversion_tables_), values_() {
     std::mt19937 rng(1285120005);
     std::uniform_real_distribution<float> value_distribution(kMinProbability,
                                                              kMaxProbability);
@@ -143,6 +147,7 @@ class RandomHybridGridTest : public ::testing::Test {
   }
 
  protected:
+  ValueConversionTables conversion_tables_;
   HybridGrid hybrid_grid_;
   using ValueMap = std::map<std::tuple<int, int, int>, float>;
   ValueMap values_;
@@ -210,7 +215,9 @@ struct EigenComparator {
 };
 
 TEST_F(RandomHybridGridTest, FromProto) {
-  const HybridGrid constructed_grid(hybrid_grid_.ToProto());
+  ValueConversionTables conversion_tables_;
+  const HybridGrid constructed_grid(hybrid_grid_.ToProto(),
+                                       &conversion_tables_);
 
   std::map<Eigen::Vector3i, float, EigenComparator> member_map(
       hybrid_grid_.begin(), hybrid_grid_.end());

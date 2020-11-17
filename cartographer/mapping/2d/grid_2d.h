@@ -33,7 +33,6 @@ namespace mapping {
 proto::GridOptions2D CreateGridOptions2D(
     common::LuaParameterDictionary* const parameter_dictionary);
 
-enum class GridType { PROBABILITY_GRID, TSDF };
 
 class Grid2D : public GridInterface {
  public:
@@ -55,8 +54,6 @@ class Grid2D : public GridInterface {
     return (*value_to_correspondence_cost_table_)
         [correspondence_cost_cells()[ToFlatIndex(cell_index)]];
   }
-
-  virtual GridType GetGridType() const = 0;
 
   // Returns the minimum possible correspondence cost.
   float GetMinCorrespondenceCost() const { return min_correspondence_cost_; }

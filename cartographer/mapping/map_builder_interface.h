@@ -108,6 +108,8 @@ class MapBuilderInterface {
 
   virtual const std::vector<proto::TrajectoryBuilderOptionsWithSensorIds>&
   GetAllTrajectoryBuilderOptions() const = 0;
+
+  virtual void SetMapUpdateEnabled(bool map_update_enabled) = 0;
 };
 
 }  // namespace mapping

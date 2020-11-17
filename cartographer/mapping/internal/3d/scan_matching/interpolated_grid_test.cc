@@ -28,7 +28,8 @@ namespace {
 class InterpolatedGridTest : public ::testing::Test {
  protected:
   InterpolatedGridTest()
-      : hybrid_grid_(0.1f), interpolated_grid_(hybrid_grid_) {
+      : hybrid_grid_(0.1f, &conversion_tables_),
+        interpolated_grid_(hybrid_grid_) {
     for (const Eigen::Vector3f& point :
          {Eigen::Vector3f(-3.f, 2.f, 0.f), Eigen::Vector3f(-4.f, 2.f, 0.f),
           Eigen::Vector3f(-5.f, 2.f, 0.f), Eigen::Vector3f(-6.f, 2.f, 0.f),
@@ -43,6 +44,7 @@ class InterpolatedGridTest : public ::testing::Test {
         hybrid_grid_.GetCellIndex(Eigen::Vector3f(x, y, z)));
   }
 
+  ValueConversionTables conversion_tables_;
   HybridGrid hybrid_grid_;
   InterpolatedGrid interpolated_grid_;
 };

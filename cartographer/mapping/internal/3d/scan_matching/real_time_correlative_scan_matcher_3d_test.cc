@@ -36,7 +36,7 @@ namespace {
 class RealTimeCorrelativeScanMatcher3DTest : public ::testing::Test {
  protected:
   RealTimeCorrelativeScanMatcher3DTest()
-      : hybrid_grid_(0.1f),
+      : hybrid_grid_(0.1f, &conversion_tables_),
         expected_pose_(Eigen::Vector3d(-1., 0., 0.),
                        Eigen::Quaterniond::Identity()) {
     for (const Eigen::Vector3f& point :
@@ -71,6 +71,7 @@ class RealTimeCorrelativeScanMatcher3DTest : public ::testing::Test {
     EXPECT_THAT(pose, transform::IsNearly(expected_pose_, 1e-3));
   }
 
+  ValueConversionTables conversion_tables_;
   HybridGrid hybrid_grid_;
   transform::Rigid3d expected_pose_;
   sensor::PointCloud point_cloud_;

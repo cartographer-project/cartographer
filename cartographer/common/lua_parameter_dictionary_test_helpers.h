@@ -46,11 +46,13 @@ class DummyFileResolver : public FileResolver {
   }
 };
 
+namespace {
 std::unique_ptr<LuaParameterDictionary> MakeDictionary(
     const std::string& code) {
   return absl::make_unique<LuaParameterDictionary>(
       code, absl::make_unique<DummyFileResolver>());
 }
+}  // namespace
 
 }  // namespace common
 }  // namespace cartographer

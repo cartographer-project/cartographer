@@ -96,5 +96,9 @@ RangeData FromProto(const proto::RangeData& proto) {
   return RangeData{transform::ToEigen(proto.origin()), returns, misses};
 }
 
+RangeData::RangeData() : origin(Eigen::Vector3f::Zero()) {}
+RangeData::RangeData(const Eigen::Vector3f& origin, const PointCloud& returns,
+                     const PointCloud& misses)
+    : origin(origin), returns(returns), misses(misses) {}
 }  // namespace sensor
 }  // namespace cartographer

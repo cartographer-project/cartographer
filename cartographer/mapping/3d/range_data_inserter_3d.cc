@@ -53,9 +53,10 @@ void InsertMissesIntoGrid(const std::vector<uint16>& miss_table,
 
 }  // namespace
 
-proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
+proto::ProbabilityGridRangeDataInserterOptions3D
+CreateProbabilityGridRangeDataInserterOptions3D(
     common::LuaParameterDictionary* parameter_dictionary) {
-  proto::RangeDataInserterOptions3D options;
+  proto::ProbabilityGridRangeDataInserterOptions3D options;
   options.set_hit_probability(
       parameter_dictionary->GetDouble("hit_probability"));
   options.set_miss_probability(
@@ -67,28 +68,36 @@ proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
   return options;
 }
 
-RangeDataInserter3D::RangeDataInserter3D(
+OccupancyGridRangeDataInserter3D::OccupancyGridRangeDataInserter3D(
     const proto::RangeDataInserterOptions3D& options)
     : options_(options),
-      hit_table_(
-          ComputeLookupTableToApplyOdds(Odds(options_.hit_probability()))),
-      miss_table_(
-          ComputeLookupTableToApplyOdds(Odds(options_.miss_probability()))) {}
+      hit_table_(ComputeLookupTableToApplyOdds(
+          Odds(options_.probability_grid_range_data_inserter_options_3d()
+                   .hit_probability()))),
+      miss_table_(ComputeLookupTableToApplyOdds(
+          Odds(options_.probability_grid_range_data_inserter_options_3d()
+                   .miss_probability()))) {}
 
-void RangeDataInserter3D::Insert(const sensor::RangeData& range_data,
-                                 HybridGrid* hybrid_grid) const {
-  CHECK(hybrid_grid != nullptr);
+void OccupancyGridRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
+                                              GridInterface* grid) const {
+  CHECK(grid != nullptr);
+  CHECK(grid->GetGridType() == GridType::PROBABILITY_GRID);
+  HybridGrid* occupancy_grid = static_cast<HybridGrid*>(grid);
 
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
-    const Eigen::Array3i hit_cell = hybrid_grid->GetCellIndex(hit.position);
-    hybrid_grid->ApplyLookupTable(hit_cell, hit_table_);
+    const Eigen::Array3i hit_cell = occupancy_grid->GetCellIndex(hit.position);
+    //    LOG(INFO)<<"P before hit "<<occupancy_grid->GetProbability(hit_cell);
+    occupancy_grid->ApplyLookupTable(hit_cell, hit_table_);
+    //    LOG(INFO)<<"P after hit "<<occupancy_grid->GetProbability(hit_cell);
   }
 
   // By not starting a new update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
-  InsertMissesIntoGrid(miss_table_, range_data.origin, range_data.returns,
-                       hybrid_grid, options_.num_free_space_voxels());
-  hybrid_grid->FinishUpdate();
+  InsertMissesIntoGrid(
+      miss_table_, range_data.origin, range_data.returns, occupancy_grid,
+      options_.probability_grid_range_data_inserter_options_3d()
+          .num_free_space_voxels());
+  occupancy_grid->FinishUpdate();
 }
 
 }  // namespace mapping

@@ -24,7 +24,7 @@
 #include "cartographer/io/serialization_format_migration.h"
 #include "cartographer/mapping/internal/2d/local_trajectory_builder_2d.h"
 #include "cartographer/mapping/internal/2d/pose_graph_2d.h"
-#include "cartographer/mapping/internal/3d/local_trajectory_builder_3d.h"
+#include "cartographer/mapping/internal/3d/optimizing_local_trajectory_builder.h"
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
 #include "cartographer/mapping/internal/collated_trajectory_builder.h"
 #include "cartographer/mapping/internal/global_trajectory_builder.h"
@@ -122,11 +122,12 @@ int MapBuilder::AddTrajectoryBuilder(
     LocalSlamResultCallback local_slam_result_callback) {
   const int trajectory_id = trajectory_builders_.size();
   if (options_.use_trajectory_builder_3d()) {
-    std::unique_ptr<LocalTrajectoryBuilder3D> local_trajectory_builder;
+    std::unique_ptr<OptimizingLocalTrajectoryBuilder> local_trajectory_builder;
     if (trajectory_options.has_trajectory_builder_3d_options()) {
-      local_trajectory_builder = absl::make_unique<LocalTrajectoryBuilder3D>(
-          trajectory_options.trajectory_builder_3d_options(),
-          SelectRangeSensorIds(expected_sensor_ids));
+      local_trajectory_builder =
+          absl::make_unique<OptimizingLocalTrajectoryBuilder>(
+              trajectory_options.trajectory_builder_3d_options(),
+              SelectRangeSensorIds(expected_sensor_ids));
     }
     DCHECK(dynamic_cast<PoseGraph3D*>(pose_graph_.get()));
     trajectory_builders_.push_back(absl::make_unique<CollatedTrajectoryBuilder>(

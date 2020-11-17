@@ -15,21 +15,55 @@
  */
 
 #include "cartographer/mapping/internal/3d/scan_matching/low_resolution_matcher.h"
+#include "cartographer/mapping/3d/hybrid_grid_tsdf.h"
 
 namespace cartographer {
 namespace mapping {
 namespace scan_matching {
 
 std::function<float(const transform::Rigid3f&)> CreateLowResolutionMatcher(
-    const HybridGrid* low_resolution_grid, const sensor::PointCloud* points) {
+    const GridInterface* low_resolution_grid,
+    const sensor::PointCloud* points) {
   return [=](const transform::Rigid3f& pose) {
     float score = 0.f;
-    for (const sensor::RangefinderPoint& point :
-         sensor::TransformPointCloud(*points, pose)) {
-      // TODO(zhengj, whess): Interpolate the Grid to get better score.
-      score += low_resolution_grid->GetProbability(
-          low_resolution_grid->GetCellIndex(point.position));
+    switch (low_resolution_grid->GetGridType()) {
+      case GridType::PROBABILITY_GRID: {
+        const HybridGrid* casted_grid =
+            static_cast<const HybridGrid*>(low_resolution_grid);
+        for (const sensor::RangefinderPoint& point :
+             sensor::TransformPointCloud(*points, pose)) {
+          // TODO(zhengj, whess): Interpolate the Grid to get better score.
+          score += casted_grid->GetProbability(
+              casted_grid->GetCellIndex(point.position));
+        }
+        break;
+      }
+      case GridType::TSDF: {
+        const HybridGridTSDF* casted_grid =
+            static_cast<const HybridGridTSDF*>(low_resolution_grid);
+        for (const sensor::RangefinderPoint& point :
+             sensor::TransformPointCloud(*points, pose)) {
+          // TODO(zhengj, whess): Interpolate the Grid to get better score.
+          score += 1.f - std::abs(casted_grid->GetTSD(casted_grid->GetCellIndex(
+                                      point.position)) /
+                                  casted_grid->ValueConverter().getMaxTSD());
+          if (std::abs(casted_grid->GetTSD(casted_grid->GetCellIndex(
+                  point.position))) > casted_grid->ValueConverter().getMaxTSD())
+            LOG(INFO) << std::abs(
+                casted_grid->GetTSD(casted_grid->GetCellIndex(point.position)));
+        }
+        //        LOG(INFO)<<"lr score "<< score;
+        //        LOG(INFO)<<"lr scoren "<< score/ points->size();
+        //        LOG(INFO)<<"lr max tsd "<<
+        //        casted_grid->ValueConverter().getMaxTSD(); LOG(INFO)<<"lr res
+        //        "<< casted_grid->resolution();
+        break;
+      }
+      case GridType::NONE:
+        LOG(FATAL) << "Gridtype not initialized.";
+        break;
     }
+
     return score / points->size();
   };
 }

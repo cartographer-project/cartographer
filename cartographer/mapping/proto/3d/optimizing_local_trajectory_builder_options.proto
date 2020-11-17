@@ -1,0 +1,46 @@
+// Copyright 2016 The Cartographer Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cartographer.mapping.proto;
+
+enum IMUIntegrator {
+  INVALID_IMU_INTEGRATOR = 0;
+  EULER = 1;
+  RK4 = 2;
+}
+enum IMUCostTerm {
+  INVALID_IMU_COST_TERM = 0;
+  DIRECT = 1;
+  PREINTEGRATION = 2;
+}
+message OptimizingLocalTrajectoryBuilderOptions {
+  double high_resolution_grid_weight = 6;
+  double low_resolution_grid_weight = 7;
+  double velocity_weight = 1;
+  double translation_weight = 2;
+  double rotation_weight = 3;
+  double odometry_translation_weight = 4;
+  double odometry_rotation_weight = 5;
+  bool initialize_map_orientation_with_imu = 9;
+  bool calibrate_imu = 10;
+  double optimization_rate = 11;
+  double ct_window_horizon = 12;
+  double ct_window_rate = 13;
+  IMUIntegrator imu_integrator = 14;
+  IMUCostTerm imu_cost_term = 15;
+  bool sync_control_points_with_range_data = 16;
+  double initialization_duration = 17;
+}

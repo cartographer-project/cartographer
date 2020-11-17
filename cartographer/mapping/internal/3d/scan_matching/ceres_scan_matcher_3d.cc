@@ -26,6 +26,7 @@
 #include "cartographer/mapping/internal/3d/scan_matching/occupied_space_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/rotation_delta_cost_functor_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/translation_delta_cost_functor_3d.h"
+#include "cartographer/mapping/internal/3d/scan_matching/tsdf_space_cost_function_3d.h"
 #include "cartographer/mapping/internal/optimization/ceres_pose.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -85,36 +86,87 @@ void CeresScanMatcher3D::Match(
           : std::unique_ptr<ceres::LocalParameterization>(
                 absl::make_unique<ceres::QuaternionParameterization>()),
       &problem);
+  SetupProblem(target_translation, initial_pose_estimate,
+               point_clouds_and_hybrid_grids, &ceres_pose, &problem);
 
+  ceres::Solve(ceres_solver_options_, &problem, summary);
+
+  *pose_estimate = ceres_pose.ToRigid();
+}
+
+void CeresScanMatcher3D::Evaluate(
+    const Eigen::Vector3d& target_translation,
+    const transform::Rigid3d& initial_pose_estimate,
+    const std::vector<PointCloudAndHybridGridPointers>&
+        point_clouds_and_hybrid_grids,
+    double* cost, std::vector<double>* residuals,
+    std::vector<double>* jacobians) const {
+  ceres::Problem problem;
+  optimization::CeresPose ceres_pose(
+      initial_pose_estimate, nullptr /* translation_parameterization */,
+      options_.only_optimize_yaw()
+          ? std::unique_ptr<ceres::LocalParameterization>(
+                absl::make_unique<ceres::AutoDiffLocalParameterization<
+                    YawOnlyQuaternionPlus, 4, 1>>())
+          : std::unique_ptr<ceres::LocalParameterization>(
+                absl::make_unique<ceres::QuaternionParameterization>()),
+      &problem);
+  SetupProblem(target_translation, initial_pose_estimate,
+               point_clouds_and_hybrid_grids, &ceres_pose, &problem);
+  problem.Evaluate(ceres::Problem::EvaluateOptions(), cost, residuals,
+                   jacobians, NULL);
+}
+
+void CeresScanMatcher3D::SetupProblem(
+    const Eigen::Vector3d& target_translation,
+    const transform::Rigid3d& initial_pose_estimate,
+    const std::vector<PointCloudAndHybridGridPointers>&
+        point_clouds_and_hybrid_grids,
+    optimization::CeresPose* ceres_pose, ceres::Problem* problem) const {
   CHECK_EQ(options_.occupied_space_weight_size(),
            point_clouds_and_hybrid_grids.size());
   for (size_t i = 0; i != point_clouds_and_hybrid_grids.size(); ++i) {
     CHECK_GT(options_.occupied_space_weight(i), 0.);
     const sensor::PointCloud& point_cloud =
         *point_clouds_and_hybrid_grids[i].first;
-    const HybridGrid& hybrid_grid = *point_clouds_and_hybrid_grids[i].second;
-    problem.AddResidualBlock(
-        OccupiedSpaceCostFunction3D::CreateAutoDiffCostFunction(
-            options_.occupied_space_weight(i) /
-                std::sqrt(static_cast<double>(point_cloud.size())),
-            point_cloud, hybrid_grid),
-        nullptr /* loss function */, ceres_pose.translation(),
-        ceres_pose.rotation());
+    const GridInterface& hybrid_grid = *point_clouds_and_hybrid_grids[i].second;
+
+    switch (hybrid_grid.GetGridType()) {
+      case GridType::PROBABILITY_GRID: {
+        problem->AddResidualBlock(
+            OccupiedSpaceCostFunction3D::CreateAutoDiffCostFunction(
+                options_.occupied_space_weight(i) /
+                    std::sqrt(static_cast<double>(point_cloud.size())),
+                point_cloud, static_cast<const HybridGrid&>(hybrid_grid)),
+            nullptr /* loss function */, ceres_pose->translation(),
+            ceres_pose->rotation());
+        break;
+      }
+      case GridType::TSDF: {
+        problem->AddResidualBlock(
+            TSDFSpaceCostFunction3D::CreateAutoDiffCostFunction(
+                options_.occupied_space_weight(i) /
+                    std::sqrt(static_cast<double>(point_cloud.size())),
+                point_cloud, static_cast<const HybridGridTSDF&>(hybrid_grid)),
+            nullptr /* loss function */, ceres_pose->translation(),
+            ceres_pose->rotation());
+        break;
+      }
+      case GridType::NONE:
+        LOG(FATAL) << "Gridtype not initialized.";
+        break;
+    }
   }
-  CHECK_GT(options_.translation_weight(), 0.);
-  problem.AddResidualBlock(
+  CHECK_GE(options_.translation_weight(), 0.);
+  problem->AddResidualBlock(
       TranslationDeltaCostFunctor3D::CreateAutoDiffCostFunction(
           options_.translation_weight(), target_translation),
-      nullptr /* loss function */, ceres_pose.translation());
-  CHECK_GT(options_.rotation_weight(), 0.);
-  problem.AddResidualBlock(
+      nullptr /* loss function */, ceres_pose->translation());
+  CHECK_GE(options_.rotation_weight(), 0.);
+  problem->AddResidualBlock(
       RotationDeltaCostFunctor3D::CreateAutoDiffCostFunction(
           options_.rotation_weight(), initial_pose_estimate.rotation()),
-      nullptr /* loss function */, ceres_pose.rotation());
-
-  ceres::Solve(ceres_solver_options_, &problem, summary);
-
-  *pose_estimate = ceres_pose.ToRigid();
+      nullptr /* loss function */, ceres_pose->rotation());
 }
 
 }  // namespace scan_matching

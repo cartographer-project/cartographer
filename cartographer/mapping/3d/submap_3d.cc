@@ -42,9 +42,33 @@ struct PixelData {
 sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
                                             const float max_range) {
   sensor::RangeData result{range_data.origin, {}, {}};
+  if(max_range == 0.f) {
+    result.returns = range_data.returns;
+    return result;
+  }
+
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
     if ((hit.position - range_data.origin).norm() <= max_range) {
       result.returns.push_back(hit);
+    }
+  }
+  return result;
+}
+
+// Filters structured 'range_data', setting all points with a distance from the
+// origin smaller than 'max_range' to the origin. Therby the cloud size and
+// structure is preserved. Removes misses and reflectivity information.
+sensor::RangeData FilterStructuredRangeDataByMaxRange(
+    const sensor::RangeData& range_data, const float max_range) {
+  sensor::RangeData result{range_data.origin, range_data.returns, {}};
+  if (max_range == 0.f) {
+    result.returns = range_data.returns;
+    return result;
+  }
+
+  for (sensor::RangefinderPoint& hit : result.returns) {
+    if ((hit.position - result.origin).norm() > max_range) {
+      hit.position = result.origin;
     }
   }
   return result;
@@ -89,6 +113,45 @@ std::vector<Eigen::Array4i> ExtractVoxelData(
   for (auto it = HybridGrid::Iterator(hybrid_grid); !it.Done(); it.Next()) {
     const uint16 probability_value = it.GetValue();
     const float probability = ValueToProbability(probability_value);
+    if (probability < kXrayObstructedCellProbabilityLimit) {
+      // We ignore non-obstructed cells.
+      continue;
+    }
+
+    const Eigen::Vector3f cell_center_submap =
+        hybrid_grid.GetCenterOfCell(it.GetCellIndex());
+    const Eigen::Vector3f cell_center_global = transform * cell_center_submap;
+    const Eigen::Array4i voxel_index_and_probability(
+        common::RoundToInt(cell_center_global.x() * resolution_inverse),
+        common::RoundToInt(cell_center_global.y() * resolution_inverse),
+        common::RoundToInt(cell_center_global.z() * resolution_inverse),
+        probability_value);
+
+    voxel_indices_and_probabilities.push_back(voxel_index_and_probability);
+    const Eigen::Array2i pixel_index = voxel_index_and_probability.head<2>();
+    *min_index = min_index->cwiseMin(pixel_index);
+    *max_index = max_index->cwiseMax(pixel_index);
+  }
+  return voxel_indices_and_probabilities;
+}
+
+// The first three entries of each returned value are a cell_index and the
+// last is the corresponding probability value. We batch them together like
+// this to only have one vector and have better cache locality.
+std::vector<Eigen::Array4i> ExtractVoxelData(
+    const HybridGridTSDF& hybrid_grid, const transform::Rigid3f& transform,
+    Eigen::Array2i* min_index, Eigen::Array2i* max_index) {
+  std::vector<Eigen::Array4i> voxel_indices_and_probabilities;
+  const float resolution_inverse = 1.f / hybrid_grid.resolution();
+
+  constexpr float kXrayObstructedCellProbabilityLimit = 0.501f;
+  for (auto it = HybridGridTSDF::Iterator(hybrid_grid); !it.Done(); it.Next()) {
+    const TSDFVoxel voxel = it.GetValue();
+    const float tsd =
+        hybrid_grid.ValueConverter().ValueToTSD(voxel.discrete_tsd);
+    const float probability =
+        1.f - std::abs(tsd) / hybrid_grid.ValueConverter().getMaxTSD();
+    const float probability_value = ProbabilityToValue(probability);
     if (probability < kXrayObstructedCellProbabilityLimit) {
       // We ignore non-obstructed cells.
       continue;
@@ -177,6 +240,39 @@ void AddToTextureProto(
           global_submap_pose.translation().z())));
 }
 
+void AddToTextureProto(
+    const HybridGridTSDF& hybrid_grid,
+    const transform::Rigid3d& global_submap_pose,
+    proto::SubmapQuery::Response::SubmapTexture* const texture) {
+  // Generate an X-ray view through the 'hybrid_grid', aligned to the
+  // xy-plane in the global map frame.
+  const float resolution = hybrid_grid.resolution();
+  texture->set_resolution(resolution);
+
+  // Compute a bounding box for the texture.
+  Eigen::Array2i min_index(INT_MAX, INT_MAX);
+  Eigen::Array2i max_index(INT_MIN, INT_MIN);
+  const std::vector<Eigen::Array4i> voxel_indices_and_probabilities =
+      ExtractVoxelData(hybrid_grid, global_submap_pose.cast<float>(),
+                       &min_index, &max_index);
+
+  const int width = max_index.y() - min_index.y() + 1;
+  const int height = max_index.x() - min_index.x() + 1;
+  texture->set_width(width);
+  texture->set_height(height);
+
+  const std::vector<PixelData> accumulated_pixel_data = AccumulatePixelData(
+      width, height, min_index, max_index, voxel_indices_and_probabilities);
+  const std::string cell_data = ComputePixelValues(accumulated_pixel_data);
+
+  common::FastGzipString(cell_data, texture->mutable_cells());
+  *texture->mutable_slice_pose() = transform::ToProto(
+      global_submap_pose.inverse() *
+      transform::Rigid3d::Translation(Eigen::Vector3d(
+          max_index.x() * resolution, max_index.y() * resolution,
+          global_submap_pose.translation().z())));
+}
+
 }  // namespace
 
 proto::SubmapsOptions3D CreateSubmapsOptions3D(
@@ -193,18 +289,26 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
       CreateRangeDataInserterOptions3D(
           parameter_dictionary->GetDictionary("range_data_inserter").get());
   CHECK_GT(options.num_range_data(), 0);
+  const std::string grid_type_string =
+      parameter_dictionary->GetString("grid_type");
+  proto::SubmapsOptions3D_GridType grid_type;
+  CHECK(proto::SubmapsOptions3D_GridType_Parse(grid_type_string, &grid_type))
+      << "Unknown SubmapsOptions3D_GridType kind: " << grid_type_string;
+  options.set_grid_type(grid_type);
   return options;
 }
 
-Submap3D::Submap3D(const float high_resolution, const float low_resolution,
-                   const transform::Rigid3d& local_submap_pose,
-                   const Eigen::VectorXf& rotational_scan_matcher_histogram)
+Submap3D::Submap3D(const transform::Rigid3d& local_submap_pose,
+                   std::unique_ptr<GridInterface> low_resolution_grid,
+                   std::unique_ptr<GridInterface> high_resolution_grid,
+                   const Eigen::VectorXf& rotational_scan_matcher_histogram,
+                   ValueConversionTables* conversion_tables)
     : Submap(local_submap_pose),
-      high_resolution_hybrid_grid_(
-          absl::make_unique<HybridGrid>(high_resolution)),
-      low_resolution_hybrid_grid_(
-          absl::make_unique<HybridGrid>(low_resolution)),
-      rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram) {}
+      rotational_scan_matcher_histogram_(rotational_scan_matcher_histogram),
+      conversion_tables_(conversion_tables) {
+  low_resolution_grid_ = std::move(low_resolution_grid);
+  high_resolution_grid_ = std::move(high_resolution_grid);
+}
 
 Submap3D::Submap3D(const proto::Submap3D& proto)
     : Submap(transform::ToRigid3(proto.local_pose())) {
@@ -219,10 +323,11 @@ proto::Submap Submap3D::ToProto(
   submap_3d->set_num_range_data(num_range_data());
   submap_3d->set_finished(insertion_finished());
   if (include_probability_grid_data) {
-    *submap_3d->mutable_high_resolution_hybrid_grid() =
-        high_resolution_hybrid_grid().ToProto();
-    *submap_3d->mutable_low_resolution_hybrid_grid() =
-        low_resolution_hybrid_grid().ToProto();
+    LOG(ERROR) << "proto export not implemented";
+    //    *submap_3d->mutable_high_resolution_hybrid_grid() =
+    //        high_resolution_hybrid_grid().ToProto();
+    //    *submap_3d->mutable_low_resolution_hybrid_grid() =
+    //        low_resolution_hybrid_grid().ToProto();
   }
   for (Eigen::VectorXf::Index i = 0;
        i != rotational_scan_matcher_histogram_.size(); ++i) {
@@ -241,12 +346,12 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
   set_num_range_data(submap_3d.num_range_data());
   set_insertion_finished(submap_3d.finished());
   if (submap_3d.has_high_resolution_hybrid_grid()) {
-    high_resolution_hybrid_grid_ =
-        absl::make_unique<HybridGrid>(submap_3d.high_resolution_hybrid_grid());
+    high_resolution_grid_ = absl::make_unique<HybridGrid>(
+        submap_3d.high_resolution_hybrid_grid(), conversion_tables_);
   }
   if (submap_3d.has_low_resolution_hybrid_grid()) {
-    low_resolution_hybrid_grid_ =
-        absl::make_unique<HybridGrid>(submap_3d.low_resolution_hybrid_grid());
+    low_resolution_grid_ = absl::make_unique<HybridGrid>(
+        submap_3d.low_resolution_hybrid_grid(), conversion_tables_);
   }
   rotational_scan_matcher_histogram_ =
       Eigen::VectorXf::Zero(submap_3d.rotational_scan_matcher_histogram_size());
@@ -261,15 +366,37 @@ void Submap3D::ToResponseProto(
     const transform::Rigid3d& global_submap_pose,
     proto::SubmapQuery::Response* const response) const {
   response->set_submap_version(num_range_data());
-
-  AddToTextureProto(*high_resolution_hybrid_grid_, global_submap_pose,
-                    response->add_textures());
-  AddToTextureProto(*low_resolution_hybrid_grid_, global_submap_pose,
-                    response->add_textures());
+  switch (low_resolution_grid_->GetGridType()) {
+    case GridType::PROBABILITY_GRID: {
+      HybridGrid* low_res_grid =
+          static_cast<HybridGrid*>(low_resolution_grid_.get());
+      HybridGrid* high_res_grid =
+          static_cast<HybridGrid*>(high_resolution_grid_.get());
+      AddToTextureProto(*low_res_grid, global_submap_pose,
+                        response->add_textures());
+      AddToTextureProto(*high_res_grid, global_submap_pose,
+                        response->add_textures());
+      break;
+    }
+    case GridType::TSDF: {
+      HybridGridTSDF* low_res_grid =
+          static_cast<HybridGridTSDF*>(low_resolution_grid_.get());
+      HybridGridTSDF* high_res_grid =
+          static_cast<HybridGridTSDF*>(high_resolution_grid_.get());
+      AddToTextureProto(*low_res_grid, global_submap_pose,
+                        response->add_textures());
+      AddToTextureProto(*high_res_grid, global_submap_pose,
+                        response->add_textures());
+      break;
+    }
+    case GridType::NONE:
+      LOG(FATAL) << "Gridtype not initialized.";
+      break;
+  }
 }
 
 void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
-                          const RangeDataInserter3D& range_data_inserter,
+                          const RangeDataInserterInterface* range_data_inserter,
                           const float high_resolution_max_range,
                           const Eigen::Quaterniond& local_from_gravity_aligned,
                           const Eigen::VectorXf& scan_histogram_in_gravity) {
@@ -277,12 +404,20 @@ void Submap3D::InsertData(const sensor::RangeData& range_data_in_local,
   // Transform range data into submap frame.
   const sensor::RangeData transformed_range_data = sensor::TransformRangeData(
       range_data_in_local, local_pose().inverse().cast<float>());
-  range_data_inserter.Insert(
-      FilterRangeDataByMaxRange(transformed_range_data,
-                                high_resolution_max_range),
-      high_resolution_hybrid_grid_.get());
-  range_data_inserter.Insert(transformed_range_data,
-                             low_resolution_hybrid_grid_.get());
+  if (range_data_inserter->RequiresStructuredData()) {
+    range_data_inserter->Insert(
+        FilterStructuredRangeDataByMaxRange(transformed_range_data,
+                                            high_resolution_max_range),
+        high_resolution_grid_.get());
+  } else {
+    range_data_inserter->Insert(
+        FilterRangeDataByMaxRange(transformed_range_data,
+                                  high_resolution_max_range),
+        high_resolution_grid_.get());
+  }
+
+  range_data_inserter->Insert(transformed_range_data,
+                              low_resolution_grid_.get());
   set_num_range_data(num_range_data() + 1);
   const float yaw_in_submap_from_gravity = transform::GetYaw(
       local_pose().inverse().rotation() * local_from_gravity_aligned);
@@ -296,9 +431,25 @@ void Submap3D::Finish() {
   set_insertion_finished(true);
 }
 
+std::unique_ptr<RangeDataInserterInterface>
+  ActiveSubmaps3D::CreateRangeDataInserter() {
+    switch (options_.range_data_inserter_options().range_data_inserter_type()) {
+      case proto::RangeDataInserterOptions3D::PROBABILITY_GRID_INSERTER_3D:
+        return absl::make_unique<OccupancyGridRangeDataInserter3D>(
+            options_.range_data_inserter_options());
+      case proto::RangeDataInserterOptions3D::TSDF_INSERTER_3D:
+        return absl::make_unique<TSDFRangeDataInserter3D>(
+            options_.range_data_inserter_options());
+      default:
+        LOG(FATAL) << "Unknown RangeDataInserterType.";
+        return absl::make_unique<TSDFRangeDataInserter3D>(
+            options_.range_data_inserter_options()); //todo(kdaun) fix error: control reaches end of non-void function
+    }
+  }
+
 ActiveSubmaps3D::ActiveSubmaps3D(const proto::SubmapsOptions3D& options)
     : options_(options),
-      range_data_inserter_(options.range_data_inserter_options()) {}
+      range_data_inserter_(CreateRangeDataInserter()) {}
 
 std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::submaps() const {
   return std::vector<std::shared_ptr<const Submap3D>>(submaps_.begin(),
@@ -316,7 +467,7 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
               rotational_scan_matcher_histogram_in_gravity.size());
   }
   for (auto& submap : submaps_) {
-    submap->InsertData(range_data, range_data_inserter_,
+    submap->InsertData(range_data, range_data_inserter_.get(),
                        options_.high_resolution_max_range(),
                        local_from_gravity_aligned,
                        rotational_scan_matcher_histogram_in_gravity);
@@ -325,6 +476,27 @@ std::vector<std::shared_ptr<const Submap3D>> ActiveSubmaps3D::InsertData(
     submaps_.front()->Finish();
   }
   return submaps();
+}
+
+std::unique_ptr<GridInterface> ActiveSubmaps3D::CreateGrid(float resolution) {
+  switch (options_.grid_type()) {
+    case proto::SubmapsOptions3D_GridType_PROBABILITY_GRID:
+      return absl::make_unique<HybridGrid>(resolution, &conversion_tables_);
+    case proto::SubmapsOptions3D_GridType_TSDF:
+      return absl::make_unique<HybridGridTSDF>(
+          resolution,
+          options_.range_data_inserter_options()
+              .tsdf_range_data_inserter_options_3d()
+              .relative_truncation_distance(),
+          options_.range_data_inserter_options()
+              .tsdf_range_data_inserter_options_3d()
+              .maximum_weight(),
+          &conversion_tables_);
+    default:
+      LOG(FATAL) << "Unknown GridType.";
+      return absl::make_unique<HybridGridTSDF>(resolution, 0.3f, 1000.0f,
+                                               &conversion_tables_); //todo(kdaun) fix default return
+  }
 }
 
 void ActiveSubmaps3D::AddSubmap(
@@ -339,8 +511,12 @@ void ActiveSubmaps3D::AddSubmap(
   const Eigen::VectorXf initial_rotational_scan_matcher_histogram =
       Eigen::VectorXf::Zero(rotational_scan_matcher_histogram_size);
   submaps_.emplace_back(new Submap3D(
-      options_.high_resolution(), options_.low_resolution(), local_submap_pose,
-      initial_rotational_scan_matcher_histogram));
+      local_submap_pose,
+      std::unique_ptr<GridInterface>(static_cast<GridInterface*>(
+                                         CreateGrid(options_.low_resolution()).release())),
+      std::unique_ptr<GridInterface>(static_cast<GridInterface*>(
+          CreateGrid(options_.high_resolution()).release())),
+      initial_rotational_scan_matcher_histogram, &conversion_tables_));
 }
 
 }  // namespace mapping

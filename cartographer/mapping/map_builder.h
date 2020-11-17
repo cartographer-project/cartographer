@@ -85,6 +85,12 @@ class MapBuilder : public MapBuilderInterface {
     return all_trajectory_builder_options_;
   }
 
+  void SetMapUpdateEnabled(bool map_update_enabled) override {
+    for (auto& trajectory_builder : trajectory_builders_) {
+      trajectory_builder->SetMapUpdateEnabled(map_update_enabled);
+    }
+  }
+
  private:
   const proto::MapBuilderOptions options_;
   common::ThreadPool thread_pool_;

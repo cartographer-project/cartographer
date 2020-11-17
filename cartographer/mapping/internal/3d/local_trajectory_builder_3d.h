@@ -72,6 +72,8 @@ class LocalTrajectoryBuilder3D {
       const sensor::TimedPointCloudData& range_data);
   void AddOdometryData(const sensor::OdometryData& odometry_data);
 
+  void SetMapUpdateEnabled(bool map_update_enabled);
+
   static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
  private:
@@ -106,7 +108,7 @@ class LocalTrajectoryBuilder3D {
   std::unique_ptr<mapping::PoseExtrapolator> extrapolator_;
 
   int num_accumulated_ = 0;
-  sensor::RangeData accumulated_range_data_;
+  sensor::RangeData accumulated_range_data_in_local_;
   absl::optional<std::chrono::steady_clock::time_point> last_wall_time_;
 
   absl::optional<double> last_thread_cpu_time_seconds_;
@@ -114,6 +116,7 @@ class LocalTrajectoryBuilder3D {
   RangeDataCollator range_data_collator_;
 
   absl::optional<common::Time> last_sensor_time_;
+  bool map_update_enabled_;
 };
 
 }  // namespace mapping

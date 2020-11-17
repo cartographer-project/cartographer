@@ -79,5 +79,12 @@ bool TransformInterpolationBuffer::empty() const {
   return timestamped_transforms_.empty();
 }
 
+
+void TransformInterpolationBuffer::DeleteUntil(common::Time time) {
+  while ((!timestamped_transforms_.empty()) && timestamped_transforms_.front().time < time) {
+    timestamped_transforms_.pop_front();
+  }
+}
+
 }  // namespace transform
 }  // namespace cartographer

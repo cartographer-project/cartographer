@@ -15,6 +15,8 @@
  */
 
 #include "cartographer/mapping/range_data_inserter_interface.h"
+#include "cartographer/mapping/3d/range_data_inserter_3d.h"
+#include "cartographer/mapping/3d/tsdf_range_data_inserter_3d.h"
 
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
 #include "cartographer/mapping/2d/tsdf_range_data_inserter_2d.h"
@@ -45,5 +47,30 @@ proto::RangeDataInserterOptions CreateRangeDataInserterOptions(
               .get());
   return options;
 }
+
+proto::RangeDataInserterOptions3D CreateRangeDataInserterOptions3D(
+    common::LuaParameterDictionary* parameter_dictionary) {
+  proto::RangeDataInserterOptions3D options;
+  const std::string range_data_inserter_type_string =
+      parameter_dictionary->GetString("range_data_inserter_type");
+  proto::RangeDataInserterOptions3D_RangeDataInserterType3D
+      range_data_inserter_type;
+  CHECK(proto::RangeDataInserterOptions3D_RangeDataInserterType3D_Parse(
+      range_data_inserter_type_string, &range_data_inserter_type))
+      << "Unknown RangeDataInserterOptions_RangeDataInserterType kind: "
+      << range_data_inserter_type_string;
+  options.set_range_data_inserter_type(range_data_inserter_type);
+  *options.mutable_probability_grid_range_data_inserter_options_3d() =
+      CreateProbabilityGridRangeDataInserterOptions3D(
+          parameter_dictionary
+              ->GetDictionary("probability_grid_range_data_inserter")
+              .get());
+  *options.mutable_tsdf_range_data_inserter_options_3d() =
+      CreateTSDFRangeDataInserterOptions3D(
+          parameter_dictionary->GetDictionary("tsdf_range_data_inserter")
+              .get());
+  return options;
+}
+
 }  // namespace mapping
 }  // namespace cartographer

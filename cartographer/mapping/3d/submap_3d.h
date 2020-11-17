@@ -25,11 +25,14 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/mapping/3d/range_data_inserter_3d.h"
+#include "cartographer/mapping/3d/tsdf_range_data_inserter_3d.h"
 #include "cartographer/mapping/id.h"
 #include "cartographer/mapping/proto/3d/submaps_options_3d.pb.h"
 #include "cartographer/mapping/proto/serialization.pb.h"
 #include "cartographer/mapping/proto/submap_visualization.pb.h"
+#include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/mapping/submaps.h"
+#include "cartographer/mapping/value_conversion_tables.h"
 #include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
@@ -42,9 +45,11 @@ proto::SubmapsOptions3D CreateSubmapsOptions3D(
 
 class Submap3D : public Submap {
  public:
-  Submap3D(float high_resolution, float low_resolution,
-           const transform::Rigid3d& local_submap_pose,
-           const Eigen::VectorXf& rotational_scan_matcher_histogram);
+  Submap3D(const transform::Rigid3d& local_submap_pose,
+           std::unique_ptr<GridInterface> low_resolution_grid,
+           std::unique_ptr<GridInterface> high_resolution_grid,
+           const Eigen::VectorXf& rotational_scan_matcher_histogram,
+           ValueConversionTables* conversion_tables);
 
   explicit Submap3D(const proto::Submap3D& proto);
 
@@ -54,11 +59,11 @@ class Submap3D : public Submap {
   void ToResponseProto(const transform::Rigid3d& global_submap_pose,
                        proto::SubmapQuery::Response* response) const override;
 
-  const HybridGrid& high_resolution_hybrid_grid() const {
-    return *high_resolution_hybrid_grid_;
+  const GridInterface& high_resolution_hybrid_grid() const {
+    return *high_resolution_grid_;
   }
-  const HybridGrid& low_resolution_hybrid_grid() const {
-    return *low_resolution_hybrid_grid_;
+  const GridInterface& low_resolution_hybrid_grid() const {
+    return *low_resolution_grid_;
   }
   const Eigen::VectorXf& rotational_scan_matcher_histogram() const {
     return rotational_scan_matcher_histogram_;
@@ -67,7 +72,7 @@ class Submap3D : public Submap {
   // Insert 'range_data' into this submap using 'range_data_inserter'. The
   // submap must not be finished yet.
   void InsertData(const sensor::RangeData& range_data,
-                  const RangeDataInserter3D& range_data_inserter,
+                  const RangeDataInserterInterface* range_data_inserter,
                   float high_resolution_max_range,
                   const Eigen::Quaterniond& local_from_gravity_aligned,
                   const Eigen::VectorXf& scan_histogram_in_gravity);
@@ -77,9 +82,10 @@ class Submap3D : public Submap {
  private:
   void UpdateFromProto(const proto::Submap3D& submap_3d);
 
-  std::unique_ptr<HybridGrid> high_resolution_hybrid_grid_;
-  std::unique_ptr<HybridGrid> low_resolution_hybrid_grid_;
+  std::unique_ptr<GridInterface> high_resolution_grid_;
+  std::unique_ptr<GridInterface> low_resolution_grid_;
   Eigen::VectorXf rotational_scan_matcher_histogram_;
+  ValueConversionTables* conversion_tables_;
 };
 
 // The first active submap will be created on the insertion of the first range
@@ -112,12 +118,15 @@ class ActiveSubmaps3D {
   std::vector<std::shared_ptr<const Submap3D>> submaps() const;
 
  private:
+  std::unique_ptr<RangeDataInserterInterface> CreateRangeDataInserter();
+  std::unique_ptr<GridInterface> CreateGrid(float resolution);
   void AddSubmap(const transform::Rigid3d& local_submap_pose,
                  int rotational_scan_matcher_histogram_size);
 
   const proto::SubmapsOptions3D options_;
   std::vector<std::shared_ptr<Submap3D>> submaps_;
-  RangeDataInserter3D range_data_inserter_;
+  std::unique_ptr<RangeDataInserterInterface> range_data_inserter_;
+  ValueConversionTables conversion_tables_;
 };
 
 }  // namespace mapping

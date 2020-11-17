@@ -23,7 +23,7 @@ HybridGridPointsProcessor::HybridGridPointsProcessor(
     std::unique_ptr<FileWriter> file_writer, PointsProcessor* const next)
     : next_(next),
       range_data_inserter_(range_data_inserter_options),
-      hybrid_grid_(voxel_size),
+      hybrid_grid_(voxel_size, &conversion_tables_),
       file_writer_(std::move(file_writer)) {}
 
 std::unique_ptr<HybridGridPointsProcessor>

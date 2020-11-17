@@ -392,7 +392,7 @@ void OptimizationProblem3D::Solve(
         }
 
         auto imu_it2 = imu_it;
-        const IntegrateImuResult<double> result = IntegrateImu(
+        const IntegrateImuResult<double> result = IntegrateImuEuler(
             imu_data, first_node_data.time, second_node_data.time, &imu_it);
         const auto next_node_it = std::next(node_it);
         if (next_node_it != trajectory_end &&
@@ -407,9 +407,10 @@ void OptimizationProblem3D::Solve(
           const common::Time first_center = first_time + first_duration / 2;
           const common::Time second_center = second_time + second_duration / 2;
           const IntegrateImuResult<double> result_to_first_center =
-              IntegrateImu(imu_data, first_time, first_center, &imu_it2);
+              IntegrateImuEuler(imu_data, first_time, first_center, &imu_it2);
           const IntegrateImuResult<double> result_center_to_center =
-              IntegrateImu(imu_data, first_center, second_center, &imu_it2);
+              IntegrateImuEuler(imu_data, first_center, second_center,
+                                &imu_it2);
           // 'delta_velocity' is the change in velocity from the point in time
           // halfway between the first and second poses to halfway between
           // second and third pose. It is computed from IMU data and still
