@@ -517,7 +517,7 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
         for (int cloud_idx = 0; cloud_idx < NUM_CLOUDS; ++cloud_idx) {
           for (int relative_point_idx = 0; relative_point_idx < NUM_POINTS_PER_CLOUD; ++relative_point_idx) {
             int point_idx = relative_point_idx + cloud_idx * NUM_POINTS_PER_CLOUD;
-            if (range_data.returns[point_idx].position.isZero()) continue;
+            if (range_data.returns[point_idx].position.hasNaN()) continue;
             int i0 = point_idx;
             int horizontal_stride = 5;
             int i1 = relative_point_idx + horizontal_stride >= NUM_POINTS_PER_CLOUD
@@ -529,7 +529,7 @@ void TSDFRangeDataInserter3D::Insert(const sensor::RangeData& range_data,
             Eigen::Vector3f p0 = range_data.returns[i0].position;
             Eigen::Vector3f p1 = range_data.returns[i1].position;
             Eigen::Vector3f p2 = range_data.returns[i2].position;
-            if (p1.isZero() || p2.isZero()) continue;
+            if (p1.hasNaN() || p2.hasNaN()) continue;
             float r0 = p0.norm();
             float r1 = p1.norm();
             float r2 = p2.norm();
