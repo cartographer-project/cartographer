@@ -19,11 +19,11 @@
 
 #include "absl/memory/memory.h"
 #include "async_grpc/testing/rpc_handler_test_server.h"
+#include "cartographer/cloud/internal/testing/mock_local_trajectory_uploader.h"
+#include "cartographer/cloud/internal/testing/mock_map_builder_context.h"
 #include "cartographer/mapping/internal/testing/mock_map_builder.h"
 #include "cartographer/mapping/internal/testing/mock_pose_graph.h"
 #include "gtest/gtest.h"
-#include "mock_local_trajectory_uploader.h"
-#include "mock_map_builder_context.h"
 
 namespace cartographer {
 namespace cloud {
