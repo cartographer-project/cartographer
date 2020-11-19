@@ -43,4 +43,9 @@ message OptimizingLocalTrajectoryBuilderOptions {
   IMUCostTerm imu_cost_term = 15;
   bool sync_control_points_with_range_data = 16;
   double initialization_duration = 17;
+  bool use_adaptive_odometry_weights = 18;
+  double max_odometry_translation_weight = 19;
+  double max_odometry_rotation_weight = 20;
+  double weight_odometry_translation_limit = 21;
+  double weight_odometry_rotation_limit = 22;
 }

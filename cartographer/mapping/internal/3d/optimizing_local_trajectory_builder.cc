@@ -575,14 +575,49 @@ OptimizingLocalTrajectoryBuilder::MaybeOptimize(const common::Time time) {
             interpolation_buffer.Lookup(control_points_[i].time);
         const transform::Rigid3d delta_pose =
             current_odometer_pose.inverse() * previous_odometer_pose;
+
+        double residual_translation_weight =
+            options_.optimizing_local_trajectory_builder_options()
+                .odometry_translation_weight();
+        double residual_rotation_weight =
+            options_.optimizing_local_trajectory_builder_options()
+                .odometry_rotation_weight();
+        if (options_.optimizing_local_trajectory_builder_options()
+                .use_adaptive_odometry_weights()) {
+          double delta_translation =
+              (delta_pose.translation()).norm() /
+              options_.optimizing_local_trajectory_builder_options()
+                  .weight_odometry_translation_limit();
+          double delta_rotation =
+              std::abs(delta_pose.rotation().angularDistance(
+                  Eigen::Quaterniond::Identity())) /
+              options_.optimizing_local_trajectory_builder_options()
+                  .weight_odometry_rotation_limit();
+          double delta_time = common::ToSeconds(control_points_[i].time -
+                                                control_points_[i - 1].time);
+          double weight_ratio = common::Clamp(
+              std::max(delta_translation, delta_rotation) / (delta_time), 0.0,
+              1.0);
+          residual_translation_weight =
+              weight_ratio *
+                  options_.optimizing_local_trajectory_builder_options()
+                      .odometry_translation_weight() +
+              (1.0 - weight_ratio) *
+                  options_.optimizing_local_trajectory_builder_options()
+                      .max_odometry_translation_weight();
+          residual_rotation_weight =
+              weight_ratio *
+                  options_.optimizing_local_trajectory_builder_options()
+                      .odometry_rotation_weight() +
+              (1.0 - weight_ratio) *
+                  options_.optimizing_local_trajectory_builder_options()
+                      .max_odometry_rotation_weight();
+        }
         problem.AddResidualBlock(
             new ceres::AutoDiffCostFunction<
                 RelativeTranslationAndYawCostFunction, 6, 3, 4, 3, 4>(
                 new RelativeTranslationAndYawCostFunction(
-                    options_.optimizing_local_trajectory_builder_options()
-                        .odometry_translation_weight(),
-                    options_.optimizing_local_trajectory_builder_options()
-                        .odometry_rotation_weight(),
+                    residual_translation_weight, residual_rotation_weight,
                     delta_pose)),
             nullptr, control_points_[i - 1].state.translation.data(),
             control_points_[i - 1].state.rotation.data(),

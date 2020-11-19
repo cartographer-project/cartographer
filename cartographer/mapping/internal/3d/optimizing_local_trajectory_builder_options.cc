@@ -64,6 +64,17 @@ CreateOptimizingLocalTrajectoryBuilderOptions(
   options.set_imu_cost_term(imu_cost_term_type);
   options.set_sync_control_points_with_range_data(
       parameter_dictionary->GetBool("sync_control_points_with_range_data"));
+  options.set_use_adaptive_odometry_weights(
+      parameter_dictionary->GetBool("use_adaptive_odometry_weights"));
+  options.set_max_odometry_translation_weight(
+      parameter_dictionary->GetDouble("max_odometry_translation_weight"));
+  options.set_max_odometry_rotation_weight(
+      parameter_dictionary->GetDouble("max_odometry_rotation_weight"));
+  options.set_weight_odometry_translation_limit(
+      parameter_dictionary->GetDouble("weight_odometry_translation_limit"));
+  options.set_weight_odometry_rotation_limit(
+      parameter_dictionary->GetDouble("weight_odometry_rotation_limit"));
+
   return options;
 }
 
