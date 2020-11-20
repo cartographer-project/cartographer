@@ -18,6 +18,7 @@ package cartographer.mapping.proto;
 
 import "cartographer/mapping/proto/2d/grid_2d.proto";
 import "cartographer/mapping/proto/3d/hybrid_grid.proto";
+import "cartographer/mapping/proto/3d/hybrid_grid_tsdf.proto";
 import "cartographer/transform/proto/transform.proto";
 
 // Serialized state of a Submap2D.
@@ -33,7 +34,13 @@ message Submap3D {
   transform.proto.Rigid3d local_pose = 1;
   int32 num_range_data = 2;
   bool finished = 3;
-  HybridGrid high_resolution_hybrid_grid = 4;
-  HybridGrid low_resolution_hybrid_grid = 5;
+  oneof high_resolution_grid {
+    HybridGrid high_resolution_hybrid_grid = 4;
+    HybridGridTSDF high_resolution_hybrid_grid_tsdf = 7;
+  }
+  oneof low_resolution_grid {
+    HybridGrid low_resolution_hybrid_grid = 5;
+    HybridGridTSDF low_resolution_hybrid_grid_tsdf = 8;
+  }
   repeated float rotational_scan_matcher_histogram = 6;
 }

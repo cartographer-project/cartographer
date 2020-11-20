@@ -323,16 +323,26 @@ proto::Submap Submap3D::ToProto(
   submap_3d->set_num_range_data(num_range_data());
   submap_3d->set_finished(insertion_finished());
   if (include_probability_grid_data) {
-    LOG(ERROR) << "proto export not implemented";
-    //    *submap_3d->mutable_high_resolution_hybrid_grid() =
-    //        high_resolution_hybrid_grid().ToProto();
-    //    *submap_3d->mutable_low_resolution_hybrid_grid() =
-    //        low_resolution_hybrid_grid().ToProto();
-  }
-  for (Eigen::VectorXf::Index i = 0;
-       i != rotational_scan_matcher_histogram_.size(); ++i) {
-    submap_3d->add_rotational_scan_matcher_histogram(
-        rotational_scan_matcher_histogram_(i));
+    switch (low_resolution_grid_->GetGridType()) {
+      case GridType::PROBABILITY_GRID: {
+        *submap_3d->mutable_high_resolution_hybrid_grid() =
+            static_cast<HybridGrid*>(high_resolution_grid_.get())->ToProto();
+        *submap_3d->mutable_low_resolution_hybrid_grid() =
+            static_cast<HybridGrid*>(low_resolution_grid_.get())->ToProto();
+        break;
+      }
+      case GridType::TSDF: {
+        *submap_3d->mutable_low_resolution_hybrid_grid_tsdf() =
+            static_cast<HybridGridTSDF*>(low_resolution_grid_.get())->ToProto();
+        *submap_3d->mutable_high_resolution_hybrid_grid_tsdf() =
+            static_cast<HybridGridTSDF*>(high_resolution_grid_.get())
+                ->ToProto();
+        break;
+      }
+      case GridType::NONE:
+        LOG(FATAL) << "Gridtype not initialized.";
+        break;
+    }
   }
   return proto;
 }
@@ -349,9 +359,17 @@ void Submap3D::UpdateFromProto(const proto::Submap3D& submap_3d) {
     high_resolution_grid_ = absl::make_unique<HybridGrid>(
         submap_3d.high_resolution_hybrid_grid(), conversion_tables_);
   }
+  if (submap_3d.has_high_resolution_hybrid_grid_tsdf()) {
+    high_resolution_grid_ = absl::make_unique<HybridGridTSDF>(
+        submap_3d.high_resolution_hybrid_grid_tsdf(), conversion_tables_);
+  }
   if (submap_3d.has_low_resolution_hybrid_grid()) {
     low_resolution_grid_ = absl::make_unique<HybridGrid>(
         submap_3d.low_resolution_hybrid_grid(), conversion_tables_);
+  }
+  if (submap_3d.has_low_resolution_hybrid_grid_tsdf()) {
+    low_resolution_grid_ = absl::make_unique<HybridGridTSDF>(
+        submap_3d.low_resolution_hybrid_grid_tsdf(), conversion_tables_);
   }
   rotational_scan_matcher_histogram_ =
       Eigen::VectorXf::Zero(submap_3d.rotational_scan_matcher_histogram_size());

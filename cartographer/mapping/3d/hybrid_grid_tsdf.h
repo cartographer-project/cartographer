@@ -29,9 +29,9 @@
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/tsd_value_converter.h"
 #include "cartographer/mapping/3d/hybrid_grid_base.h"
-#include "cartographer/mapping/probability_values.h"
 #include "cartographer/mapping/grid_interface.h"
-#include "cartographer/mapping/proto/3d/hybrid_grid.pb.h"
+#include "cartographer/mapping/probability_values.h"
+#include "cartographer/mapping/proto/3d/hybrid_grid_tsdf.pb.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
@@ -66,22 +66,19 @@ class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
             relative_truncation_distance * resolution, max_weight,
             conversion_tables_)) {}
 
-  explicit HybridGridTSDF(const proto::HybridGrid& proto,
+  explicit HybridGridTSDF(const proto::HybridGridTSDF& proto,
                           ValueConversionTables* conversion_tables)
-      : HybridGridTSDF(proto.resolution(), 0.3f, 1000.0f, conversion_tables)
-  // TODO(kdaun) Initialze from proto
-  {
-    CHECK_EQ(proto.values_size(), proto.x_indices_size());
-    CHECK_EQ(proto.values_size(), proto.y_indices_size());
-    CHECK_EQ(proto.values_size(), proto.z_indices_size());
-    for (int i = 0; i < proto.values_size(); ++i) {
-      LOG(ERROR) << "protobuf not supported for 3D TSDF";
-      // TODO(kdaun): add proto support
-      // SetProbability does some error checking for us.
-      //      SetProbability(Eigen::Vector3i(proto.x_indices(i),
-      //      proto.y_indices(i),
-      //                                     proto.z_indices(i)),
-      //                     ValueToProbability(proto.values(i)));
+      : HybridGridTSDF(proto.resolution(), proto.relative_truncation_distance(),
+                       proto.max_weight(), conversion_tables) {
+    CHECK_EQ(proto.values_tsd_size(), proto.x_indices_size());
+    CHECK_EQ(proto.values_tsd_size(), proto.y_indices_size());
+    CHECK_EQ(proto.values_tsd_size(), proto.z_indices_size());
+    CHECK_EQ(proto.values_tsd_size(), proto.values_weight_size());
+    for (int i = 0; i < proto.values_tsd_size(); ++i) {
+      SetCell(Eigen::Vector3i(proto.x_indices(i), proto.y_indices(i),
+                              proto.z_indices(i)),
+              ValueConverter().ValueToTSD(proto.values_tsd(i)),
+              ValueConverter().ValueToWeight(proto.values_weight(i)));
     }
   }
   virtual GridType GetGridType() const override { return GridType::TSDF; };
@@ -104,26 +101,6 @@ class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
     }
   }
 
-  // Applies the 'odds' specified when calling ComputeLookupTableToApplyOdds()
-  // to the probability of the cell at 'index' if the cell has not already been
-  // updated. Multiple updates of the same cell will be ignored until
-  // FinishUpdate() is called. Returns true if the cell was updated.
-  //
-  // If this is the first call to ApplyOdds() for the specified cell, its value
-  // will be set to probability corresponding to 'odds'.
-  //  bool ApplyLookupTable(const Eigen::Array3i& index,
-  //                        const std::vector<uint16>& table) {
-  //    DCHECK_EQ(table.size(), kUpdateMarker);
-  //    uint16* const cell = mutable_value(index);
-  //    if (*cell >= kUpdateMarker) {
-  //      return false;
-  //    }
-  //    update_indices_.push_back(cell);
-  //    *cell = table[*cell];
-  //    DCHECK_GE(*cell, kUpdateMarker);
-  //    return true;
-  //  }
-
   // Returns the truncated signed distance of the cell with 'index'.
   float GetTSD(const Eigen::Array3i& index) const {
     return value_converter_->ValueToTSD(value(index).discrete_tsd);
@@ -139,19 +116,20 @@ class HybridGridTSDF : public GridInterface, public HybridGridBase<TSDFVoxel> {
     return value(index).discrete_weight != 0;
   }
 
-  proto::HybridGrid ToProto() const {
-    LOG(ERROR) << "protobuf not supported for 3D TSDF";
-    // TODO(kdaun): add proto support
+  proto::HybridGridTSDF ToProto() const {
     CHECK(update_indices_.empty()) << "Serializing a grid during an update is "
                                       "not supported. Finish the update first.";
-    proto::HybridGrid result;
-    //    result.set_resolution(resolution());
-    //    for (const auto it : *this) {
-    //      result.add_x_indices(it.first.x());
-    //      result.add_y_indices(it.first.y());
-    //      result.add_z_indices(it.first.z());
-    //      result.add_values(it.second);
-    //    }
+    proto::HybridGridTSDF result;
+    result.set_resolution(resolution());
+    for (const auto it : *this) {
+      result.add_x_indices(it.first.x());
+      result.add_y_indices(it.first.y());
+      result.add_z_indices(it.first.z());
+      result.add_values_tsd(it.second.discrete_tsd);
+      result.add_values_weight(it.second.discrete_weight);
+    }
+    result.set_max_weight(ValueConverter().getMaxWeight());
+    result.set_relative_truncation_distance(ValueConverter().getMaxTSD());
     return result;
   }
 
