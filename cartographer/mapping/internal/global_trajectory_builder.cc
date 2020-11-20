@@ -69,12 +69,14 @@ class GlobalTrajectoryBuilder : public mapping::TrajectoryBuilderInterface {
     std::unique_ptr<InsertionResult> insertion_result;
     if (matching_result->insertion_result != nullptr) {
       kLocalSlamInsertionResults->Increment();
-      auto node_id = pose_graph_->AddNode(
+      const auto node_submap_ids = pose_graph_->AddNode(
           matching_result->insertion_result->constant_data, trajectory_id_,
           matching_result->insertion_result->insertion_submaps);
+      const auto& node_id = node_submap_ids.first;
       CHECK_EQ(node_id.trajectory_id, trajectory_id_);
       insertion_result = absl::make_unique<InsertionResult>(InsertionResult{
           node_id, matching_result->insertion_result->constant_data,
+          node_submap_ids.second,
           std::vector<std::shared_ptr<const Submap>>(
               matching_result->insertion_result->insertion_submaps.begin(),
               matching_result->insertion_result->insertion_submaps.end())});

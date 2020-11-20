@@ -50,6 +50,7 @@ class TrajectoryBuilderInterface {
   struct InsertionResult {
     NodeId node_id;
     std::shared_ptr<const TrajectoryNode::Data> constant_data;
+    std::vector<SubmapId> insertion_submap_ids;
     std::vector<std::shared_ptr<const Submap>> insertion_submaps;
   };
 

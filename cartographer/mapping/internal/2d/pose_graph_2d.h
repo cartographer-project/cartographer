@@ -77,7 +77,7 @@ class PoseGraph2D : public PoseGraph {
   // node data was inserted into the 'insertion_submaps'. If
   // 'insertion_submaps.front().finished()' is 'true', data was inserted into
   // this submap for the last time.
-  NodeId AddNode(
+  std::pair<NodeId, std::vector<SubmapId>> AddNode(
       std::shared_ptr<const TrajectoryNode::Data> constant_data,
       int trajectory_id,
       const std::vector<std::shared_ptr<const Submap2D>>& insertion_submaps)
@@ -173,7 +173,7 @@ class PoseGraph2D : public PoseGraph {
 
   // Appends the new node and submap (if needed) to the internal data
   // structures.
-  NodeId AppendNode(
+  std::pair<NodeId, std::vector<SubmapId>> AppendNode(
       std::shared_ptr<const TrajectoryNode::Data> constant_data,
       int trajectory_id,
       const std::vector<std::shared_ptr<const Submap2D>>& insertion_submaps,
