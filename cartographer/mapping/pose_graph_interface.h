@@ -99,6 +99,11 @@ class PoseGraphInterface {
   // Returns data for all submaps.
   virtual MapById<SubmapId, SubmapData> GetAllSubmapData() const = 0;
 
+  // Returns the current optimized transform and submap itself for the given
+  // 'submap_id'. Returns 'nullptr' for the 'submap' member if the submap does
+  // not exist (anymore).
+  virtual SubmapData GetSubmapData(const SubmapId& submap_id) const = 0;
+
   // Returns the global poses for all submaps.
   virtual MapById<SubmapId, SubmapPose> GetAllSubmapPoses() const = 0;
 

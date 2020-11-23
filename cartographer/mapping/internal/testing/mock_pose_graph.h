@@ -34,6 +34,7 @@ class MockPoseGraph : public mapping::PoseGraphInterface {
   MOCK_METHOD0(RunFinalOptimization, void());
   MOCK_CONST_METHOD0(GetAllSubmapData,
                      mapping::MapById<mapping::SubmapId, SubmapData>());
+  MOCK_CONST_METHOD1(GetSubmapData, SubmapData(const SubmapId&));
   MOCK_CONST_METHOD0(GetAllSubmapPoses,
                      mapping::MapById<mapping::SubmapId, SubmapPose>());
   MOCK_CONST_METHOD1(GetLocalToGlobalTransform, transform::Rigid3d(int));

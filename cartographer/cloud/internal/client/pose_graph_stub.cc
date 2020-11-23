@@ -52,6 +52,11 @@ PoseGraphStub::GetAllSubmapData() const {
   LOG(FATAL) << "Not implemented";
 }
 
+mapping::PoseGraphInterface::SubmapData PoseGraphStub::GetSubmapData(
+    const mapping::SubmapId& submap_id) const {
+  LOG(FATAL) << "Not implemented";
+}
+
 mapping::MapById<mapping::SubmapId, mapping::PoseGraphInterface::SubmapPose>
 PoseGraphStub::GetAllSubmapPoses() const {
   google::protobuf::Empty request;
