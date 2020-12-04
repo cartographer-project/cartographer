@@ -31,7 +31,7 @@ option(WITH_RK4_INTEGRATOR "build with rk4 integrator" false)
 option(BUILD_EVALUATION_TOOLS "build with evaluation tool" false)
 
 
-set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_CXX_STANDARD 14)
 
 include("${PROJECT_SOURCE_DIR}/cmake/functions.cmake")
 google_initialize_cartographer_project()
@@ -44,7 +44,7 @@ if(WIN32)
   set(Boost_USE_STATIC_LIBS FALSE)
 endif()
 find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-find_package(PythonLibs 2.7)
+find_package(PythonLibs)
 find_package(Ceres REQUIRED COMPONENTS SuiteSparse)
 find_package(Eigen3 REQUIRED)
 find_package(LuaGoogle REQUIRED)
