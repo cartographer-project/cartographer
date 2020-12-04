@@ -27,6 +27,7 @@ option(BUILD_PROMETHEUS "build Prometheus monitoring support" false)
 
 option(WITH_OPEN3D "build with open3d support" false)
 option(WITH_PCL "build with pcl support" false)
+option(WITH_RK4_INTEGRATOR "build with rk4 integrator" false)
 option(BUILD_EVALUATION_TOOLS "build with evaluation tool" false)
 
 
@@ -76,7 +77,9 @@ if(SPHINX_FOUND)
   add_subdirectory("docs")
 endif()
 
+if(${WITH_RK4_INTEGRATOR})
 find_package(imu_integrator_rk4 REQUIRED)
+endif()
 
 # PCL
 if(${WITH_PCL})
@@ -288,9 +291,12 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${LUA_INCLUDE_DIR}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LUA_LIBRARIES})
 
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${imu_integrator_rk4_INCLUDE_DIRS}")
-target_link_libraries(${PROJECT_NAME} PUBLIC ${imu_integrator_rk4_LIBRARIES})
+
+if(${WITH_RK4_INTEGRATOR})
+  target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+    "${imu_integrator_rk4_INCLUDE_DIRS}")
+  target_link_libraries(${PROJECT_NAME} PUBLIC ${imu_integrator_rk4_LIBRARIES})
+endif()
 
 # PCL
 
@@ -403,7 +409,6 @@ foreach(ABS_FIL ${ALL_TESTS})
   endif()
   target_link_libraries("${TEST_TARGET_NAME}" PUBLIC ${TEST_LIB})
 endforeach()
-
 
 # Add the binary directory first, so that port.h is included after it has
 # been generated.

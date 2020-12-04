@@ -22,7 +22,9 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
+#ifdef WITH_RK4
 #include "imu-integrator/imu-integrator.h"
+#endif
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/internal/3d/state.h"
@@ -180,7 +182,7 @@ IntegrateImuWithTranslationResult<T> IntegrateImuRK4(
   if (std::next(*it) != imu_data.end()) {
     CHECK_GE(std::next(*it)->time, start_time);
   }
-
+#ifdef WITH_RK4
   common::Time current_time = start_time;
   imu_integrator::ImuIntegratorRK4 integrator(0.0, 0.0, 0.0, 0.0,
                                               gravity_acceleration);
@@ -299,6 +301,10 @@ IntegrateImuWithTranslationResult<T> IntegrateImuRK4(
               .data()),
       current_state.template block<imu_integrator::kVelocityBlockSize, 1>(
           imu_integrator::kStateVelocityOffset, 0)};
+#else
+  LOG(ERROR)<<"RK4 integrator disabled in build options.";
+  IntegrateImuWithTranslationResult<T> result;
+#endif
 
   return result;
 }

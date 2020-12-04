@@ -20,7 +20,10 @@
 
 #include "cartographer/mapping/internal/3d/imu_integration.h"
 
+
+#ifdef WITH_RK4
 #include "imu-integrator/imu-integrator.h"
+
 
 #include <map>
 #include <random>
@@ -463,3 +466,5 @@ TEST(IMUIntegrationTest, ConstantAccelerationIMUIntegratorWithGravity) {
 }  // namespace
 }  // namespace mapping
 }  // namespace cartographer
+
+#endif
