@@ -39,6 +39,30 @@ Getting started
 .. _our Read the Docs site: https://google-cartographer.readthedocs.io
 .. _creating an issue: https://github.com/cartographer-project/cartographer_ros/issues/new?labels=question
 
+Building
+================
+
+In order to test changes of cartographer you can point bazel to reference a local copy of cartographer instead of the version in github.
+To do this open the WORKSAPCE file at the root of the thirdwave repo
+
+change the cartographer entry to look like 
+ .. code:: python
+
+   # Cartographer
+   load("//third_party:cartographer_repositories.bzl", "cartographer_repositories")
+   cartographer_repositories()
+   local_repository(
+      name = "com_github_thirdwave_ai_cartographer",
+      path = "/home/trevor/cartographer"
+   )
+   
+   #github_repository(
+   #    name = "com_github_thirdwave_ai_cartographer",
+   #    commit = "3cb68fbffa8814cc402316074ebae206d01313e2",
+   #    repo = "thirdwave-ai/cartographer",
+   #)
+Once you are done testing and have a commit live in github remember to change back the workspace file
+
 Contributing
 ============
 
