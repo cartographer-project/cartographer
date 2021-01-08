@@ -20,7 +20,7 @@
 #include <limits>
 
 #include "cartographer/common/math.h"
-#include "cartographer/mapping/eigen_quaterniond_from_two_vectors.h"
+#include "cartographer/mapping/internal/eigen_quaterniond_from_two_vectors.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 

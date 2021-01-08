@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/eigen_quaterniond_from_two_vectors.h"
+#include "cartographer/mapping/internal/eigen_quaterniond_from_two_vectors.h"
 
 namespace cartographer {
 namespace mapping {
