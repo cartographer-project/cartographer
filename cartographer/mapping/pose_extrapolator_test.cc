@@ -18,7 +18,7 @@
 
 #include "Eigen/Geometry"
 #include "absl/memory/memory.h"
-#include "cartographer/mapping/eigen_quaterniond_from_two_vectors.h"
+#include "cartographer/mapping/internal/eigen_quaterniond_from_two_vectors.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "gtest/gtest.h"
 

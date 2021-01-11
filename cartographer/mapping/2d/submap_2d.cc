@@ -26,7 +26,7 @@
 #include "absl/memory/memory.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/2d/probability_grid_range_data_inserter_2d.h"
-#include "cartographer/mapping/2d/tsdf_range_data_inserter_2d.h"
+#include "cartographer/mapping/internal/2d/tsdf_range_data_inserter_2d.h"
 #include "cartographer/mapping/range_data_inserter_interface.h"
 #include "glog/logging.h"
 

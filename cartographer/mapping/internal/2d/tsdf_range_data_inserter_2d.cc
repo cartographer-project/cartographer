@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/2d/tsdf_range_data_inserter_2d.h"
+#include "cartographer/mapping/internal/2d/tsdf_range_data_inserter_2d.h"
 
 #include "cartographer/mapping/internal/2d/normal_estimation_2d.h"
 #include "cartographer/mapping/internal/2d/ray_to_pixel_mask.h"

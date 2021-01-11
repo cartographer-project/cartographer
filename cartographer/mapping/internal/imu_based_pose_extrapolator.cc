@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/imu_based_pose_extrapolator.h"
+#include "cartographer/mapping/internal/imu_based_pose_extrapolator.h"
 
 #include <algorithm>
 
 #include "absl/memory/memory.h"
-#include "cartographer/mapping/eigen_quaterniond_from_two_vectors.h"
 #include "cartographer/mapping/internal/3d/imu_integration.h"
 #include "cartographer/mapping/internal/3d/rotation_parameterization.h"
+#include "cartographer/mapping/internal/eigen_quaterniond_from_two_vectors.h"
 #include "cartographer/mapping/internal/optimization/ceres_pose.h"
 #include "cartographer/mapping/internal/optimization/cost_functions/acceleration_cost_function_3d.h"
 #include "cartographer/mapping/internal/optimization/cost_functions/rotation_cost_function_3d.h"
