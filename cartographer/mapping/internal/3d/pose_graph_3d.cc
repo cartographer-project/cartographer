@@ -1190,28 +1190,24 @@ void PoseGraph3D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   CHECK(parent_->data_.submap_data.at(submap_id).state ==
         SubmapState::kFinished);
 
-  std::set<NodeId> nodes_to_remove;
-  // We need to use node_ids instead of constraints here to be also compatible
-  // with frozen trajectories that don't have intra-constraints.
-  nodes_to_remove.insert(
-      parent_->data_.submap_data.at(submap_id).node_ids.begin(),
-      parent_->data_.submap_data.at(submap_id).node_ids.end());
-
   // Compile all nodes that are still INTRA_SUBMAP constrained to other submaps
   // once the submap with 'submap_id' is gone.
+  // We need to use node_ids instead of constraints here to be also compatible
+  // with frozen trajectories that don't have intra-constraints.
   std::set<NodeId> nodes_to_retain;
-  for (const auto& other_submap : parent_->data_.submap_data) {
-    if (other_submap.id == submap_id) {
-      continue;
+  for (const auto& submap_data : parent_->data_.submap_data) {
+    if (submap_data.id != submap_id) {
+      nodes_to_retain.insert(submap_data.data.node_ids.begin(),
+                             submap_data.data.node_ids.end());
     }
-    std::set_intersection(
-        nodes_to_remove.begin(), nodes_to_remove.end(),
-        other_submap.data.node_ids.begin(), other_submap.data.node_ids.end(),
-        std::inserter(nodes_to_retain, nodes_to_retain.begin()));
   }
-  for (const auto& node_to_retain : nodes_to_retain) {
-    nodes_to_remove.erase(node_to_retain);
-  }
+
+  // Remove all nodes that are exlusively associated to 'submap_id'.
+  std::set<NodeId> nodes_to_remove;
+  std::set_difference(parent_->data_.submap_data.at(submap_id).node_ids.begin(),
+                      parent_->data_.submap_data.at(submap_id).node_ids.end(),
+                      nodes_to_retain.begin(), nodes_to_retain.end(),
+                      std::inserter(nodes_to_remove, nodes_to_remove.begin()));
 
   // Remove all 'data_.constraints' related to 'submap_id'.
   {
