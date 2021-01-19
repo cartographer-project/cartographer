@@ -323,6 +323,59 @@ TEST_F(PoseGraph3DTest, EvenSubmapTrimmer) {
   }
 }
 
+TEST_F(PoseGraph3DTest, EvenSubmapTrimmerOnFrozenTrajectory) {
+  BuildPoseGraphWithFakeOptimization();
+  const int trajectory_id = 2;
+  const int num_submaps_to_keep = 10;
+  const int num_submaps_to_create = 2 * num_submaps_to_keep;
+  const int num_nodes_per_submap = 3;
+  for (int i = 0; i < num_submaps_to_create; ++i) {
+    int submap_index = 42 + i;
+    auto submap = testing::CreateFakeSubmap3D(trajectory_id, submap_index);
+    pose_graph_->AddSubmapFromProto(Rigid3d::Identity(), submap);
+    for (int j = 0; j < num_nodes_per_submap; ++j) {
+      int node_index = 7 + num_nodes_per_submap * i + j;
+      auto node = testing::CreateFakeNode(trajectory_id, node_index);
+      pose_graph_->AddNodeFromProto(Rigid3d::Identity(), node);
+      // This step is normally done by a MapBuilder when loading frozen state.
+      pose_graph_->AddNodeToSubmap(NodeId{trajectory_id, node_index},
+                                   SubmapId{trajectory_id, submap_index});
+    }
+  }
+  pose_graph_->FreezeTrajectory(trajectory_id);
+  pose_graph_->AddTrimmer(absl::make_unique<EvenSubmapTrimmer>(trajectory_id));
+  pose_graph_->WaitForAllComputations();
+  EXPECT_EQ(
+      pose_graph_->GetAllSubmapPoses().SizeOfTrajectoryOrZero(trajectory_id),
+      num_submaps_to_create);
+  EXPECT_EQ(
+      pose_graph_->GetAllSubmapData().SizeOfTrajectoryOrZero(trajectory_id),
+      num_submaps_to_create);
+  EXPECT_EQ(
+      pose_graph_->GetTrajectoryNodes().SizeOfTrajectoryOrZero(trajectory_id),
+      num_nodes_per_submap * num_submaps_to_create);
+  EXPECT_EQ(pose_graph_->GetTrajectoryNodePoses().SizeOfTrajectoryOrZero(
+                trajectory_id),
+            num_nodes_per_submap * num_submaps_to_create);
+  EXPECT_EQ(pose_graph_->constraints().size(), 0);
+  for (int i = 0; i < 2; ++i) {
+    pose_graph_->RunFinalOptimization();
+    EXPECT_EQ(
+        pose_graph_->GetAllSubmapPoses().SizeOfTrajectoryOrZero(trajectory_id),
+        num_submaps_to_keep);
+    EXPECT_EQ(
+        pose_graph_->GetAllSubmapData().SizeOfTrajectoryOrZero(trajectory_id),
+        num_submaps_to_keep);
+    EXPECT_EQ(
+        pose_graph_->GetTrajectoryNodes().SizeOfTrajectoryOrZero(trajectory_id),
+        num_nodes_per_submap * num_submaps_to_keep);
+    EXPECT_EQ(pose_graph_->GetTrajectoryNodePoses().SizeOfTrajectoryOrZero(
+                  trajectory_id),
+              num_nodes_per_submap * num_submaps_to_keep);
+    EXPECT_EQ(pose_graph_->constraints().size(), 0);
+  }
+}
+
 }  // namespace
 }  // namespace mapping
 }  // namespace cartographer

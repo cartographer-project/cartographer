@@ -359,7 +359,7 @@ std::map<int, int> MapBuilder::LoadState(
 
   if (load_frozen_state) {
     // Add information about which nodes belong to which submap.
-    // Required for 3D pure localization.
+    // This is required, even without constraints.
     for (const proto::PoseGraph::Constraint& constraint_proto :
          pose_graph_proto.constraint()) {
       if (constraint_proto.tag() !=

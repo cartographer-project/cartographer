@@ -1210,33 +1210,36 @@ void PoseGraph2D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   CHECK(parent_->data_.submap_data.at(submap_id).state ==
         SubmapState::kFinished);
 
-  // Compile all nodes that are still INTRA_SUBMAP constrained once the submap
-  // with 'submap_id' is gone.
+  // Compile all nodes that are still INTRA_SUBMAP constrained to other submaps
+  // once the submap with 'submap_id' is gone.
+  // We need to use node_ids instead of constraints here to be also compatible
+  // with frozen trajectories that don't have intra-constraints.
   std::set<NodeId> nodes_to_retain;
-  for (const Constraint& constraint : parent_->data_.constraints) {
-    if (constraint.tag == Constraint::Tag::INTRA_SUBMAP &&
-        constraint.submap_id != submap_id) {
-      nodes_to_retain.insert(constraint.node_id);
+  for (const auto& submap_data : parent_->data_.submap_data) {
+    if (submap_data.id != submap_id) {
+      nodes_to_retain.insert(submap_data.data.node_ids.begin(),
+                             submap_data.data.node_ids.end());
     }
   }
-  // Remove all 'data_.constraints' related to 'submap_id'.
+
+  // Remove all nodes that are exlusively associated to 'submap_id'.
   std::set<NodeId> nodes_to_remove;
+  std::set_difference(parent_->data_.submap_data.at(submap_id).node_ids.begin(),
+                      parent_->data_.submap_data.at(submap_id).node_ids.end(),
+                      nodes_to_retain.begin(), nodes_to_retain.end(),
+                      std::inserter(nodes_to_remove, nodes_to_remove.begin()));
+
+  // Remove all 'data_.constraints' related to 'submap_id'.
   {
     std::vector<Constraint> constraints;
     for (const Constraint& constraint : parent_->data_.constraints) {
-      if (constraint.submap_id == submap_id) {
-        if (constraint.tag == Constraint::Tag::INTRA_SUBMAP &&
-            nodes_to_retain.count(constraint.node_id) == 0) {
-          // This node will no longer be INTRA_SUBMAP contrained and has to be
-          // removed.
-          nodes_to_remove.insert(constraint.node_id);
-        }
-      } else {
+      if (constraint.submap_id != submap_id) {
         constraints.push_back(constraint);
       }
     }
     parent_->data_.constraints = std::move(constraints);
   }
+
   // Remove all 'data_.constraints' related to 'nodes_to_remove'.
   // If the removal lets other submaps lose all their inter-submap constraints,
   // delete their corresponding constraint submap matchers to save memory.
