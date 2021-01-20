@@ -37,6 +37,7 @@ void ThreadPoolInterface::SetThreadPool(Task* task) {
 }
 
 ThreadPool::ThreadPool(int num_threads) {
+  CHECK_GT(num_threads, 0) << "ThreadPool requires a positive num_threads!";
   absl::MutexLock locker(&mutex_);
   for (int i = 0; i != num_threads; ++i) {
     pool_.emplace_back([this]() { ThreadPool::DoWork(); });
