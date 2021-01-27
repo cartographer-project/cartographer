@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "Eigen/Core"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/common/internal/testing/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/mapping/internal/scan_matching/real_time_correlative_scan_matcher.h"
 #include "cartographer/sensor/point_cloud.h"

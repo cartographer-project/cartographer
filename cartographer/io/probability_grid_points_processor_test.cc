@@ -18,8 +18,8 @@
 
 #include <string>
 
+#include "cartographer/common/internal/testing/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/port.h"
 #include "cartographer/io/fake_file_writer.h"
 #include "cartographer/io/points_processor_pipeline_builder.h"

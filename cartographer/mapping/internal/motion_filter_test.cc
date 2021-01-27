@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/internal/motion_filter.h"
 
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/common/internal/testing/lua_parameter_dictionary_test_helpers.h"
 #include "gmock/gmock.h"
 
 namespace cartographer {

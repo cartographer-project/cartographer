@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/pose_extrapolator_interface.h"
 
-#include "cartographer/common/ceres_solver_options.h"
+#include "cartographer/common/internal/ceres_solver_options.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/internal/imu_based_pose_extrapolator.h"
 #include "cartographer/mapping/pose_extrapolator.h"

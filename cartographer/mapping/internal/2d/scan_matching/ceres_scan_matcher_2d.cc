@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "Eigen/Core"
-#include "cartographer/common/ceres_solver_options.h"
+#include "cartographer/common/internal/ceres_solver_options.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/mapping/2d/grid_2d.h"
 #include "cartographer/mapping/internal/2d/scan_matching/occupied_space_cost_function_2d.h"

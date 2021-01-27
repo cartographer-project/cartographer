@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/common/ceres_solver_options.h"
+#include "cartographer/common/internal/ceres_solver_options.h"
 
 namespace cartographer {
 namespace common {

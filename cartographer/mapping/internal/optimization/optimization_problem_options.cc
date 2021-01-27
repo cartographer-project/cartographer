@@ -16,7 +16,7 @@
 
 #include "cartographer/mapping/internal/optimization/optimization_problem_options.h"
 
-#include "cartographer/common/ceres_solver_options.h"
+#include "cartographer/common/internal/ceres_solver_options.h"
 
 namespace cartographer {
 namespace mapping {
