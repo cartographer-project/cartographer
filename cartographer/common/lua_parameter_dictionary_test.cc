@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "absl/memory/memory.h"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/common/internal/testing/lua_parameter_dictionary_test_helpers.h"
 #include "gtest/gtest.h"
 
 namespace cartographer {

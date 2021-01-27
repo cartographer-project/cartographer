@@ -19,7 +19,7 @@
 #include "absl/memory/memory.h"
 #include "cartographer/common/config.h"
 #include "cartographer/common/configuration_file_resolver.h"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/common/internal/testing/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"
 #include "cartographer/transform/transform.h"
 

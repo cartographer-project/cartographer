@@ -20,7 +20,7 @@
 #include <random>
 
 #include "Eigen/Core"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/common/internal/testing/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/3d/hybrid_grid.h"
 #include "cartographer/mapping/internal/3d/local_trajectory_builder_options_3d.h"

@@ -19,7 +19,7 @@
 #include <random>
 
 #include "Eigen/Core"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/common/internal/testing/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/internal/optimization/optimization_problem_options.h"
 #include "cartographer/transform/transform.h"

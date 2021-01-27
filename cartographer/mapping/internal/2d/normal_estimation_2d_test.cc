@@ -16,8 +16,8 @@
 
 #include "cartographer/mapping/internal/2d/normal_estimation_2d.h"
 
+#include "cartographer/common/internal/testing/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/math.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

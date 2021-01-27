@@ -27,7 +27,7 @@
 
 #include "Eigen/Core"
 #include "absl/memory/memory.h"
-#include "cartographer/common/ceres_solver_options.h"
+#include "cartographer/common/internal/ceres_solver_options.h"
 #include "cartographer/common/math.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/internal/3d/imu_integration.h"

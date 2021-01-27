@@ -22,7 +22,7 @@
 #include <string>
 
 #include "absl/memory/memory.h"
-#include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
+#include "cartographer/common/internal/testing/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/mapping/3d/range_data_inserter_3d.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"

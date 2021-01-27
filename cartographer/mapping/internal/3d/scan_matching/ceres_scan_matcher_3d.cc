@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
-#include "cartographer/common/ceres_solver_options.h"
+#include "cartographer/common/internal/ceres_solver_options.h"
 #include "cartographer/mapping/internal/3d/rotation_parameterization.h"
 #include "cartographer/mapping/internal/3d/scan_matching/intensity_cost_function_3d.h"
 #include "cartographer/mapping/internal/3d/scan_matching/occupied_space_cost_function_3d.h"

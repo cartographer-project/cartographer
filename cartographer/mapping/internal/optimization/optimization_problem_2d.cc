@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "cartographer/common/ceres_solver_options.h"
+#include "cartographer/common/internal/ceres_solver_options.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/internal/optimization/ceres_pose.h"
