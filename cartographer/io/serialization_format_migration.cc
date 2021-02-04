@@ -60,11 +60,13 @@ void MigrateStreamVersion1ToVersion2(
   common::ThreadPool thread_pool(1);
   CHECK(!options.use_trajectory_builder_2d());
   // We always use 3D here. 2D submaps do not have histograms.
+  mapping::MapBuilderCallbacks cbs;
   mapping::PoseGraph3D pose_graph(
       options.pose_graph_options(),
       absl::make_unique<mapping::optimization::OptimizationProblem3D>(
           options.pose_graph_options().optimization_problem_options()),
-      &thread_pool);
+      &thread_pool,
+      cbs);
 
   ProtoStreamDeserializer deserializer(input);
 

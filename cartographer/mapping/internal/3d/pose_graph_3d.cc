@@ -303,7 +303,8 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   } else if (maybe_add_global_constraint) {
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap, node_id, constant_data, global_node_pose.rotation(),
-        global_submap_pose.rotation());
+        global_submap_pose.rotation(),
+        loop_closure_cb_);
   }
 }
 

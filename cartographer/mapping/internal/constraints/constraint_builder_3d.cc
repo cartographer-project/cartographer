@@ -111,7 +111,8 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
     const SubmapId& submap_id, const Submap3D* const submap,
     const NodeId& node_id, const TrajectoryNode::Data* const constant_data,
     const Eigen::Quaterniond& global_node_rotation,
-    const Eigen::Quaterniond& global_submap_rotation) {
+    const Eigen::Quaterniond& global_submap_rotation,
+    std::function<void()> loop_closure_cb) {
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
