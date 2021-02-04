@@ -90,7 +90,7 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
   return options;
 }
 
-MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
+MapBuilder::MapBuilder(const proto::MapBuilderOptions& options, MapBuilderCallbacks cbs)
     : options_(options), thread_pool_(options.num_background_threads()) {
   CHECK(options.use_trajectory_builder_2d() ^
         options.use_trajectory_builder_3d());
@@ -106,7 +106,8 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options)
         options_.pose_graph_options(),
         absl::make_unique<optimization::OptimizationProblem3D>(
             options_.pose_graph_options().optimization_problem_options()),
-        &thread_pool_);
+        &thread_pool_,
+        cbs);
   }
   if (options.collate_by_trajectory()) {
     sensor_collator_ = absl::make_unique<sensor::TrajectoryCollator>();

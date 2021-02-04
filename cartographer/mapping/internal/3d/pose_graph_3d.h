@@ -64,7 +64,8 @@ class PoseGraph3D : public PoseGraph {
   PoseGraph3D(
       const proto::PoseGraphOptions& options,
       std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem,
-      common::ThreadPool* thread_pool);
+      common::ThreadPool* thread_pool,
+      const cartographer::mapping::MapBuilderCallbacks& cbs);
   ~PoseGraph3D() override;
 
   PoseGraph3D(const PoseGraph3D&) = delete;
@@ -267,6 +268,9 @@ class PoseGraph3D : public PoseGraph {
   std::vector<std::unique_ptr<PoseGraphTrimmer>> trimmers_ GUARDED_BY(mutex_);
 
   PoseGraphData data_ GUARDED_BY(mutex_);
+
+  // Loop closure callback
+  std::function<void(/*match result*/)> loop_closure_cb_;
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.
