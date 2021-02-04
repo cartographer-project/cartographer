@@ -37,7 +37,7 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 // and a PoseGraph for loop closure.
 class MapBuilder : public MapBuilderInterface {
  public:
-  explicit MapBuilder(const proto::MapBuilderOptions &options, MapBuilderCallbacks cbs);
+  explicit MapBuilder(const proto::MapBuilderOptions &options, MapBuilderCallbacks cbs=MapBuilderCallbacks{nullptr});
   ~MapBuilder() override {}
 
   MapBuilder(const MapBuilder &) = delete;
