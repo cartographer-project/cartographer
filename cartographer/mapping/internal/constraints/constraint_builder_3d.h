@@ -79,7 +79,11 @@ class ConstraintBuilder3D {
                           const NodeId& node_id,
                           const TrajectoryNode::Data* const constant_data,
                           const transform::Rigid3d& global_node_pose,
-                          const transform::Rigid3d& global_submap_pose);
+                          const transform::Rigid3d& global_submap_pose,
+                          std::function<void(
+                            scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+                            Constraint 
+                          )> loop_closure_cb);
 
   // Schedules exploring a new constraint between 'submap' identified by
   // 'submap_id' and the 'compressed_point_cloud' for 'node_id'.
