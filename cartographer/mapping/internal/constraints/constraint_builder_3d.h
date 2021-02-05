@@ -91,11 +91,13 @@ class ConstraintBuilder3D {
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddGlobalConstraint(
-      const SubmapId& submap_id, const Submap3D* submap, const NodeId& node_id,
-      const TrajectoryNode::Data* const constant_data,
-      const Eigen::Quaterniond& global_node_rotation,
-      const Eigen::Quaterniond& global_submap_rotation,
-      std::function<void()> loop_closure_cb);
+    const SubmapId& submap_id, const Submap3D* submap, const NodeId& node_id,
+    const TrajectoryNode::Data* const constant_data,
+    const Eigen::Quaterniond& global_node_rotation,
+    const Eigen::Quaterniond& global_submap_rotation,
+    std::function<void(
+        scan_matching::FastCorrelativeScanMatcher3D::Result, ConstraintBuilder3D::Constraint 
+    )> loop_closure_cb);
 
   // Must be called after all computations related to one node have been added.
   void NotifyEndOfNode();
@@ -138,7 +140,10 @@ class ConstraintBuilder3D {
                          const transform::Rigid3d& global_submap_pose,
                          const SubmapScanMatcher& submap_scan_matcher,
                          std::unique_ptr<Constraint>* constraint,
-                         std::function<void()> loop_closure_cb = nullptr)
+                         std::function<void(
+                            scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+                            Constraint 
+                        )> loop_closure_cb = nullptr)
       LOCKS_EXCLUDED(mutex_);
 
   void RunWhenDoneCallback() LOCKS_EXCLUDED(mutex_);

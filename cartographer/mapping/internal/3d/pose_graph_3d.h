@@ -271,7 +271,10 @@ class PoseGraph3D : public PoseGraph {
   PoseGraphData data_ GUARDED_BY(mutex_);
 
   // Loop closure callback
-  std::function<void(/*match result*/)> loop_closure_cb_;
+  std::function<void(
+    scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+    constraints::ConstraintBuilder3D::Constraint 
+  )> loop_closure_cb_;
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.

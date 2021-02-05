@@ -112,7 +112,10 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
     const NodeId& node_id, const TrajectoryNode::Data* const constant_data,
     const Eigen::Quaterniond& global_node_rotation,
     const Eigen::Quaterniond& global_submap_rotation,
-    std::function<void()> loop_closure_cb) {
+    std::function<void(
+      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+      Constraint 
+    )> loop_closure_cb) {
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
@@ -128,7 +131,7 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
                       constant_data,
                       transform::Rigid3d::Rotation(global_node_rotation),
                       transform::Rigid3d::Rotation(global_submap_rotation),
-                      *scan_matcher, constraint);
+                      *scan_matcher, constraint, loop_closure_cb);
   });
   constraint_task->AddDependency(scan_matcher->creation_task_handle);
   auto constraint_task_handle =
@@ -199,7 +202,10 @@ void ConstraintBuilder3D::ComputeConstraint(
     const transform::Rigid3d& global_submap_pose,
     const SubmapScanMatcher& submap_scan_matcher,
     std::unique_ptr<Constraint>* constraint,
-    std::function<void()> loop_closure_cb) {
+    std::function<void(
+      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+      Constraint 
+    )> loop_closure_cb) {
   CHECK(submap_scan_matcher.fast_correlative_scan_matcher);
   // The 'constraint_transform' (submap i <- node j) is computed from:
   // - a 'high_resolution_point_cloud' in node j and
@@ -274,7 +280,17 @@ void ConstraintBuilder3D::ComputeConstraint(
       {constraint_transform, options_.loop_closure_translation_weight(),
        options_.loop_closure_rotation_weight()},
       Constraint::INTER_SUBMAP});
-
+  if (loop_closure_cb) {
+    loop_closure_cb(
+      scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
+      Constraint{
+        submap_id,
+        node_id,
+        {constraint_transform, options_.loop_closure_translation_weight(),
+        options_.loop_closure_rotation_weight()},
+        Constraint::INTER_SUBMAP}
+    );
+  }
   if (options_.log_matches()) {
     std::ostringstream info;
     info << "Node " << node_id << " with "
