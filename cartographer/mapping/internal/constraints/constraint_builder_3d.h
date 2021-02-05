@@ -145,7 +145,7 @@ class ConstraintBuilder3D {
                          const SubmapScanMatcher& submap_scan_matcher,
                          std::unique_ptr<Constraint>* constraint,
                          std::function<void(
-                            scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+                            scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
                             Constraint 
                         )> loop_closure_cb = nullptr)
       LOCKS_EXCLUDED(mutex_);

@@ -81,7 +81,7 @@ void ConstraintBuilder3D::MaybeAddConstraint(
     const transform::Rigid3d& global_node_pose,
     const transform::Rigid3d& global_submap_pose,
     std::function<void(
-      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
       Constraint 
     )> loop_closure_cb) {
   if ((global_node_pose.translation() - global_submap_pose.translation())
@@ -277,7 +277,6 @@ void ConstraintBuilder3D::ComputeConstraint(
                              {&constant_data->low_resolution_point_cloud,
                               submap_scan_matcher.low_resolution_hybrid_grid}},
                             &constraint_transform, &unused_summary);
-  std::cerr << "LOOP CLOSURE FOUND! " << match_full_submap << std::endl;
   constraint->reset(new Constraint{
       submap_id,
       node_id,
@@ -285,7 +284,6 @@ void ConstraintBuilder3D::ComputeConstraint(
        options_.loop_closure_rotation_weight()},
       Constraint::INTER_SUBMAP});
   if (loop_closure_cb) {
-      std::cerr << "LOOP CLOSURE CALLBACK!" << std::endl;
     loop_closure_cb(
       scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
       Constraint{
