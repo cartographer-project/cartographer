@@ -158,7 +158,7 @@ cc_library(
     linkstatic = 1,
     visibility = ["//visibility:public"],
     deps = [
-        "@com_google_glog//:glog",
+        "@com_github_google_glog//:glog",
         "@eigen3//:core",
     ],
 )
