@@ -273,7 +273,7 @@ void ConstraintBuilder3D::ComputeConstraint(
                              {&constant_data->low_resolution_point_cloud,
                               submap_scan_matcher.low_resolution_hybrid_grid}},
                             &constraint_transform, &unused_summary);
-
+  std::cerr << "LOOP CLOSURE FOUND!" << std::endl;
   constraint->reset(new Constraint{
       submap_id,
       node_id,
@@ -281,6 +281,7 @@ void ConstraintBuilder3D::ComputeConstraint(
        options_.loop_closure_rotation_weight()},
       Constraint::INTER_SUBMAP});
   if (loop_closure_cb) {
+      std::cerr << "LOOP CLOSURE CALLBACK!" << std::endl;
     loop_closure_cb(
       scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
       Constraint{
