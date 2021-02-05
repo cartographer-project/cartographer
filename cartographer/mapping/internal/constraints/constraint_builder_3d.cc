@@ -103,7 +103,7 @@ void ConstraintBuilder3D::MaybeAddConstraint(
   constraint_task->SetWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     ComputeConstraint(submap_id, node_id, false, /* match_full_submap */
                       constant_data, global_node_pose, global_submap_pose,
-                      *scan_matcher, constraint);
+                      *scan_matcher, constraint, loop_closure_cb);
   });
   constraint_task->AddDependency(scan_matcher->creation_task_handle);
   auto constraint_task_handle =
