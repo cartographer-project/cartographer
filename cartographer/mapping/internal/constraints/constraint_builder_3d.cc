@@ -237,7 +237,7 @@ void ConstraintBuilder3D::ComputeConstraint(
           match_result->rotational_score);
       kGlobalConstraintLowResolutionScoresMetric->Observe(
           match_result->low_resolution_score);
-    } else if(match_result && loop_closure_cb) {
+    } else if(match_result != nullptr && loop_closure_cb) {
       loop_closure_cb(scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),{});
       return;
     } else {
@@ -257,7 +257,7 @@ void ConstraintBuilder3D::ComputeConstraint(
           match_result->rotational_score);
       kConstraintLowResolutionScoresMetric->Observe(
           match_result->low_resolution_score);
-    } else if(match_result && loop_closure_cb) {
+    } else if(match_result != nullptr && loop_closure_cb) {
       loop_closure_cb(scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),{});
       return;
     } else {

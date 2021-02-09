@@ -195,6 +195,9 @@ FastCorrelativeScanMatcher3D::MatchWithSearchParameters(
         discrete_scans[best_candidate.scan_index].rotational_score,
         best_candidate.low_resolution_score});
   }
+  if (best_candidate.scan_index >= discrete_scans.size()) {
+    return nullptr;
+  }
   return absl::make_unique<Result>(Result{
     false,
     best_candidate.score,
