@@ -50,11 +50,13 @@ static auto* kDeletedSubmapsMetric = metrics::Gauge::Null();
 PoseGraph3D::PoseGraph3D(
     const proto::PoseGraphOptions& options,
     std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem,
-    common::ThreadPool* thread_pool)
+    common::ThreadPool* thread_pool,
+    const cartographer::mapping::MapBuilderCallbacks& cbs)
     : options_(options),
       optimization_problem_(std::move(optimization_problem)),
       constraint_builder_(options_.constraint_builder_options(), thread_pool),
-      thread_pool_(thread_pool) {}
+      thread_pool_(thread_pool),
+      loop_closure_cb_(cbs.loop_closure_cb) {}
 
 PoseGraph3D::~PoseGraph3D() {
   WaitForAllComputations();
@@ -297,11 +299,13 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
   if (maybe_add_local_constraint) {
     constraint_builder_.MaybeAddConstraint(submap_id, submap, node_id,
                                            constant_data, global_node_pose,
-                                           global_submap_pose);
+                                           global_submap_pose,
+                                           loop_closure_cb_);
   } else if (maybe_add_global_constraint) {
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap, node_id, constant_data, global_node_pose.rotation(),
-        global_submap_pose.rotation());
+        global_submap_pose.rotation(),
+        loop_closure_cb_);
   }
 }
 

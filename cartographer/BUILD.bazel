@@ -102,7 +102,7 @@ cc_library(
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/types:optional",
-        "@com_google_glog//:glog",
+        "@com_github_google_glog//:glog",
         "@org_cairographics_cairo//:cairo",
         "@org_ceres_solver_ceres_solver//:ceres",
         "@org_lua_lua//:lua",
@@ -116,7 +116,7 @@ cc_binary(
     deps = [
         ":cartographer",
         "@com_github_gflags_gflags//:gflags",
-        "@com_google_glog//:glog",
+        "@com_github_google_glog//:glog",
     ],
 )
 

@@ -21,6 +21,7 @@
 #include <deque>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <vector>
 
 #include "Eigen/Core"
@@ -79,7 +80,11 @@ class ConstraintBuilder3D {
                           const NodeId& node_id,
                           const TrajectoryNode::Data* const constant_data,
                           const transform::Rigid3d& global_node_pose,
-                          const transform::Rigid3d& global_submap_pose);
+                          const transform::Rigid3d& global_submap_pose,
+                          std::function<void(
+                            scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
+                            std::optional<Constraint> 
+                          )> loop_closure_cb);
 
   // Schedules exploring a new constraint between 'submap' identified by
   // 'submap_id' and the 'compressed_point_cloud' for 'node_id'.
@@ -91,10 +96,13 @@ class ConstraintBuilder3D {
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
   void MaybeAddGlobalConstraint(
-      const SubmapId& submap_id, const Submap3D* submap, const NodeId& node_id,
-      const TrajectoryNode::Data* const constant_data,
-      const Eigen::Quaterniond& global_node_rotation,
-      const Eigen::Quaterniond& global_submap_rotation);
+    const SubmapId& submap_id, const Submap3D* submap, const NodeId& node_id,
+    const TrajectoryNode::Data* const constant_data,
+    const Eigen::Quaterniond& global_node_rotation,
+    const Eigen::Quaterniond& global_submap_rotation,
+    std::function<void(
+        scan_matching::FastCorrelativeScanMatcher3D::Result, std::optional<ConstraintBuilder3D::Constraint> 
+    )> loop_closure_cb);
 
   // Must be called after all computations related to one node have been added.
   void NotifyEndOfNode();
@@ -136,7 +144,11 @@ class ConstraintBuilder3D {
                          const transform::Rigid3d& global_node_pose,
                          const transform::Rigid3d& global_submap_pose,
                          const SubmapScanMatcher& submap_scan_matcher,
-                         std::unique_ptr<Constraint>* constraint)
+                         std::unique_ptr<Constraint>* constraint,
+                         std::function<void(
+                            scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
+                            std::optional<Constraint> 
+                        )> loop_closure_cb = nullptr)
       LOCKS_EXCLUDED(mutex_);
 
   void RunWhenDoneCallback() LOCKS_EXCLUDED(mutex_);
@@ -145,7 +157,7 @@ class ConstraintBuilder3D {
   common::ThreadPoolInterface* thread_pool_;
   absl::Mutex mutex_;
 
-  // 'callback' set by WhenDone().
+    // 'callback' set by WhenDone().
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 

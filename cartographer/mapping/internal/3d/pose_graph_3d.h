@@ -22,6 +22,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -37,6 +38,7 @@
 #include "cartographer/mapping/internal/optimization/optimization_problem_3d.h"
 #include "cartographer/mapping/internal/trajectory_connectivity_state.h"
 #include "cartographer/mapping/internal/work_queue.h"
+#include "cartographer/mapping/map_builder_callbacks.h"
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/pose_graph_data.h"
 #include "cartographer/mapping/pose_graph_trimmer.h"
@@ -64,7 +66,8 @@ class PoseGraph3D : public PoseGraph {
   PoseGraph3D(
       const proto::PoseGraphOptions& options,
       std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem,
-      common::ThreadPool* thread_pool);
+      common::ThreadPool* thread_pool,
+      const cartographer::mapping::MapBuilderCallbacks& cbs);
   ~PoseGraph3D() override;
 
   PoseGraph3D(const PoseGraph3D&) = delete;
@@ -267,6 +270,12 @@ class PoseGraph3D : public PoseGraph {
   std::vector<std::unique_ptr<PoseGraphTrimmer>> trimmers_ GUARDED_BY(mutex_);
 
   PoseGraphData data_ GUARDED_BY(mutex_);
+
+  // Loop closure callback
+  std::function<void(
+    scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+    std::optional<constraints::ConstraintBuilder3D::Constraint> 
+  )> loop_closure_cb_;
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.

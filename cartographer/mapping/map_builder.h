@@ -24,6 +24,8 @@
 #include "cartographer/mapping/pose_graph.h"
 #include "cartographer/mapping/proto/map_builder_options.pb.h"
 #include "cartographer/sensor/collator_interface.h"
+#include "cartographer/mapping/map_builder_callbacks.h"
+
 
 namespace cartographer {
 namespace mapping {
@@ -35,7 +37,7 @@ proto::MapBuilderOptions CreateMapBuilderOptions(
 // and a PoseGraph for loop closure.
 class MapBuilder : public MapBuilderInterface {
  public:
-  explicit MapBuilder(const proto::MapBuilderOptions &options);
+  explicit MapBuilder(const proto::MapBuilderOptions &options, MapBuilderCallbacks cbs);
   ~MapBuilder() override {}
 
   MapBuilder(const MapBuilder &) = delete;

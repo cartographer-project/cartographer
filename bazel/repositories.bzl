@@ -48,7 +48,7 @@ def cartographer_repositories():
 
     _maybe(
         http_archive,
-        name = "com_google_glog",
+        name = "com_github_google_glog",
         sha256 = "dfc074b41a5b86fc5dda4f0e2e2d6cc5b21f798c9fcc8ed5fea9c8f7c4613be6",
         strip_prefix = "glog-dd2b93d761a19860190cb3fa92066c8031e912e3",
         urls = [
