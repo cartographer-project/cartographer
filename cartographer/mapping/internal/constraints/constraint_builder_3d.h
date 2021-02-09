@@ -82,7 +82,7 @@ class ConstraintBuilder3D {
                           const transform::Rigid3d& global_node_pose,
                           const transform::Rigid3d& global_submap_pose,
                           std::function<void(
-                            scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+                            scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
                             std::optional<Constraint> 
                           )> loop_closure_cb);
 
