@@ -21,6 +21,7 @@
 #include <deque>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <vector>
 
 #include "Eigen/Core"
@@ -82,7 +83,7 @@ class ConstraintBuilder3D {
                           const transform::Rigid3d& global_submap_pose,
                           std::function<void(
                             scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
-                            Constraint 
+                            std::optional<Constraint> 
                           )> loop_closure_cb);
 
   // Schedules exploring a new constraint between 'submap' identified by
@@ -100,7 +101,7 @@ class ConstraintBuilder3D {
     const Eigen::Quaterniond& global_node_rotation,
     const Eigen::Quaterniond& global_submap_rotation,
     std::function<void(
-        scan_matching::FastCorrelativeScanMatcher3D::Result, ConstraintBuilder3D::Constraint 
+        scan_matching::FastCorrelativeScanMatcher3D::Result, std::optional<ConstraintBuilder3D::Constraint> 
     )> loop_closure_cb);
 
   // Must be called after all computations related to one node have been added.
@@ -146,7 +147,7 @@ class ConstraintBuilder3D {
                          std::unique_ptr<Constraint>* constraint,
                          std::function<void(
                             scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
-                            Constraint 
+                            std::optional<Constraint> 
                         )> loop_closure_cb = nullptr)
       LOCKS_EXCLUDED(mutex_);
 
@@ -156,7 +157,7 @@ class ConstraintBuilder3D {
   common::ThreadPoolInterface* thread_pool_;
   absl::Mutex mutex_;
 
-  // 'callback' set by WhenDone().
+    // 'callback' set by WhenDone().
   std::unique_ptr<std::function<void(const Result&)>> when_done_
       GUARDED_BY(mutex_);
 

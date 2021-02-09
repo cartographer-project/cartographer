@@ -22,6 +22,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -273,7 +274,7 @@ class PoseGraph3D : public PoseGraph {
   // Loop closure callback
   std::function<void(
     scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
-    constraints::ConstraintBuilder3D::Constraint 
+    std::optional<constraints::ConstraintBuilder3D::Constraint> 
   )> loop_closure_cb_;
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The

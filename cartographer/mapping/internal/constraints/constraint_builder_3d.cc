@@ -82,7 +82,7 @@ void ConstraintBuilder3D::MaybeAddConstraint(
     const transform::Rigid3d& global_submap_pose,
     std::function<void(
       scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
-      Constraint 
+      std::optional<Constraint> 
     )> loop_closure_cb) {
   if ((global_node_pose.translation() - global_submap_pose.translation())
           .norm() > options_.max_constraint_distance()) {
@@ -118,7 +118,7 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
     const Eigen::Quaterniond& global_submap_rotation,
     std::function<void(
       scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
-      Constraint 
+      std::optional<Constraint>
     )> loop_closure_cb) {
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
@@ -208,7 +208,7 @@ void ConstraintBuilder3D::ComputeConstraint(
     std::unique_ptr<Constraint>* constraint,
     std::function<void(
       scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
-      Constraint 
+      std::optional<Constraint> 
     )> loop_closure_cb) {
   CHECK(submap_scan_matcher.fast_correlative_scan_matcher);
   // The 'constraint_transform' (submap i <- node j) is computed from:
@@ -227,7 +227,7 @@ void ConstraintBuilder3D::ComputeConstraint(
         submap_scan_matcher.fast_correlative_scan_matcher->MatchFullSubmap(
             global_node_pose.rotation(), global_submap_pose.rotation(),
             *constant_data, options_.global_localization_min_score());
-    if (match_result != nullptr) {
+    if (match_result != nullptr && match_result->success) {
       CHECK_GT(match_result->score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
       CHECK_GE(submap_id.trajectory_id, 0);
@@ -237,6 +237,9 @@ void ConstraintBuilder3D::ComputeConstraint(
           match_result->rotational_score);
       kGlobalConstraintLowResolutionScoresMetric->Observe(
           match_result->low_resolution_score);
+    } else if(match_result && loop_closure_cb) {
+      loop_closure_cb(scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),{});
+      return;
     } else {
       return;
     }
@@ -245,7 +248,7 @@ void ConstraintBuilder3D::ComputeConstraint(
     match_result = submap_scan_matcher.fast_correlative_scan_matcher->Match(
         global_node_pose, global_submap_pose, *constant_data,
         options_.min_score());
-    if (match_result != nullptr) {
+    if (match_result != nullptr && match_result->success) {
       // We've reported a successful local match.
       CHECK_GT(match_result->score, options_.min_score());
       kConstraintsFoundMetric->Increment();
@@ -254,6 +257,9 @@ void ConstraintBuilder3D::ComputeConstraint(
           match_result->rotational_score);
       kConstraintLowResolutionScoresMetric->Observe(
           match_result->low_resolution_score);
+    } else if(match_result && loop_closure_cb) {
+      loop_closure_cb(scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),{});
+      return;
     } else {
       return;
     }

@@ -189,12 +189,19 @@ FastCorrelativeScanMatcher3D::MatchWithSearchParameters(
       precomputation_grid_stack_->max_depth(), min_score);
   if (best_candidate.score > min_score) {
     return absl::make_unique<Result>(Result{
+        true,
         best_candidate.score,
         GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>(),
         discrete_scans[best_candidate.scan_index].rotational_score,
         best_candidate.low_resolution_score});
   }
-  return nullptr;
+  return absl::make_unique<Result>(Result{
+    false,
+    best_candidate.score,
+    GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>(),
+    discrete_scans[best_candidate.scan_index].rotational_score,
+    best_candidate.low_resolution_score}
+  );
 }
 
 DiscreteScan3D FastCorrelativeScanMatcher3D::DiscretizeScan(

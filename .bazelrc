@@ -21,3 +21,4 @@ build -c opt
 # reduces build time.
 build --force_pic
 
+build --cxxopt=--std=c++17

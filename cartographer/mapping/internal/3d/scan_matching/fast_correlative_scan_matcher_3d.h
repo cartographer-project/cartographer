@@ -66,6 +66,7 @@ using MatchingFunction = std::function<float(const transform::Rigid3f&)>;
 class FastCorrelativeScanMatcher3D {
  public:
   struct Result {
+    bool success;
     float score;
     transform::Rigid3d pose_estimate;
     float rotational_score;
