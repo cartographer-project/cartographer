@@ -17,7 +17,7 @@
 #ifndef CARTOGRAPHER_MAPPING_INTERNAL_2D_SCAN_MATCHING_TSDF_MATCH_COST_FUNCTION_2D_H_
 #define CARTOGRAPHER_MAPPING_INTERNAL_2D_SCAN_MATCHING_TSDF_MATCH_COST_FUNCTION_2D_H_
 
-#include "cartographer/mapping/2d/tsdf_2d.h"
+#include "cartographer/mapping/internal/2d/tsdf_2d.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "ceres/ceres.h"
 

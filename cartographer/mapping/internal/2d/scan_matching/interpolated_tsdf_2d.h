@@ -19,7 +19,7 @@
 
 #include <cmath>
 
-#include "cartographer/mapping/2d/tsdf_2d.h"
+#include "cartographer/mapping/internal/2d/tsdf_2d.h"
 
 namespace cartographer {
 namespace mapping {

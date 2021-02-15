@@ -23,7 +23,7 @@
 #include "cartographer/mapping/internal/2d/pose_graph_2d.h"
 #include "cartographer/mapping/internal/3d/local_trajectory_builder_3d.h"
 #include "cartographer/mapping/internal/3d/pose_graph_3d.h"
-#include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer/mapping/internal/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/metrics/family_factory.h"
 

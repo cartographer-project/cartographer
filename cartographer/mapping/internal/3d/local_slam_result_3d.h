@@ -17,8 +17,8 @@
 #ifndef CARTOGRAPHER_MAPPING_INTERNAL_3D_LOCAL_SLAM_RESULT_3D_H_
 #define CARTOGRAPHER_MAPPING_INTERNAL_3D_LOCAL_SLAM_RESULT_3D_H_
 
+#include "cartographer/mapping/internal/local_slam_result_data.h"
 #include "cartographer/mapping/internal/submap_controller.h"
-#include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 
 namespace cartographer {

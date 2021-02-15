@@ -18,7 +18,7 @@
 
 #include "cartographer/cloud/internal/sensor/serialization.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer/mapping/internal/local_slam_result_data.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 

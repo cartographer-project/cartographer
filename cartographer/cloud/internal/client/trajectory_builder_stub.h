@@ -26,7 +26,7 @@
 #include "cartographer/cloud/internal/handlers/add_odometry_data_handler.h"
 #include "cartographer/cloud/internal/handlers/add_rangefinder_data_handler.h"
 #include "cartographer/cloud/internal/handlers/receive_local_slam_results_handler.h"
-#include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer/mapping/internal/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "grpc++/grpc++.h"
 #include "pose_graph_stub.h"
