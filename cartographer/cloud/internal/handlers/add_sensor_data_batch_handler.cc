@@ -20,7 +20,7 @@
 #include "async_grpc/rpc_handler.h"
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer/mapping/internal/local_slam_result_data.h"
 #include "cartographer/metrics/counter.h"
 #include "cartographer/sensor/internal/dispatchable.h"
 #include "cartographer/sensor/timed_point_cloud_data.h"

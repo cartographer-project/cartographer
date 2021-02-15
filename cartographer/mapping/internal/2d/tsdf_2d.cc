@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/2d/tsdf_2d.h"
+#include "cartographer/mapping/internal/2d/tsdf_2d.h"
 
 #include "absl/memory/memory.h"
 

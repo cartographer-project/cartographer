@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_CLOUD_INTERNAL_TESTING_MOCK_MAP_BUILDER_CONTEXT_H
 
 #include "cartographer/cloud/internal/map_builder_context_interface.h"
-#include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer/mapping/internal/local_slam_result_data.h"
 #include "glog/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

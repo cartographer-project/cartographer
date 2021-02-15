@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_MAPPING_2D_TSDF_RANGE_DATA_INSERTER_2D_H_
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/mapping/2d/tsdf_2d.h"
+#include "cartographer/mapping/internal/2d/tsdf_2d.h"
 #include "cartographer/mapping/proto/tsdf_range_data_inserter_options_2d.pb.h"
 #include "cartographer/mapping/range_data_inserter_interface.h"
 #include "cartographer/sensor/point_cloud.h"

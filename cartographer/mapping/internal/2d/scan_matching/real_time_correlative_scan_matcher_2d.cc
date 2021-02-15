@@ -25,7 +25,7 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/2d/probability_grid.h"
-#include "cartographer/mapping/2d/tsdf_2d.h"
+#include "cartographer/mapping/internal/2d/tsdf_2d.h"
 #include "cartographer/sensor/point_cloud.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"

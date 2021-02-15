@@ -21,8 +21,8 @@
 #include "absl/memory/memory.h"
 #include "absl/types/optional.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/internal/local_slam_result_data.h"
 #include "cartographer/mapping/internal/motion_filter.h"
-#include "cartographer/mapping/local_slam_result_data.h"
 #include "cartographer/metrics/family_factory.h"
 #include "glog/logging.h"
 

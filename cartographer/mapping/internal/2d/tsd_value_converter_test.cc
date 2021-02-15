@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/2d/tsd_value_converter.h"
+#include "cartographer/mapping/internal/2d/tsd_value_converter.h"
 
 #include "gtest/gtest.h"
 

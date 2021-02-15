@@ -18,7 +18,7 @@
 #define CARTOGRAPHER_CLOUD_INTERNAL_SENSOR_SERIALIZATION_H
 
 #include "cartographer/cloud/proto/map_builder_service.pb.h"
-#include "cartographer/mapping/local_slam_result_data.h"
+#include "cartographer/mapping/internal/local_slam_result_data.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/fixed_frame_pose_data.h"
 #include "cartographer/sensor/imu_data.h"
