@@ -56,7 +56,8 @@ PoseGraph3D::PoseGraph3D(
       optimization_problem_(std::move(optimization_problem)),
       constraint_builder_(options_.constraint_builder_options(), thread_pool),
       thread_pool_(thread_pool),
-      loop_closure_cb_(cbs.loop_closure_cb) {}
+      loop_closure_cb_(cbs.loop_closure_cb),
+      node_insertion_cb_(cbs.node_insertion_cb) {}
 
 PoseGraph3D::~PoseGraph3D() {
   WaitForAllComputations();
@@ -346,6 +347,18 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
           {constraint_transform, options_.matcher_translation_weight(),
            options_.matcher_rotation_weight()},
           Constraint::INTRA_SUBMAP});
+      if (node_insertion_cb_) {
+        node_insertion_cb_(
+          data_.trajectory_nodes.at(node_id), 
+          Constraint{
+            submap_id,
+            node_id,
+            {constraint_transform, options_.matcher_translation_weight(),
+              options_.matcher_rotation_weight()},
+            Constraint::INTRA_SUBMAP
+          }
+        );
+      }
     }
     // TODO(gaschler): Consider not searching for constraints against
     // trajectories scheduled for deletion.

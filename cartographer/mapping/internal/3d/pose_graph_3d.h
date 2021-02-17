@@ -277,6 +277,12 @@ class PoseGraph3D : public PoseGraph {
     std::optional<constraints::ConstraintBuilder3D::Constraint> 
   )> loop_closure_cb_;
 
+  // Node insertion callback
+  std::function<void(
+    TrajectoryNode, 
+    constraints::ConstraintBuilder3D::Constraint
+  )> node_insertion_cb_;
+
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.
   class TrimmingHandle : public Trimmable {
