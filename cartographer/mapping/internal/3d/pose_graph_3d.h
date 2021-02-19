@@ -279,8 +279,8 @@ class PoseGraph3D : public PoseGraph {
 
   // Node insertion callback
   std::function<void(
-    TrajectoryNode, 
-    constraints::ConstraintBuilder3D::Constraint
+    const TrajectoryNode&, 
+    const constraints::ConstraintBuilder3D::Constraint&
   )> node_insertion_cb_;
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The

@@ -15,7 +15,7 @@ struct MapBuilderCallbacks {
   )> loop_closure_cb{nullptr};
   
   // Called with the trajectory node and the intra-submap constraint
-  std::function<void(TrajectoryNode, constraints::ConstraintBuilder3D::Constraint)> node_insertion_cb{nullptr}; 
+  std::function<void(const TrajectoryNode&, const constraints::ConstraintBuilder3D::Constraint&)> node_insertion_cb{nullptr}; 
 };
 
 }  // namespace cartographer::mapping
