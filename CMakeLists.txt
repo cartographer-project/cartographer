@@ -228,8 +228,12 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${EIGEN3_INCLUDE_DIR}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${EIGEN3_LIBRARIES})
 
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  "${CERES_INCLUDE_DIRS}")
+if (CERES_INCLUDE_DIRS AND NOT "${CERES_INCLUDE_DIRS}" STREQUAL "")
+  target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+    "${CERES_INCLUDE_DIRS}")
+else()
+  message(STATUS "Not including CERES_INCLUDE_DIRS, because it's not set or empty, see http://ceres-solver.org/installation.html#using-ceres-with-cmake Ceres: CERES_INCLUDE_DIRS: '${CERES_INCLUDE_DIRS}' CERES_INCLUDE_DIR '${CERES_INCLUDE_DIR}'")
+endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CERES_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
