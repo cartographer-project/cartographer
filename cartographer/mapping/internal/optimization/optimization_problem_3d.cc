@@ -186,8 +186,9 @@ void AddLandmarkCostFunctions(
 }  // namespace
 
 OptimizationProblem3D::OptimizationProblem3D(
-    const optimization::proto::OptimizationProblemOptions& options)
-    : options_(options) {}
+    const optimization::proto::OptimizationProblemOptions& options,
+    std::function<void(const ceres::Solver::Summary&)> optimization_cb)
+    : options_(options), optimization_cb_(optimization_cb) {}
 
 OptimizationProblem3D::~OptimizationProblem3D() {}
 
@@ -562,6 +563,9 @@ void OptimizationProblem3D::Solve(
   ceres::Solve(
       common::CreateCeresSolverOptions(options_.ceres_solver_options()),
       &problem, &summary);
+  if (optimization_cb_) {
+    optimization_cb_(summary);
+  }
   if (options_.log_solver_summary()) {
     LOG(INFO) << summary.FullReport();
     for (const auto& trajectory_id_and_data : trajectory_data_) {

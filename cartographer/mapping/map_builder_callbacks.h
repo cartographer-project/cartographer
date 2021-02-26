@@ -18,10 +18,10 @@ struct MapBuilderCallbacks {
   std::function<void(const TrajectoryNode&, const constraints::ConstraintBuilder3D::Constraint&)> node_insertion_cb{nullptr}; 
     
   // Called when a trajectory node is initially created in local slam
-  std::function<void(const TrajectoryNode&)> local_slam_node_cb_;
+  std::function<void(const TrajectoryNode&)> local_slam_node_cb{nullptr};
 
   // Optimization 
-  std::function<void(const ceres::Solver::Summary&) optimization_cb_;
+  std::function<void(const ceres::Solver::Summary&)> optimization_cb{nullptr};
 };
 
 }  // namespace cartographer::mapping

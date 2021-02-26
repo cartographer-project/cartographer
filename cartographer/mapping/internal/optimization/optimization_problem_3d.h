@@ -56,7 +56,8 @@ class OptimizationProblem3D
                                           transform::Rigid3d> {
  public:
   explicit OptimizationProblem3D(
-      const optimization::proto::OptimizationProblemOptions& options);
+      const optimization::proto::OptimizationProblemOptions& options,
+        std::function<void(const ceres::Solver::Summary&)> optimization_cb=nullptr);
   ~OptimizationProblem3D();
 
   OptimizationProblem3D(const OptimizationProblem3D&) = delete;
@@ -130,6 +131,7 @@ class OptimizationProblem3D
   sensor::MapByTime<sensor::OdometryData> odometry_data_;
   sensor::MapByTime<sensor::FixedFramePoseData> fixed_frame_pose_data_;
   std::map<int, PoseGraphInterface::TrajectoryData> trajectory_data_;
+  std::function<void(const ceres::Solver::Summary&)> optimization_cb_;
 };
 
 }  // namespace optimization
