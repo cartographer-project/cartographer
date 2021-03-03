@@ -70,5 +70,9 @@ common::Time TrajectoryConnectivityState::LastConnectionTime(
   return last_connection_time_map_[sorted_pair];
 }
 
+int TrajectoryConnectivityState::GetConnectivity(int i, int j) const {
+  return connected_components_.ConnectionCount(i, j);
+}
+
 }  // namespace mapping
 }  // namespace cartographer

@@ -1080,6 +1080,11 @@ std::vector<std::vector<int>> PoseGraph2D::GetConnectedTrajectories() const {
   return data_.trajectory_connectivity_state.Components();
 }
 
+int PoseGraph2D::ConnectivityCount(int ti, int tj) const {
+  absl::MutexLock locker(&mutex_);
+  return data_.trajectory_connectivity_state.GetConnectivity(ti, tj);
+}
+
 PoseGraphInterface::SubmapData PoseGraph2D::GetSubmapData(
     const SubmapId& submap_id) const {
   absl::MutexLock locker(&mutex_);
