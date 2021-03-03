@@ -54,6 +54,8 @@ class TrajectoryConnectivityState {
   // The trajectory IDs, grouped by connectivity.
   std::vector<std::vector<int>> Components() const;
 
+  int GetConnectivity(int i, int j) const;
+
   // Return the last connection count between the two trajectories. If either of
   // the trajectories is untracked or they have never been connected returns the
   // beginning of time.

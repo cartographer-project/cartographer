@@ -128,6 +128,7 @@ class PoseGraphInterface {
 
   // Gets the current trajectory clusters.
   virtual std::vector<std::vector<int>> GetConnectedTrajectories() const = 0;
+  virtual int ConnectivityCount(int, int) const = 0;
 
   // Sets global pose of landmark 'landmark_id' to given 'global_pose'.
   virtual void SetLandmarkPose(const std::string& landmark_id,

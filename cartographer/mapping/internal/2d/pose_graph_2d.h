@@ -116,6 +116,8 @@ class PoseGraph2D : public PoseGraph {
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() const override
       LOCKS_EXCLUDED(mutex_);
+  int ConnectivityCount(int, int) const override
+      LOCKS_EXCLUDED(mutex_);
   PoseGraphInterface::SubmapData GetSubmapData(const SubmapId& submap_id) const
       LOCKS_EXCLUDED(mutex_) override;
   MapById<SubmapId, PoseGraphInterface::SubmapData> GetAllSubmapData() const
