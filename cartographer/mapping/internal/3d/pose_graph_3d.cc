@@ -57,7 +57,8 @@ PoseGraph3D::PoseGraph3D(
       constraint_builder_(options_.constraint_builder_options(), thread_pool),
       thread_pool_(thread_pool),
       loop_closure_cb_(cbs.loop_closure_cb),
-      node_insertion_cb_(cbs.node_insertion_cb) {}
+      node_insertion_cb_(cbs.node_insertion_cb),
+      local_slam_node_cb_(cbs.local_slam_node_cb) {}
 
 PoseGraph3D::~PoseGraph3D() {
   WaitForAllComputations();
@@ -126,6 +127,9 @@ NodeId PoseGraph3D::AppendNode(
   }
   const NodeId node_id = data_.trajectory_nodes.Append(
       trajectory_id, TrajectoryNode{constant_data, optimized_pose});
+  if (local_slam_node_cb_) {
+    local_slam_node_cb_(data_.trajectory_nodes.at(node_id));
+  }
   ++data_.num_trajectory_nodes;
   // Test if the 'insertion_submap.back()' is one we never saw before.
   if (data_.submap_data.SizeOfTrajectoryOrZero(trajectory_id) == 0 ||

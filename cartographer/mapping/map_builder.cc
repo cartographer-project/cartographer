@@ -105,7 +105,8 @@ MapBuilder::MapBuilder(const proto::MapBuilderOptions& options, MapBuilderCallba
     pose_graph_ = absl::make_unique<PoseGraph3D>(
         options_.pose_graph_options(),
         absl::make_unique<optimization::OptimizationProblem3D>(
-            options_.pose_graph_options().optimization_problem_options()),
+            options_.pose_graph_options().optimization_problem_options(),
+            cbs.optimization_cb),
         &thread_pool_,
         cbs);
   }
