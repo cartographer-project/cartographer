@@ -285,6 +285,10 @@ class PoseGraph3D : public PoseGraph {
     const constraints::ConstraintBuilder3D::Constraint&
   )> node_insertion_cb_;
 
+  std::function<void(
+    int
+  )> work_items_queue_cb_;
+
   // Local slam node created
   std::function<void(const TrajectoryNode&)> local_slam_node_cb_;
 

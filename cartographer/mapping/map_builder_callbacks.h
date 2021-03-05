@@ -22,6 +22,10 @@ struct MapBuilderCallbacks {
 
   // Optimization 
   std::function<void(const ceres::Solver::Summary&)> optimization_cb{nullptr};
+
+  // Remaining work items in the queue
+  std::function<void(int)> work_items_queue_cb{nullptr};
+
 };
 
 }  // namespace cartographer::mapping

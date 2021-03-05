@@ -58,7 +58,8 @@ PoseGraph3D::PoseGraph3D(
       thread_pool_(thread_pool),
       loop_closure_cb_(cbs.loop_closure_cb),
       node_insertion_cb_(cbs.node_insertion_cb),
-      local_slam_node_cb_(cbs.local_slam_node_cb) {}
+      local_slam_node_cb_(cbs.local_slam_node_cb),
+      work_items_queue_cb_(cbs.work_items_queue_cb) {}
 
 PoseGraph3D::~PoseGraph3D() {
   WaitForAllComputations();
@@ -544,6 +545,9 @@ void PoseGraph3D::DrainWorkQueue() {
     process_work_queue = work_item() == WorkItem::Result::kDoNotRunOptimization;
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_size;
+  if (work_items_queue_cb_){
+    work_items_queue_cb_(work_queue_size);
+  }
   // We have to optimize again.
   constraint_builder_.WhenDone(
       [this](const constraints::ConstraintBuilder3D::Result& result) {
