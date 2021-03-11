@@ -2,8 +2,12 @@
 Changelog for package cartographer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.0 (2021-03-09)
+------------------
+https://github.com/cartographer-project/cartographer/compare/1.0.0...2.0.0
+
 1.0.0 (2018-06-01)
-----------------------
+------------------
 https://github.com/googlecartographer/cartographer/compare/0.3.0...1.0.0
 
 0.3.0 (2017-11-23)
