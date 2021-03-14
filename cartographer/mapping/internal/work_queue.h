@@ -24,14 +24,29 @@
 namespace cartographer {
 namespace mapping {
 
+enum WorkItemType {
+  CHANGE_TRAJECTORY_STATE, 
+  OPTIMIZATION_ADD_IMU_DATA,
+  OPTIMIZATION_ADD_ODOM_DATA, 
+  OPTIMIZATION_ADD_LANDMARK_DATA,
+  OPTIMIZATION_ADD_FIXED_FRAME_DATA,
+  OPTIMIZATION_SOLVE, 
+  OPTIMIZATION_INSERT_SUBMAP, 
+  COMPUTE_CONSTRAINT,  // CAN BE LOOP CLOSURES OR INTRA_SUBMAP CONSTRAINT 
+  NODE_TRAJECTORY_INSERTION, 
+  NODE_SUBMAP_INSERTION, 
+  OTHER_ITEM };
+
 struct WorkItem {
   enum class Result {
     kDoNotRunOptimization,
     kRunOptimization,
   };
+  using Details = std::map<std::string, double>;
 
   std::chrono::steady_clock::time_point time;
-  std::function<Result()> task;
+  std::function<std::pair<Result, Details>()> task;
+  WorkItemType t{OTHER_ITEM};
 };
 
 using WorkQueue = std::deque<WorkItem>;

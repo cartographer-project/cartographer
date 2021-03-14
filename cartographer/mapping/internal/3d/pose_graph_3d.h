@@ -173,7 +173,7 @@ class PoseGraph3D : public PoseGraph {
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Handles a new work item.
-  void AddWorkItem(const std::function<WorkItem::Result()>& work_item)
+  void AddWorkItem(const std::function<std::pair<WorkItem::Result, WorkItem::Details>()>& work_item, WorkItemType t = OTHER_ITEM)
       LOCKS_EXCLUDED(mutex_) LOCKS_EXCLUDED(work_queue_mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
@@ -195,7 +195,7 @@ class PoseGraph3D : public PoseGraph {
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Adds constraints for a node, and starts scan matching in the background.
-  WorkItem::Result ComputeConstraintsForNode(
+  std::pair<WorkItem::Result, WorkItem::Details> ComputeConstraintsForNode(
       const NodeId& node_id,
       std::vector<std::shared_ptr<const Submap3D>> insertion_submaps,
       bool newly_finished_submap) LOCKS_EXCLUDED(mutex_);
