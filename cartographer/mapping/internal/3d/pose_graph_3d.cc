@@ -580,6 +580,8 @@ void PoseGraph3D::DrainWorkQueue() {
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_size;
   if (work_items_queue_cb_){
+    // Queue characterization reflects whats left in the queue prior to optimization
+    // And details about processing that happened before the coming optimization
     absl::MutexLock locker(&work_queue_mutex_);
     auto characterization = characterize(work_queue_);
     characterization.cummulative_processed_queue_details = cummulative_queue_details;
