@@ -46,7 +46,7 @@ struct WorkItem {
     kDoNotRunOptimization,
     kRunOptimization,
   };
-  using Details = std::map<std::string, double>;
+  using Details = std::map<std::string, size_t>;
 
   std::chrono::steady_clock::time_point time;
   std::function<std::pair<Result, Details>()> task;
@@ -55,7 +55,8 @@ struct WorkItem {
 
 struct WorkQueueCharacterization {
   std::chrono::steady_clock::time_point front_of_queue_time;
-  std::map<WorkItemType, int> queue_distrobution;
+  std::map<WorkItemType, size_t> queue_distrobution;
+  WorkItem::Details cummulative_processed_queue_details;
 };
 
 using WorkQueue = std::deque<WorkItem>;

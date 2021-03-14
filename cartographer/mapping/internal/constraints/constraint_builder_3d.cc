@@ -75,7 +75,7 @@ ConstraintBuilder3D::~ConstraintBuilder3D() {
   CHECK(when_done_ == nullptr);
 }
 
-void ConstraintBuilder3D::MaybeAddConstraint(
+bool ConstraintBuilder3D::MaybeAddConstraint(
     const SubmapId& submap_id, const Submap3D* const submap,
     const NodeId& node_id, const TrajectoryNode::Data* const constant_data,
     const transform::Rigid3d& global_node_pose,
@@ -86,9 +86,9 @@ void ConstraintBuilder3D::MaybeAddConstraint(
     )> loop_closure_cb) {
   if ((global_node_pose.translation() - global_submap_pose.translation())
           .norm() > options_.max_constraint_distance()) {
-    return;
+    return false;
   }
-  if (!sampler_.Pulse()) return;
+  if (!sampler_.Pulse()) return false;
 
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
@@ -109,9 +109,10 @@ void ConstraintBuilder3D::MaybeAddConstraint(
   auto constraint_task_handle =
       thread_pool_->Schedule(std::move(constraint_task));
   finish_node_task_->AddDependency(constraint_task_handle);
+  return true;
 }
 
-void ConstraintBuilder3D::MaybeAddGlobalConstraint(
+bool ConstraintBuilder3D::MaybeAddGlobalConstraint(
     const SubmapId& submap_id, const Submap3D* const submap,
     const NodeId& node_id, const TrajectoryNode::Data* const constant_data,
     const Eigen::Quaterniond& global_node_rotation,
@@ -141,6 +142,7 @@ void ConstraintBuilder3D::MaybeAddGlobalConstraint(
   auto constraint_task_handle =
       thread_pool_->Schedule(std::move(constraint_task));
   finish_node_task_->AddDependency(constraint_task_handle);
+  return true;
 }
 
 void ConstraintBuilder3D::NotifyEndOfNode() {
