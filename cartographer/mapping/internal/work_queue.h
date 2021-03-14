@@ -20,6 +20,9 @@
 #include <chrono>
 #include <deque>
 #include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
 
 namespace cartographer {
 namespace mapping {
@@ -35,7 +38,8 @@ enum WorkItemType {
   COMPUTE_CONSTRAINT,  // CAN BE LOOP CLOSURES OR INTRA_SUBMAP CONSTRAINT 
   NODE_TRAJECTORY_INSERTION, 
   NODE_SUBMAP_INSERTION, 
-  OTHER_ITEM };
+  OTHER_ITEM 
+};
 
 struct WorkItem {
   enum class Result {
@@ -46,10 +50,17 @@ struct WorkItem {
 
   std::chrono::steady_clock::time_point time;
   std::function<std::pair<Result, Details>()> task;
-  WorkItemType t{OTHER_ITEM};
+  WorkItemType work_item_type{OTHER_ITEM};
+};
+
+struct WorkQueueCharacterization {
+  std::chrono::steady_clock::time_point front_of_queue_time;
+  std::map<WorkItemType, int> queue_distrobution;
 };
 
 using WorkQueue = std::deque<WorkItem>;
+
+WorkQueueCharacterization characterize(const std::unique_ptr<WorkQueue>& queue);
 
 }  // namespace mapping
 }  // namespace cartographer

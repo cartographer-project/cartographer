@@ -286,7 +286,8 @@ class PoseGraph3D : public PoseGraph {
   )> node_insertion_cb_;
 
   std::function<void(
-    int
+    int,
+    WorkQueueCharacterization
   )> work_items_queue_cb_;
 
   // Local slam node created

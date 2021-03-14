@@ -546,7 +546,9 @@ void PoseGraph3D::DrainWorkQueue() {
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_size;
   if (work_items_queue_cb_){
-    work_items_queue_cb_(work_queue_size);
+    absl::MutexLock locker(&work_queue_mutex_);
+    auto characterization = characterize(work_queue_);
+    work_items_queue_cb_(work_queue_size, characterization);
   }
   // We have to optimize again.
   constraint_builder_.WhenDone(
