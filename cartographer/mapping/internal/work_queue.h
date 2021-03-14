@@ -33,12 +33,12 @@ enum WorkItemType {
   OPTIMIZATION_ADD_ODOM_DATA, 
   OPTIMIZATION_ADD_LANDMARK_DATA,
   OPTIMIZATION_ADD_FIXED_FRAME_DATA,
-  OPTIMIZATION_SOLVE, 
+  OPTIMIZATION_RUN_FINAL, 
   OPTIMIZATION_INSERT_SUBMAP, 
-  COMPUTE_CONSTRAINT,  // CAN BE LOOP CLOSURES OR INTRA_SUBMAP CONSTRAINT 
+  COMPUTE_CONSTRAINTS,  // CAN BE LOOP CLOSURES OR INTRA_SUBMAP CONSTRAINT 
   NODE_TRAJECTORY_INSERTION, 
   NODE_SUBMAP_INSERTION, 
-  OTHER_ITEM 
+  UNLABELED_ITEM
 };
 
 struct WorkItem {
@@ -50,7 +50,7 @@ struct WorkItem {
 
   std::chrono::steady_clock::time_point time;
   std::function<std::pair<Result, Details>()> task;
-  WorkItemType work_item_type{OTHER_ITEM};
+  WorkItemType work_item_type{UNLABELED_ITEM};
 };
 
 struct WorkQueueCharacterization {
@@ -62,6 +62,8 @@ struct WorkQueueCharacterization {
 using WorkQueue = std::deque<WorkItem>;
 
 WorkQueueCharacterization characterize(const std::unique_ptr<WorkQueue>& queue);
+
+std::string to_string(WorkItemType);
 
 }  // namespace mapping
 }  // namespace cartographer

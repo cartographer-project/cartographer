@@ -163,7 +163,7 @@ NodeId PoseGraph3D::AddNode(
   AddWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     return ComputeConstraintsForNode(node_id, insertion_submaps,
                                      newly_finished_submap);
-  }, COMPUTE_CONSTRAINT);
+  }, COMPUTE_CONSTRAINTS);
   return node_id;
 }
 
@@ -879,7 +879,7 @@ void PoseGraph3D::RunFinalOptimization() {
       optimization_problem_->SetMaxNumIterations(
           options_.max_num_final_iterations());
       return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kRunOptimization, {}};
-    }, OPTIMIZATION_SOLVE);
+    }, OPTIMIZATION_RUN_FINAL);
     AddWorkItem([this]() LOCKS_EXCLUDED(mutex_) {
       absl::MutexLock locker(&mutex_);
       optimization_problem_->SetMaxNumIterations(
