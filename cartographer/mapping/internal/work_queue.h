@@ -55,7 +55,7 @@ struct WorkItem {
 
 struct WorkQueueCharacterization {
   std::chrono::steady_clock::time_point front_of_queue_time;
-  std::map<WorkItemType, size_t> distribution;
+  std::map<WorkItemType, size_t> queue_distribution;
   WorkItem::Details cummulative_processed_queue_details;
 };
 
