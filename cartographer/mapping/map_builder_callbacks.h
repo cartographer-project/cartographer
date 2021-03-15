@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "cartographer/mapping/internal/constraints/constraint_builder_3d.h"
+#include "cartographer/mapping/internal/work_queue.h"
 #include "cartographer/mapping/internal/3d/scan_matching/fast_correlative_scan_matcher_3d.h"
 
 namespace cartographer::mapping {
@@ -24,7 +25,7 @@ struct MapBuilderCallbacks {
   std::function<void(const ceres::Solver::Summary&)> optimization_cb{nullptr};
 
   // Remaining work items in the queue
-  std::function<void(int)> work_items_queue_cb{nullptr};
+  std::function<void(std::chrono::steady_clock::time_point, int, WorkQueueCharacterization)> work_items_queue_cb{nullptr};
 
 };
 

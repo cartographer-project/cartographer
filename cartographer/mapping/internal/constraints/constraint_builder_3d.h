@@ -48,6 +48,11 @@ namespace cartographer {
 namespace mapping {
 namespace constraints {
 
+enum class LoopClosureSearchType {
+  GLOBAL_CONSTRAINT_SEARCH,
+  LOCAL_CONSTRAINT_SEARCH
+};
+
 // Asynchronously computes constraints.
 //
 // Intermingle an arbitrary number of calls to 'MaybeAddConstraint',
@@ -76,7 +81,7 @@ class ConstraintBuilder3D {
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
-  void MaybeAddConstraint(const SubmapId& submap_id, const Submap3D* submap,
+  bool MaybeAddConstraint(const SubmapId& submap_id, const Submap3D* submap,
                           const NodeId& node_id,
                           const TrajectoryNode::Data* const constant_data,
                           const transform::Rigid3d& global_node_pose,
@@ -95,7 +100,7 @@ class ConstraintBuilder3D {
   //
   // The pointees of 'submap' and 'compressed_point_cloud' must stay valid until
   // all computations are finished.
-  void MaybeAddGlobalConstraint(
+  bool MaybeAddGlobalConstraint(
     const SubmapId& submap_id, const Submap3D* submap, const NodeId& node_id,
     const TrajectoryNode::Data* const constant_data,
     const Eigen::Quaterniond& global_node_rotation,

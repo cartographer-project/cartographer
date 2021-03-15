@@ -163,12 +163,12 @@ NodeId PoseGraph3D::AddNode(
   AddWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     return ComputeConstraintsForNode(node_id, insertion_submaps,
                                      newly_finished_submap);
-  });
+  }, WorkItemType::COMPUTE_CONSTRAINTS);
   return node_id;
 }
 
 void PoseGraph3D::AddWorkItem(
-    const std::function<WorkItem::Result()>& work_item) {
+    const std::function<std::pair<WorkItem::Result, WorkItem::Details>()>& work_item, WorkItemType t) {
   absl::MutexLock locker(&work_queue_mutex_);
   if (work_queue_ == nullptr) {
     work_queue_ = absl::make_unique<WorkQueue>();
@@ -177,7 +177,7 @@ void PoseGraph3D::AddWorkItem(
     thread_pool_->Schedule(std::move(task));
   }
   const auto now = std::chrono::steady_clock::now();
-  work_queue_->push_back({now, work_item});
+  work_queue_->push_back({now, work_item, t});
   kWorkQueueSizeMetric->Set(work_queue_->size());
   kWorkQueueDelayMetric->Set(
       std::chrono::duration_cast<std::chrono::duration<double>>(
@@ -209,8 +209,8 @@ void PoseGraph3D::AddImuData(const int trajectory_id,
     if (CanAddWorkItemModifying(trajectory_id)) {
       optimization_problem_->AddImuData(trajectory_id, imu_data);
     }
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
+  }, WorkItemType::OPTIMIZATION_ADD_IMU_DATA);
 }
 
 void PoseGraph3D::AddOdometryData(const int trajectory_id,
@@ -220,8 +220,8 @@ void PoseGraph3D::AddOdometryData(const int trajectory_id,
     if (CanAddWorkItemModifying(trajectory_id)) {
       optimization_problem_->AddOdometryData(trajectory_id, odometry_data);
     }
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
+  }, WorkItemType::OPTIMIZATION_ADD_ODOM_DATA);
 }
 
 void PoseGraph3D::AddFixedFramePoseData(
@@ -233,8 +233,8 @@ void PoseGraph3D::AddFixedFramePoseData(
       optimization_problem_->AddFixedFramePoseData(trajectory_id,
                                                    fixed_frame_pose_data);
     }
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
+  }, WorkItemType::OPTIMIZATION_ADD_FIXED_FRAME_DATA);
 }
 
 void PoseGraph3D::AddLandmarkData(int trajectory_id,
@@ -250,11 +250,11 @@ void PoseGraph3D::AddLandmarkData(int trajectory_id,
                 observation.translation_weight, observation.rotation_weight});
       }
     }
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
+  }, WorkItemType::OPTIMIZATION_ADD_LANDMARK_DATA);
 }
 
-void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
+std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint(const NodeId& node_id,
                                     const SubmapId& submap_id) {
   const transform::Rigid3d global_node_pose =
       optimization_problem_->node_data().at(node_id).global_pose;
@@ -272,7 +272,7 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
     if (!data_.submap_data.at(submap_id).submap->insertion_finished()) {
       // Uplink server only receives grids when they are finished, so skip
       // constraint search before that.
-      return;
+      return {};
     }
 
     const common::Time node_time = GetLatestNodeTime(node_id, submap_id);
@@ -307,23 +307,35 @@ void PoseGraph3D::ComputeConstraint(const NodeId& node_id,
                                            constant_data, global_node_pose,
                                            global_submap_pose,
                                            loop_closure_cb_);
+    return constraints::LoopClosureSearchType::LOCAL_CONSTRAINT_SEARCH;
   } else if (maybe_add_global_constraint) {
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap, node_id, constant_data, global_node_pose.rotation(),
         global_submap_pose.rotation(),
         loop_closure_cb_);
+    return constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH;
   }
+  return {};
 }
 
-WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
+std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsForNode(
     const NodeId& node_id,
     std::vector<std::shared_ptr<const Submap3D>> insertion_submaps,
     const bool newly_finished_submap) {
   std::vector<SubmapId> submap_ids;
   std::vector<SubmapId> finished_submap_ids;
   std::set<NodeId> newly_finished_submap_node_ids;
+  WorkItem::Details details{
+    {"IntraSubmapConstraints", 0},
+    {"GlobalConstraintSearches", 0},
+    {"LocalConstraintSearches", 0},
+    {"NewlyCompletedSubmapGlobalConstraintSearches", 0},
+    {"NewlyCompletedSubmapLocalConstraintSearches", 0}
+  };
   {
     absl::MutexLock locker(&mutex_);
+
+
     const auto& constant_data =
         data_.trajectory_nodes.at(node_id).constant_data;
     submap_ids = InitializeGlobalSubmapPoses(
@@ -352,6 +364,7 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
           {constraint_transform, options_.matcher_translation_weight(),
            options_.matcher_rotation_weight()},
           Constraint::INTRA_SUBMAP});
+      details["IntraSubmapConstraints"]++;
       if (node_insertion_cb_) {
         node_insertion_cb_(
           data_.trajectory_nodes.at(node_id), 
@@ -386,7 +399,13 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
   }
 
   for (const auto& submap_id : finished_submap_ids) {
-    ComputeConstraint(node_id, submap_id);
+    auto res = ComputeConstraint(node_id, submap_id);
+    if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
+      details["GlobalConstraintSearches"]++;
+    }
+    if (res && *res == constraints::LoopClosureSearchType::LOCAL_CONSTRAINT_SEARCH) {
+      details["LocalConstraintSearches"]++;
+    }
   }
 
   if (newly_finished_submap) {
@@ -396,7 +415,13 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
     for (const auto& node_id_data : optimization_problem_->node_data()) {
       const NodeId& node_id = node_id_data.id;
       if (newly_finished_submap_node_ids.count(node_id) == 0) {
-        ComputeConstraint(node_id, newly_finished_submap_id);
+        auto res = ComputeConstraint(node_id, newly_finished_submap_id);
+        if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
+          details["NewlyCompletedSubmapGlobalConstraintSearches"]++;
+        }
+        if (res && *res == constraints::LoopClosureSearchType::LOCAL_CONSTRAINT_SEARCH) {
+          details["NewlyCompletedSubmapLocalConstraintSearches"]++;
+        }
       }
     }
   }
@@ -405,9 +430,9 @@ WorkItem::Result PoseGraph3D::ComputeConstraintsForNode(
   ++num_nodes_since_last_loop_closure_;
   if (options_.optimize_every_n_nodes() > 0 &&
       num_nodes_since_last_loop_closure_ > options_.optimize_every_n_nodes()) {
-    return WorkItem::Result::kRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kRunOptimization, details};
   }
-  return WorkItem::Result::kDoNotRunOptimization;
+  return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, details};
 }
 
 common::Time PoseGraph3D::GetLatestNodeTime(const NodeId& node_id,
@@ -529,8 +554,11 @@ void PoseGraph3D::HandleWorkQueue(
 void PoseGraph3D::DrainWorkQueue() {
   bool process_work_queue = true;
   size_t work_queue_size;
+  WorkItem::Details cummulative_queue_details;
+  std::map<WorkItemType, std::chrono::system_clock::duration> processed_time_spent;
   while (process_work_queue) {
-    std::function<WorkItem::Result()> work_item;
+    WorkItemType work_item_type;
+    std::function<std::pair<WorkItem::Result, WorkItem::Details>()> work_item;
     {
       absl::MutexLock locker(&work_queue_mutex_);
       if (work_queue_->empty()) {
@@ -538,15 +566,41 @@ void PoseGraph3D::DrainWorkQueue() {
         return;
       }
       work_item = work_queue_->front().task;
+      work_item_type = work_queue_->front().work_item_type;
       work_queue_->pop_front();
       work_queue_size = work_queue_->size();
       kWorkQueueSizeMetric->Set(work_queue_size);
     }
-    process_work_queue = work_item() == WorkItem::Result::kDoNotRunOptimization;
+
+    // Compute work item times
+    auto item_start = std::chrono::steady_clock::now();
+    auto work_item_res = work_item();
+    auto item_dur = std::chrono::steady_clock::now() - item_start;
+    
+    if (!processed_time_spent.count(work_item_type)) {
+      processed_time_spent[work_item_type] = item_dur;
+    } else {
+      processed_time_spent[work_item_type] += item_dur;
+    }
+
+    process_work_queue = work_item_res.first == WorkItem::Result::kDoNotRunOptimization;
+    for (auto&& [k, v] : work_item_res.second) {
+      if (!cummulative_queue_details.count(k)) {
+        cummulative_queue_details[k] = v;
+      } else {
+        cummulative_queue_details[k] += v;
+      }
+    }
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_size;
   if (work_items_queue_cb_){
-    work_items_queue_cb_(work_queue_size);
+    // Queue characterization reflects whats left in the queue prior to optimization
+    // And details about processing that happened before the coming optimization
+    absl::MutexLock locker(&work_queue_mutex_);
+    auto characterization = characterize(work_queue_);
+    characterization.processed_time_spent = processed_time_spent;
+    characterization.cummulative_processed_queue_details = cummulative_queue_details;
+    work_items_queue_cb_(std::chrono::steady_clock::now(), work_queue_size, characterization);
   }
   // We have to optimize again.
   constraint_builder_.WhenDone(
@@ -640,8 +694,8 @@ void PoseGraph3D::DeleteTrajectory(const int trajectory_id) {
           InternalTrajectoryState::DeletionState::SCHEDULED_FOR_DELETION);
     data_.trajectories_state.at(trajectory_id).deletion_state =
         InternalTrajectoryState::DeletionState::WAIT_FOR_DELETION;
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
+  }, WorkItemType::CHANGE_TRAJECTORY_STATE);
 }
 
 void PoseGraph3D::FinishTrajectory(const int trajectory_id) {
@@ -653,8 +707,8 @@ void PoseGraph3D::FinishTrajectory(const int trajectory_id) {
     for (const auto& submap : data_.submap_data.trajectory(trajectory_id)) {
       data_.submap_data.at(submap.id).state = SubmapState::kFinished;
     }
-    return WorkItem::Result::kRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kRunOptimization, {}};
+  }, WorkItemType::CHANGE_TRAJECTORY_STATE);
 }
 
 bool PoseGraph3D::IsTrajectoryFinished(const int trajectory_id) const {
@@ -688,8 +742,8 @@ void PoseGraph3D::FreezeTrajectory(const int trajectory_id) {
           trajectory_id, other_trajectory_id, common::FromUniversal(0));
     }
     data_.trajectories_state[trajectory_id].state = TrajectoryState::FROZEN;
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
+  }, WorkItemType::CHANGE_TRAJECTORY_STATE);
 }
 
 bool PoseGraph3D::IsTrajectoryFrozen(const int trajectory_id) const {
@@ -732,8 +786,8 @@ void PoseGraph3D::AddSubmapFromProto(
     absl::MutexLock locker(&mutex_);
     data_.submap_data.at(submap_id).state = SubmapState::kFinished;
     optimization_problem_->InsertSubmap(submap_id, global_submap_pose);
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
+  }, WorkItemType::OPTIMIZATION_INSERT_SUBMAP);
 }
 
 void PoseGraph3D::AddNodeFromProto(const transform::Rigid3d& global_pose,
@@ -759,8 +813,8 @@ void PoseGraph3D::AddNodeFromProto(const transform::Rigid3d& global_pose,
         node_id,
         optimization::NodeSpec3D{constant_data->time, constant_data->local_pose,
                                  global_pose});
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
+  }, WorkItemType::NODE_TRAJECTORY_INSERTION);
 }
 
 void PoseGraph3D::SetTrajectoryDataFromProto(
@@ -781,7 +835,7 @@ void PoseGraph3D::SetTrajectoryDataFromProto(
     if (CanAddWorkItemModifying(trajectory_id)) {
       optimization_problem_->SetTrajectoryData(trajectory_id, trajectory_data);
     }
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -792,8 +846,8 @@ void PoseGraph3D::AddNodeToSubmap(const NodeId& node_id,
     if (CanAddWorkItemModifying(submap_id.trajectory_id)) {
       data_.submap_data.at(submap_id).node_ids.insert(node_id);
     }
-    return WorkItem::Result::kDoNotRunOptimization;
-  });
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
+  }, WorkItemType::NODE_SUBMAP_INSERTION);
 }
 
 void PoseGraph3D::AddSerializedConstraints(
@@ -819,7 +873,7 @@ void PoseGraph3D::AddSerializedConstraints(
       data_.constraints.push_back(constraint);
     }
     LOG(INFO) << "Loaded " << constraints.size() << " constraints.";
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -829,7 +883,7 @@ void PoseGraph3D::AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) {
   AddWorkItem([this, trimmer_ptr]() LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock locker(&mutex_);
     trimmers_.emplace_back(trimmer_ptr);
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -839,15 +893,15 @@ void PoseGraph3D::RunFinalOptimization() {
       absl::MutexLock locker(&mutex_);
       optimization_problem_->SetMaxNumIterations(
           options_.max_num_final_iterations());
-      return WorkItem::Result::kRunOptimization;
-    });
+      return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kRunOptimization, {}};
+    }, WorkItemType::OPTIMIZATION_RUN_FINAL);
     AddWorkItem([this]() LOCKS_EXCLUDED(mutex_) {
       absl::MutexLock locker(&mutex_);
       optimization_problem_->SetMaxNumIterations(
           options_.optimization_problem_options()
               .ceres_solver_options()
               .max_num_iterations());
-      return WorkItem::Result::kDoNotRunOptimization;
+      return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
     });
   }
   WaitForAllComputations();
@@ -1011,7 +1065,7 @@ void PoseGraph3D::SetLandmarkPose(const std::string& landmark_id,
     absl::MutexLock locker(&mutex_);
     data_.landmark_nodes[landmark_id].global_landmark_pose = global_pose;
     data_.landmark_nodes[landmark_id].frozen = frozen;
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 

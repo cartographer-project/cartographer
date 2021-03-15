@@ -20,21 +20,51 @@
 #include <chrono>
 #include <deque>
 #include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
 
 namespace cartographer {
 namespace mapping {
+
+enum class WorkItemType {
+  UNLABELED_ITEM
+  CHANGE_TRAJECTORY_STATE, 
+  OPTIMIZATION_ADD_IMU_DATA,
+  OPTIMIZATION_ADD_ODOM_DATA, 
+  OPTIMIZATION_ADD_LANDMARK_DATA,
+  OPTIMIZATION_ADD_FIXED_FRAME_DATA,
+  OPTIMIZATION_RUN_FINAL, 
+  OPTIMIZATION_INSERT_SUBMAP, 
+  COMPUTE_CONSTRAINTS,  // CAN BE LOOP CLOSURES OR INTRA_SUBMAP CONSTRAINT 
+  NODE_TRAJECTORY_INSERTION, 
+  NODE_SUBMAP_INSERTION, 
+};
 
 struct WorkItem {
   enum class Result {
     kDoNotRunOptimization,
     kRunOptimization,
   };
+  using Details = std::map<std::string, size_t>;
 
   std::chrono::steady_clock::time_point time;
-  std::function<Result()> task;
+  std::function<std::pair<Result, Details>()> task;
+  WorkItemType work_item_type{WorkItemType::UNLABELED_ITEM};
+};
+
+struct WorkQueueCharacterization {
+  std::chrono::steady_clock::time_point front_of_queue_time;
+  std::map<WorkItemType, size_t> queue_distribution;
+  std::map<WorkItemType, std::chrono::system_clock::duration> processed_time_spent;
+  WorkItem::Details cummulative_processed_queue_details;
 };
 
 using WorkQueue = std::deque<WorkItem>;
+
+WorkQueueCharacterization characterize(const std::unique_ptr<WorkQueue>& queue);
+
+std::string to_string(WorkItemType);
 
 }  // namespace mapping
 }  // namespace cartographer

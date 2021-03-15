@@ -165,14 +165,16 @@ NodeId PoseGraph2D::AddNode(
   const bool newly_finished_submap =
       insertion_submaps.front()->insertion_finished();
   AddWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
-    return ComputeConstraintsForNode(node_id, insertion_submaps,
+    std::pair<WorkItem::Result, WorkItem::Details> res = 
+      ComputeConstraintsForNode(node_id, insertion_submaps,
                                      newly_finished_submap);
+    return res;
   });
   return node_id;
 }
 
 void PoseGraph2D::AddWorkItem(
-    const std::function<WorkItem::Result()>& work_item) {
+    const std::function<std::pair<WorkItem::Result, WorkItem::Details>()>& work_item) {
   absl::MutexLock locker(&work_queue_mutex_);
   if (work_queue_ == nullptr) {
     work_queue_ = absl::make_unique<WorkQueue>();
@@ -213,7 +215,7 @@ void PoseGraph2D::AddImuData(const int trajectory_id,
     if (CanAddWorkItemModifying(trajectory_id)) {
       optimization_problem_->AddImuData(trajectory_id, imu_data);
     }
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -224,7 +226,7 @@ void PoseGraph2D::AddOdometryData(const int trajectory_id,
     if (CanAddWorkItemModifying(trajectory_id)) {
       optimization_problem_->AddOdometryData(trajectory_id, odometry_data);
     }
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -237,7 +239,7 @@ void PoseGraph2D::AddFixedFramePoseData(
       optimization_problem_->AddFixedFramePoseData(trajectory_id,
                                                    fixed_frame_pose_data);
     }
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -254,7 +256,7 @@ void PoseGraph2D::AddLandmarkData(int trajectory_id,
                 observation.translation_weight, observation.rotation_weight});
       }
     }
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -309,7 +311,7 @@ void PoseGraph2D::ComputeConstraint(const NodeId& node_id,
   }
 }
 
-WorkItem::Result PoseGraph2D::ComputeConstraintsForNode(
+std::pair<WorkItem::Result, WorkItem::Details> PoseGraph2D::ComputeConstraintsForNode(
     const NodeId& node_id,
     std::vector<std::shared_ptr<const Submap2D>> insertion_submaps,
     const bool newly_finished_submap) {
@@ -396,9 +398,9 @@ WorkItem::Result PoseGraph2D::ComputeConstraintsForNode(
   ++num_nodes_since_last_loop_closure_;
   if (options_.optimize_every_n_nodes() > 0 &&
       num_nodes_since_last_loop_closure_ > options_.optimize_every_n_nodes()) {
-    return WorkItem::Result::kRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kRunOptimization, {}};
   }
-  return WorkItem::Result::kDoNotRunOptimization;
+  return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
 }
 
 common::Time PoseGraph2D::GetLatestNodeTime(const NodeId& node_id,
@@ -521,7 +523,7 @@ void PoseGraph2D::DrainWorkQueue() {
   bool process_work_queue = true;
   size_t work_queue_size;
   while (process_work_queue) {
-    std::function<WorkItem::Result()> work_item;
+    std::function<std::pair<WorkItem::Result, WorkItem::Details>()> work_item;
     {
       absl::MutexLock locker(&work_queue_mutex_);
       if (work_queue_->empty()) {
@@ -533,7 +535,7 @@ void PoseGraph2D::DrainWorkQueue() {
       work_queue_size = work_queue_->size();
       kWorkQueueSizeMetric->Set(work_queue_size);
     }
-    process_work_queue = work_item() == WorkItem::Result::kDoNotRunOptimization;
+    process_work_queue = work_item().first == WorkItem::Result::kDoNotRunOptimization;
   }
   LOG(INFO) << "Remaining work items in queue: " << work_queue_size;
   // We have to optimize again.
@@ -628,7 +630,7 @@ void PoseGraph2D::DeleteTrajectory(const int trajectory_id) {
           InternalTrajectoryState::DeletionState::SCHEDULED_FOR_DELETION);
     data_.trajectories_state.at(trajectory_id).deletion_state =
         InternalTrajectoryState::DeletionState::WAIT_FOR_DELETION;
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -641,7 +643,7 @@ void PoseGraph2D::FinishTrajectory(const int trajectory_id) {
     for (const auto& submap : data_.submap_data.trajectory(trajectory_id)) {
       data_.submap_data.at(submap.id).state = SubmapState::kFinished;
     }
-    return WorkItem::Result::kRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kRunOptimization, {}};
   });
 }
 
@@ -676,7 +678,7 @@ void PoseGraph2D::FreezeTrajectory(const int trajectory_id) {
           trajectory_id, other_trajectory_id, common::FromUniversal(0));
     }
     data_.trajectories_state[trajectory_id].state = TrajectoryState::FROZEN;
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -724,7 +726,7 @@ void PoseGraph2D::AddSubmapFromProto(
         absl::MutexLock locker(&mutex_);
         data_.submap_data.at(submap_id).state = SubmapState::kFinished;
         optimization_problem_->InsertSubmap(submap_id, global_submap_pose_2d);
-        return WorkItem::Result::kDoNotRunOptimization;
+        return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
       });
 }
 
@@ -757,7 +759,7 @@ void PoseGraph2D::AddNodeFromProto(const transform::Rigid3d& global_pose,
                                  gravity_alignment_inverse),
             transform::Project2D(global_pose * gravity_alignment_inverse),
             constant_data->gravity_alignment});
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -778,7 +780,7 @@ void PoseGraph2D::SetTrajectoryDataFromProto(
                         optimization_problem_->SetTrajectoryData(
                             trajectory_id, trajectory_data);
                       }
-                      return WorkItem::Result::kDoNotRunOptimization;
+                      return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
                     });
   }
 }
@@ -790,7 +792,7 @@ void PoseGraph2D::AddNodeToSubmap(const NodeId& node_id,
     if (CanAddWorkItemModifying(submap_id.trajectory_id)) {
       data_.submap_data.at(submap_id).node_ids.insert(node_id);
     }
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -824,7 +826,7 @@ void PoseGraph2D::AddSerializedConstraints(
           constraint.submap_id, constraint.node_id, pose, constraint.tag});
     }
     LOG(INFO) << "Loaded " << constraints.size() << " constraints.";
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -834,7 +836,7 @@ void PoseGraph2D::AddTrimmer(std::unique_ptr<PoseGraphTrimmer> trimmer) {
   AddWorkItem([this, trimmer_ptr]() LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock locker(&mutex_);
     trimmers_.emplace_back(trimmer_ptr);
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
@@ -844,7 +846,7 @@ void PoseGraph2D::RunFinalOptimization() {
       absl::MutexLock locker(&mutex_);
       optimization_problem_->SetMaxNumIterations(
           options_.max_num_final_iterations());
-      return WorkItem::Result::kRunOptimization;
+      return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kRunOptimization, {}};
     });
     AddWorkItem([this]() LOCKS_EXCLUDED(mutex_) {
       absl::MutexLock locker(&mutex_);
@@ -852,7 +854,7 @@ void PoseGraph2D::RunFinalOptimization() {
           options_.optimization_problem_options()
               .ceres_solver_options()
               .max_num_iterations());
-      return WorkItem::Result::kDoNotRunOptimization;
+      return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
     });
   }
   WaitForAllComputations();
@@ -989,7 +991,7 @@ void PoseGraph2D::SetLandmarkPose(const std::string& landmark_id,
     absl::MutexLock locker(&mutex_);
     data_.landmark_nodes[landmark_id].global_landmark_pose = global_pose;
     data_.landmark_nodes[landmark_id].frozen = frozen;
-    return WorkItem::Result::kDoNotRunOptimization;
+    return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
   });
 }
 
