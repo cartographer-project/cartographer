@@ -307,13 +307,13 @@ std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint
                                            constant_data, global_node_pose,
                                            global_submap_pose,
                                            loop_closure_cb_);
-    return constraints::LOCAL_CONSTRAINT_SEARCH;
+    return constraints::LoopClosureSearchType::LOCAL_CONSTRAINT_SEARCH;
   } else if (maybe_add_global_constraint) {
     constraint_builder_.MaybeAddGlobalConstraint(
         submap_id, submap, node_id, constant_data, global_node_pose.rotation(),
         global_submap_pose.rotation(),
         loop_closure_cb_);
-    return constraints::GLOBAL_CONSTRAINT_SEARCH;
+    return constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH;
   }
   return {};
 }
@@ -400,10 +400,10 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
 
   for (const auto& submap_id : finished_submap_ids) {
     auto res = ComputeConstraint(node_id, submap_id);
-    if (res && *res == constraints::GLOBAL_CONSTRAINT_SEARCH) {
+    if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
       details["GlobalConstraintSearches"]++;
     }
-    if (res && *res == constraints::LOCAL_CONSTRAINT_SEARCH) {
+    if (res && *res == constraints::LoopClosureSearchType::LOCAL_CONSTRAINT_SEARCH) {
       details["LocalConstraintSearches"]++;
     }
   }
@@ -416,10 +416,10 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
       const NodeId& node_id = node_id_data.id;
       if (newly_finished_submap_node_ids.count(node_id) == 0) {
         auto res = ComputeConstraint(node_id, newly_finished_submap_id);
-        if (res && *res == constraints::GLOBAL_CONSTRAINT_SEARCH) {
+        if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
           details["NewlyCompletedSubmapGlobalConstraintSearches"]++;
         }
-        if (res && *res == constraints::LOCAL_CONSTRAINT_SEARCH) {
+        if (res && *res == constraints::LoopClosureSearchType::LOCAL_CONSTRAINT_SEARCH) {
           details["NewlyCompletedSubmapLocalConstraintSearches"]++;
         }
       }

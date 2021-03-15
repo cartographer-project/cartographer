@@ -48,7 +48,7 @@ namespace cartographer {
 namespace mapping {
 namespace constraints {
 
-enum LoopClosureSearchType {
+enum class LoopClosureSearchType {
   GLOBAL_CONSTRAINT_SEARCH,
   LOCAL_CONSTRAINT_SEARCH
 };
