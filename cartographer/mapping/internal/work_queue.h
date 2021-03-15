@@ -28,6 +28,7 @@ namespace cartographer {
 namespace mapping {
 
 enum class WorkItemType {
+  UNLABELED_ITEM
   CHANGE_TRAJECTORY_STATE, 
   OPTIMIZATION_ADD_IMU_DATA,
   OPTIMIZATION_ADD_ODOM_DATA, 
@@ -38,7 +39,6 @@ enum class WorkItemType {
   COMPUTE_CONSTRAINTS,  // CAN BE LOOP CLOSURES OR INTRA_SUBMAP CONSTRAINT 
   NODE_TRAJECTORY_INSERTION, 
   NODE_SUBMAP_INSERTION, 
-  UNLABELED_ITEM
 };
 
 struct WorkItem {
