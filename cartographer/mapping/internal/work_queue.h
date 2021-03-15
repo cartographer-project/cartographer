@@ -28,7 +28,7 @@ namespace cartographer {
 namespace mapping {
 
 enum class WorkItemType {
-  UNLABELED_ITEM
+  UNLABELED_ITEM,
   CHANGE_TRAJECTORY_STATE, 
   OPTIMIZATION_ADD_IMU_DATA,
   OPTIMIZATION_ADD_ODOM_DATA, 
