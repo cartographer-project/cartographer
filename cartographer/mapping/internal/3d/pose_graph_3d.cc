@@ -555,7 +555,9 @@ void PoseGraph3D::DrainWorkQueue() {
   bool process_work_queue = true;
   size_t work_queue_size;
   WorkItem::Details cummulative_queue_details;
+  std::map<WorkItemType, std::chrono::system_clock::duration> processed_time_spent;
   while (process_work_queue) {
+    WorkItemType work_item_type;
     std::function<std::pair<WorkItem::Result, WorkItem::Details>()> work_item;
     {
       absl::MutexLock locker(&work_queue_mutex_);
@@ -564,11 +566,23 @@ void PoseGraph3D::DrainWorkQueue() {
         return;
       }
       work_item = work_queue_->front().task;
+      work_item_type = work_queue_->front().work_item_type;
       work_queue_->pop_front();
       work_queue_size = work_queue_->size();
       kWorkQueueSizeMetric->Set(work_queue_size);
     }
+
+    // Compute work item times
+    auto item_start = std::chrono::steady_clock::now();
     auto work_item_res = work_item();
+    auto item_dur = std::chrono::steady_clock::now() - item_start;
+    
+    if (!processed_time_spent.count(work_item_type)) {
+      processed_time_spent[work_item_type] = item_dur;
+    } else {
+      processed_time_spent[work_item_type] += item_dur;
+    }
+
     process_work_queue = work_item_res.first == WorkItem::Result::kDoNotRunOptimization;
     for (auto&& [k, v] : work_item_res.second) {
       if (!cummulative_queue_details.count(k)) {
@@ -584,8 +598,9 @@ void PoseGraph3D::DrainWorkQueue() {
     // And details about processing that happened before the coming optimization
     absl::MutexLock locker(&work_queue_mutex_);
     auto characterization = characterize(work_queue_);
+    characterization.processed_time_spent = processed_time_spent;
     characterization.cummulative_processed_queue_details = cummulative_queue_details;
-    work_items_queue_cb_(work_queue_size, characterization);
+    work_items_queue_cb_(std::chrono::steady_clock::now(), work_queue_size, characterization);
   }
   // We have to optimize again.
   constraint_builder_.WhenDone(

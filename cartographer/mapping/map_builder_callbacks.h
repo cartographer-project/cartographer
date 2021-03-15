@@ -25,7 +25,7 @@ struct MapBuilderCallbacks {
   std::function<void(const ceres::Solver::Summary&)> optimization_cb{nullptr};
 
   // Remaining work items in the queue
-  std::function<void(int, WorkQueueCharacterization)> work_items_queue_cb{nullptr};
+  std::function<void(std::chrono::steady_clock::time_point, int, WorkQueueCharacterization)> work_items_queue_cb{nullptr};
 
 };
 

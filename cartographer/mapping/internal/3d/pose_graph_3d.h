@@ -286,6 +286,7 @@ class PoseGraph3D : public PoseGraph {
   )> node_insertion_cb_;
 
   std::function<void(
+    std::chrono::steady_clock::time_point,
     int,
     WorkQueueCharacterization
   )> work_items_queue_cb_;
