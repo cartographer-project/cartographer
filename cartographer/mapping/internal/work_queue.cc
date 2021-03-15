@@ -10,10 +10,10 @@ WorkQueueCharacterization characterize(const std::unique_ptr<WorkQueue>& queue) 
   }
   characterization.front_of_queue_time = queue->front().time;
   for (auto& work_item : *queue) {
-    if (characterization.queue_distribution.count(work_item.work_item_type)) {
-      characterization.queue_distribution[work_item.work_item_type] += 1;
+    if (!characterization.queue_distribution.count(work_item.work_item_type)) {
+      characterization.queue_distribution[work_item.work_item_type] = 1;
     }
-    characterization.queue_distribution[work_item.work_item_type] = 1;
+    characterization.queue_distribution[work_item.work_item_type] += 1;
   }
   return characterization;
 }
