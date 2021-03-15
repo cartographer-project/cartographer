@@ -27,7 +27,7 @@
 namespace cartographer {
 namespace mapping {
 
-enum WorkItemType {
+enum class WorkItemType {
   CHANGE_TRAJECTORY_STATE, 
   OPTIMIZATION_ADD_IMU_DATA,
   OPTIMIZATION_ADD_ODOM_DATA, 
@@ -50,7 +50,7 @@ struct WorkItem {
 
   std::chrono::steady_clock::time_point time;
   std::function<std::pair<Result, Details>()> task;
-  WorkItemType work_item_type{UNLABELED_ITEM};
+  WorkItemType work_item_type{WorkItemType::UNLABELED_ITEM};
 };
 
 struct WorkQueueCharacterization {

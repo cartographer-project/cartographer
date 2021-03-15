@@ -163,7 +163,7 @@ NodeId PoseGraph3D::AddNode(
   AddWorkItem([=]() LOCKS_EXCLUDED(mutex_) {
     return ComputeConstraintsForNode(node_id, insertion_submaps,
                                      newly_finished_submap);
-  }, COMPUTE_CONSTRAINTS);
+  }, WorkItemType::COMPUTE_CONSTRAINTS);
   return node_id;
 }
 
@@ -210,7 +210,7 @@ void PoseGraph3D::AddImuData(const int trajectory_id,
       optimization_problem_->AddImuData(trajectory_id, imu_data);
     }
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
-  }, OPTIMIZATION_ADD_IMU_DATA);
+  }, WorkItemType::OPTIMIZATION_ADD_IMU_DATA);
 }
 
 void PoseGraph3D::AddOdometryData(const int trajectory_id,
@@ -221,7 +221,7 @@ void PoseGraph3D::AddOdometryData(const int trajectory_id,
       optimization_problem_->AddOdometryData(trajectory_id, odometry_data);
     }
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
-  }, OPTIMIZATION_ADD_ODOM_DATA);
+  }, WorkItemType::OPTIMIZATION_ADD_ODOM_DATA);
 }
 
 void PoseGraph3D::AddFixedFramePoseData(
@@ -234,7 +234,7 @@ void PoseGraph3D::AddFixedFramePoseData(
                                                    fixed_frame_pose_data);
     }
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
-  }, OPTIMIZATION_ADD_FIXED_FRAME_DATA);
+  }, WorkItemType::OPTIMIZATION_ADD_FIXED_FRAME_DATA);
 }
 
 void PoseGraph3D::AddLandmarkData(int trajectory_id,
@@ -251,7 +251,7 @@ void PoseGraph3D::AddLandmarkData(int trajectory_id,
       }
     }
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
-  }, OPTIMIZATION_ADD_LANDMARK_DATA);
+  }, WorkItemType::OPTIMIZATION_ADD_LANDMARK_DATA);
 }
 
 std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint(const NodeId& node_id,
@@ -695,7 +695,7 @@ void PoseGraph3D::DeleteTrajectory(const int trajectory_id) {
     data_.trajectories_state.at(trajectory_id).deletion_state =
         InternalTrajectoryState::DeletionState::WAIT_FOR_DELETION;
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
-  }, CHANGE_TRAJECTORY_STATE);
+  }, WorkItemType::CHANGE_TRAJECTORY_STATE);
 }
 
 void PoseGraph3D::FinishTrajectory(const int trajectory_id) {
@@ -708,7 +708,7 @@ void PoseGraph3D::FinishTrajectory(const int trajectory_id) {
       data_.submap_data.at(submap.id).state = SubmapState::kFinished;
     }
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kRunOptimization, {}};
-  }, CHANGE_TRAJECTORY_STATE);
+  }, WorkItemType::CHANGE_TRAJECTORY_STATE);
 }
 
 bool PoseGraph3D::IsTrajectoryFinished(const int trajectory_id) const {
@@ -743,7 +743,7 @@ void PoseGraph3D::FreezeTrajectory(const int trajectory_id) {
     }
     data_.trajectories_state[trajectory_id].state = TrajectoryState::FROZEN;
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
-  }, CHANGE_TRAJECTORY_STATE);
+  }, WorkItemType::CHANGE_TRAJECTORY_STATE);
 }
 
 bool PoseGraph3D::IsTrajectoryFrozen(const int trajectory_id) const {
@@ -787,7 +787,7 @@ void PoseGraph3D::AddSubmapFromProto(
     data_.submap_data.at(submap_id).state = SubmapState::kFinished;
     optimization_problem_->InsertSubmap(submap_id, global_submap_pose);
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
-  }, OPTIMIZATION_INSERT_SUBMAP);
+  }, WorkItemType::OPTIMIZATION_INSERT_SUBMAP);
 }
 
 void PoseGraph3D::AddNodeFromProto(const transform::Rigid3d& global_pose,
@@ -814,7 +814,7 @@ void PoseGraph3D::AddNodeFromProto(const transform::Rigid3d& global_pose,
         optimization::NodeSpec3D{constant_data->time, constant_data->local_pose,
                                  global_pose});
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
-  }, NODE_TRAJECTORY_INSERTION);
+  }, WorkItemType::NODE_TRAJECTORY_INSERTION);
 }
 
 void PoseGraph3D::SetTrajectoryDataFromProto(
@@ -847,7 +847,7 @@ void PoseGraph3D::AddNodeToSubmap(const NodeId& node_id,
       data_.submap_data.at(submap_id).node_ids.insert(node_id);
     }
     return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kDoNotRunOptimization, {}};
-  }, NODE_SUBMAP_INSERTION);
+  }, WorkItemType::NODE_SUBMAP_INSERTION);
 }
 
 void PoseGraph3D::AddSerializedConstraints(
@@ -894,7 +894,7 @@ void PoseGraph3D::RunFinalOptimization() {
       optimization_problem_->SetMaxNumIterations(
           options_.max_num_final_iterations());
       return std::pair<WorkItem::Result, WorkItem::Details>{WorkItem::Result::kRunOptimization, {}};
-    }, OPTIMIZATION_RUN_FINAL);
+    }, WorkItemType::OPTIMIZATION_RUN_FINAL);
     AddWorkItem([this]() LOCKS_EXCLUDED(mutex_) {
       absl::MutexLock locker(&mutex_);
       optimization_problem_->SetMaxNumIterations(
