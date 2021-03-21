@@ -306,6 +306,7 @@ std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint
     constraint_builder_.MaybeAddConstraint(submap_id, submap, node_id,
                                            constant_data, global_node_pose,
                                            global_submap_pose,
+                                           0.03,
                                            loop_closure_cb_);
     return constraints::LoopClosureSearchType::LOCAL_CONSTRAINT_SEARCH;
   } else if (maybe_add_global_constraint) {
@@ -395,6 +396,19 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
       CHECK(finished_submap_data.state == SubmapState::kNoConstraintSearch);
       finished_submap_data.state = SubmapState::kFinished;
       newly_finished_submap_node_ids = finished_submap_data.node_ids;
+    }
+  }
+
+  // Count how many within range of node
+  size_t submaps_in_range_of_node = 0;
+  for (const auto& submap_id : finished_submap_ids) {
+    const transform::Rigid3d global_node_pose =
+        optimization_problem_->node_data().at(node_id).global_pose;
+    const transform::Rigid3d global_submap_pose =
+        optimization_problem_->submap_data().at(submap_id).global_pose;
+    if ((global_node_pose.translation() - global_submap_pose.translation())
+          .norm() < constraint_builder_.max_constraint_distance()) {
+      submaps_in_range_of_node++;
     }
   }
 

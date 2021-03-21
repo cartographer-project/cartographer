@@ -88,7 +88,7 @@ TEST_F(ConstraintBuilder3DTest, FindsConstraints) {
     for (int j = 0; j < 2; ++j) {
       constraint_builder_->MaybeAddConstraint(
           submap_id, &submap, NodeId{0, 0}, node_data.get(),
-          transform::Rigid3d::Identity(), transform::Rigid3d::Identity(), nullptr);
+          transform::Rigid3d::Identity(), transform::Rigid3d::Identity(), 0.03, nullptr);
     }
     constraint_builder_->MaybeAddGlobalConstraint(
         submap_id, &submap, NodeId{0, 0}, node_data.get(),

@@ -27,7 +27,7 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "absl/synchronization/mutex.h"
-#include "cartographer/common/fixed_ratio_sampler.h"
+#include "cartographer/common/variable_ratio_sampler.h"
 #include "cartographer/common/histogram.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
@@ -86,6 +86,7 @@ class ConstraintBuilder3D {
                           const TrajectoryNode::Data* const constant_data,
                           const transform::Rigid3d& global_node_pose,
                           const transform::Rigid3d& global_submap_pose,
+                          double sampling_ratio,
                           std::function<void(
                             scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
                             std::optional<Constraint> 
@@ -124,6 +125,8 @@ class ConstraintBuilder3D {
   void DeleteScanMatcher(const SubmapId& submap_id);
 
   static void RegisterMetrics(metrics::FamilyFactory* family_factory);
+
+  double max_constraint_distance();
 
  private:
   struct SubmapScanMatcher {
@@ -187,7 +190,7 @@ class ConstraintBuilder3D {
   std::map<SubmapId, SubmapScanMatcher> submap_scan_matchers_
       GUARDED_BY(mutex_);
 
-  common::FixedRatioSampler sampler_;
+  common::VariableRatioSampler sampler_;
   scan_matching::CeresScanMatcher3D ceres_scan_matcher_;
 
   // Histograms of scan matcher scores.

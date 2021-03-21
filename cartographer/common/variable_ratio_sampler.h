@@ -25,7 +25,8 @@ namespace cartographer {
 namespace common {
 
 // Signals when a sample should be taken from a stream of data to select a
-// uniformly distributed fraction of the data.
+// uniformly distributed fraction of the data. The ratio should be kept constant 
+// when running over a batch of function calls to make sense. (e.g. pulse as a function of loop closure density)
 class VariableRatioSampler {
  public:
   explicit VariableRatioSampler();

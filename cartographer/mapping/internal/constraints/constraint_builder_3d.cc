@@ -63,7 +63,6 @@ ConstraintBuilder3D::ConstraintBuilder3D(
       thread_pool_(thread_pool),
       finish_node_task_(absl::make_unique<common::Task>()),
       when_done_task_(absl::make_unique<common::Task>()),
-      sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options_3d()) {}
 
 ConstraintBuilder3D::~ConstraintBuilder3D() {
@@ -80,6 +79,7 @@ bool ConstraintBuilder3D::MaybeAddConstraint(
     const NodeId& node_id, const TrajectoryNode::Data* const constant_data,
     const transform::Rigid3d& global_node_pose,
     const transform::Rigid3d& global_submap_pose,
+    double sampling_ratio,
     std::function<void(
       scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
       std::optional<Constraint> 
@@ -88,7 +88,7 @@ bool ConstraintBuilder3D::MaybeAddConstraint(
           .norm() > options_.max_constraint_distance()) {
     return false;
   }
-  if (!sampler_.Pulse()) return false;
+  if (!sampler_.Pulse(sampling_ratio)) return false;
 
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
@@ -356,6 +356,10 @@ void ConstraintBuilder3D::RunWhenDoneCallback() {
 int ConstraintBuilder3D::GetNumFinishedNodes() {
   absl::MutexLock locker(&mutex_);
   return num_finished_nodes_;
+}
+
+double ConstraintBuilder3D::max_constraint_distance() {
+  return options_.max_constraint_distance();
 }
 
 void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {
