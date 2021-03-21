@@ -412,6 +412,8 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
     }
   }
 
+  std::cerr << "SUBMAP DENSITY " << submaps_in_range_of_node << std::endl;  
+
   for (const auto& submap_id : finished_submap_ids) {
     auto res = ComputeConstraint(node_id, submap_id);
     if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
