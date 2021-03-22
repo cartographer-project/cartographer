@@ -288,7 +288,8 @@ std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint
       // the submap's trajectory, it suffices to do a match constrained to a
       // local search window.
       maybe_add_local_constraint = true;
-    } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse(options_.global_sampling_ratio() * sampling_scaling)) {
+    } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse(
+                options_.global_sampling_ratio() * sampling_scaling)) {
       // In this situation, 'global_node_pose' and 'global_submap_pose' have
       // orientations agreeing on gravity. Their relationship regarding yaw is
       // arbitrary. Finding the correct yaw component will be handled by the
@@ -411,10 +412,10 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
     }
   }
 
-  double submap_selection_scaling = ComputeSubmapSamplingScaling(submaps_in_range_of_node);
+  double submap_sampling_scaling = ComputeSubmapSamplingScaling(submaps_in_range_of_node);
 
   for (const auto& submap_id : finished_submap_ids) {
-    auto res = ComputeConstraint(node_id, submap_id, submap_selection_scaling);
+    auto res = ComputeConstraint(node_id, submap_id, submap_sampling_scaling);
     if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
       details["GlobalConstraintSearches"]++;
     }
@@ -430,7 +431,7 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
     for (const auto& node_id_data : optimization_problem_->node_data()) {
       const NodeId& node_id = node_id_data.id;
       if (newly_finished_submap_node_ids.count(node_id) == 0) {
-        auto res = ComputeConstraint(node_id, newly_finished_submap_id, submap_selection_scaling);
+        auto res = ComputeConstraint(node_id, newly_finished_submap_id, submap_sampling_scaling);
         if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
           details["NewlyCompletedSubmapGlobalConstraintSearches"]++;
         }
