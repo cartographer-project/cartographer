@@ -255,7 +255,7 @@ void PoseGraph3D::AddLandmarkData(int trajectory_id,
 }
 
 std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint(const NodeId& node_id,
-                                    const SubmapId& submap_id) {
+                                    const SubmapId& submap_id, double sampling_ratio) {
   const transform::Rigid3d global_node_pose =
       optimization_problem_->node_data().at(node_id).global_pose;
 
@@ -306,7 +306,7 @@ std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint
     constraint_builder_.MaybeAddConstraint(submap_id, submap, node_id,
                                            constant_data, global_node_pose,
                                            global_submap_pose,
-                                           0.03,
+                                           sampling_ratio,
                                            loop_closure_cb_);
     return constraints::LoopClosureSearchType::LOCAL_CONSTRAINT_SEARCH;
   } else if (maybe_add_global_constraint) {
@@ -413,9 +413,10 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
   }
 
   std::cerr << "SUBMAP DENSITY " << submaps_in_range_of_node << std::endl;  
+  double sampling_ratio = ComputeSubmapSamplingRatio(submaps_in_range_of_node);
 
   for (const auto& submap_id : finished_submap_ids) {
-    auto res = ComputeConstraint(node_id, submap_id);
+    auto res = ComputeConstraint(node_id, submap_id, sampling_ratio);
     if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
       details["GlobalConstraintSearches"]++;
     }
@@ -431,7 +432,7 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
     for (const auto& node_id_data : optimization_problem_->node_data()) {
       const NodeId& node_id = node_id_data.id;
       if (newly_finished_submap_node_ids.count(node_id) == 0) {
-        auto res = ComputeConstraint(node_id, newly_finished_submap_id);
+        auto res = ComputeConstraint(node_id, newly_finished_submap_id, sampling_ratio);
         if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
           details["NewlyCompletedSubmapGlobalConstraintSearches"]++;
         }
@@ -1364,6 +1365,14 @@ PoseGraph3D::GetSubmapDataUnderLock() const {
 void PoseGraph3D::SetGlobalSlamOptimizationCallback(
     PoseGraphInterface::GlobalSlamOptimizationCallback callback) {
   global_slam_optimization_callback_ = callback;
+}
+
+double PoseGraph3D::ComputeSubmapSamplingRatio(size_t submap_density) {
+  // TODO(vikram): Use params set in lua instead of hard coded values
+  size_t target_selection = 7;
+  double default_sample_ratio = 0.03;
+  double scaling_ratio = static_cast<double>(target_selection) / submap_density;
+  return default_sample_ratio * scaling_ratio;  
 }
 
 void PoseGraph3D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
