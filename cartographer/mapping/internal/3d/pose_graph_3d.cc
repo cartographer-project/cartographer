@@ -494,6 +494,7 @@ void PoseGraph3D::DeleteTrajectoriesIfNeeded() {
 
 void PoseGraph3D::HandleWorkQueue(
     const constraints::ConstraintBuilder3D::Result& result) {
+  std::cerr << "WORK_QUEUE_PROFILE (constraint_processesing time) " << absl::FormatDuration(absl::Now() - constraint_builder_start_) << std::endl;
   {
     absl::MutexLock locker(&mutex_);
     data_.constraints.insert(data_.constraints.end(), result.begin(),
@@ -620,6 +621,7 @@ void PoseGraph3D::DrainWorkQueue() {
     work_items_queue_cb_(std::chrono::steady_clock::now(), work_queue_size, characterization);
   }
   // We have to optimize again.
+  constraint_builder_start_ = absl::Now();
   constraint_builder_.WhenDone(
       [this](const constraints::ConstraintBuilder3D::Result& result) {
         HandleWorkQueue(result);

@@ -88,7 +88,10 @@ bool ConstraintBuilder3D::MaybeAddConstraint(
           .norm() > options_.max_constraint_distance()) {
     return false;
   }
-  if (!sampler_.Pulse(sampling_ratio)) return false;
+  if (!sampler_.Pulse(sampling_ratio)) {
+    std::cerr << "CONSTRAINT SAMPLER: " << sampler_.DebugString() << std::endl;
+    return false;
+  }
 
   absl::MutexLock locker(&mutex_);
   if (when_done_) {

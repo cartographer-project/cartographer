@@ -296,6 +296,8 @@ class PoseGraph3D : public PoseGraph {
   // Local slam node created
   std::function<void(const TrajectoryNode&)> local_slam_node_cb_;
 
+  absl::Time constraint_builder_start_;
+
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.
   class TrimmingHandle : public Trimmable {
