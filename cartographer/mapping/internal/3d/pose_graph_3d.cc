@@ -289,6 +289,7 @@ std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint
       // local search window.
       maybe_add_local_constraint = true;
     } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse(options_.global_sampling_ratio() * sampling_scaling)) {
+      std::cerr << "Global localization pulsed at sampling ratio scaled by " << sampling_scaling << std::endl;
       // In this situation, 'global_node_pose' and 'global_submap_pose' have
       // orientations agreeing on gravity. Their relationship regarding yaw is
       // arbitrary. Finding the correct yaw component will be handled by the
