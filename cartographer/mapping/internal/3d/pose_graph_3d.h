@@ -31,6 +31,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "cartographer/common/fixed_ratio_sampler.h"
+#include "cartographer/common/variable_ratio_sampler.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/3d/submap_3d.h"
@@ -201,7 +202,7 @@ class PoseGraph3D : public PoseGraph {
       bool newly_finished_submap) LOCKS_EXCLUDED(mutex_);
 
   // Computes constraints for a node and submap pair.
-  std::optional<constraints::LoopClosureSearchType> ComputeConstraint(const NodeId& node_id, const SubmapId& submap_id, double sampling_ratio)
+  std::optional<constraints::LoopClosureSearchType> ComputeConstraint(const NodeId& node_id, const SubmapId& submap_id, double sampling_scaling)
       LOCKS_EXCLUDED(mutex_);
 
   // Deletes trajectories waiting for deletion. Must not be called during
@@ -245,7 +246,7 @@ class PoseGraph3D : public PoseGraph {
   void UpdateTrajectoryConnectivity(const Constraint& constraint)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  double ComputeSubmapSamplingRatio(size_t submap_density);
+  double ComputeSubmapSamplingScaling(size_t submap_density);
 
   const proto::PoseGraphOptions options_;
   GlobalSlamOptimizationCallback global_slam_optimization_callback_;
@@ -257,7 +258,7 @@ class PoseGraph3D : public PoseGraph {
   std::unique_ptr<WorkQueue> work_queue_ GUARDED_BY(work_queue_mutex_);
 
   // We globally localize a fraction of the nodes from each trajectory.
-  absl::flat_hash_map<int, std::unique_ptr<common::FixedRatioSampler>>
+  absl::flat_hash_map<int, std::unique_ptr<common::VariableRatioSampler>>
       global_localization_samplers_ GUARDED_BY(mutex_);
 
   // Number of nodes added since last loop closure.

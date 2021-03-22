@@ -197,8 +197,7 @@ void PoseGraph3D::AddTrajectoryIfNeeded(const int trajectory_id) {
   // Make sure we have a sampler for this trajectory.
   if (!global_localization_samplers_[trajectory_id]) {
     global_localization_samplers_[trajectory_id] =
-        absl::make_unique<common::FixedRatioSampler>(
-            options_.global_sampling_ratio());
+        absl::make_unique<common::VariableRatioSampler>();
   }
 }
 
@@ -255,7 +254,7 @@ void PoseGraph3D::AddLandmarkData(int trajectory_id,
 }
 
 std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint(const NodeId& node_id,
-                                    const SubmapId& submap_id, double sampling_ratio) {
+                                    const SubmapId& submap_id, double sampling_scaling) {
   const transform::Rigid3d global_node_pose =
       optimization_problem_->node_data().at(node_id).global_pose;
 
@@ -289,7 +288,7 @@ std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint
       // the submap's trajectory, it suffices to do a match constrained to a
       // local search window.
       maybe_add_local_constraint = true;
-    } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse()) {
+    } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse(options_.global_sampling_ratio() * sampling_scaling)) {
       // In this situation, 'global_node_pose' and 'global_submap_pose' have
       // orientations agreeing on gravity. Their relationship regarding yaw is
       // arbitrary. Finding the correct yaw component will be handled by the
@@ -306,7 +305,7 @@ std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint
     constraint_builder_.MaybeAddConstraint(submap_id, submap, node_id,
                                            constant_data, global_node_pose,
                                            global_submap_pose,
-                                           sampling_ratio,
+                                           constraint_builder_.sampling_ratio() * sampling_scaling,
                                            loop_closure_cb_);
     return constraints::LoopClosureSearchType::LOCAL_CONSTRAINT_SEARCH;
   } else if (maybe_add_global_constraint) {
@@ -413,10 +412,10 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
   }
 
   std::cerr << "SUBMAP DENSITY " << submaps_in_range_of_node << std::endl;  
-  double sampling_ratio = ComputeSubmapSamplingRatio(submaps_in_range_of_node);
+  double submap_selection_scaling = ComputeSubmapSamplingScaling(submaps_in_range_of_node);
 
   for (const auto& submap_id : finished_submap_ids) {
-    auto res = ComputeConstraint(node_id, submap_id, sampling_ratio);
+    auto res = ComputeConstraint(node_id, submap_id, submap_selection_scaling);
     if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
       details["GlobalConstraintSearches"]++;
     }
@@ -432,7 +431,7 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
     for (const auto& node_id_data : optimization_problem_->node_data()) {
       const NodeId& node_id = node_id_data.id;
       if (newly_finished_submap_node_ids.count(node_id) == 0) {
-        auto res = ComputeConstraint(node_id, newly_finished_submap_id, sampling_ratio);
+        auto res = ComputeConstraint(node_id, newly_finished_submap_id, submap_selection_scaling);
         if (res && *res == constraints::LoopClosureSearchType::GLOBAL_CONSTRAINT_SEARCH) {
           details["NewlyCompletedSubmapGlobalConstraintSearches"]++;
         }
@@ -1369,17 +1368,15 @@ void PoseGraph3D::SetGlobalSlamOptimizationCallback(
   global_slam_optimization_callback_ = callback;
 }
 
-double PoseGraph3D::ComputeSubmapSamplingRatio(size_t submap_density) {
+double PoseGraph3D::ComputeSubmapSamplingScaling(size_t submap_density) {
   size_t target_selection = constraint_builder_.target_submap_selection();
   std::cerr << "Target selection " << target_selection << std::endl;
   double default_sampling_ratio = constraint_builder_.sampling_ratio();
   std::cerr << "Default sampling ratio" << std::endl;
   if (!target_selection) {
-    return default_sampling_ratio;
+    return 1.0;
   }
-  double scaling_ratio = static_cast<double>(target_selection) / submap_density;
-  std::cerr << "Scaled ratio " << scaling_ratio << std::endl;
-  return default_sampling_ratio * scaling_ratio;  
+  return static_cast<double>(target_selection) / submap_density;
 }
 
 void PoseGraph3D::RegisterMetrics(metrics::FamilyFactory* family_factory) {
