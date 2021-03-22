@@ -1368,11 +1368,16 @@ void PoseGraph3D::SetGlobalSlamOptimizationCallback(
 }
 
 double PoseGraph3D::ComputeSubmapSamplingRatio(size_t submap_density) {
-  // TODO(vikram): Use params set in lua instead of hard coded values
-  size_t target_selection = 7;
-  double default_sample_ratio = 0.03;
+  size_t target_selection = constraint_builder_.target_submap_selection();
+  std::cerr << "Target selection " << target_selection << std::endl;
+  double default_sampling_ratio = constraint_builder_.sampling_ratio();
+  std::cerr << "Default sampling ratio" << std::endl;
+  if (!target_selection) {
+    return default_sampling_ratio;
+  }
   double scaling_ratio = static_cast<double>(target_selection) / submap_density;
-  return default_sample_ratio * scaling_ratio;  
+  std::cerr << "Scaled ratio " << scaling_ratio << std::endl;
+  return default_sampling_ratio * scaling_ratio;  
 }
 
 void PoseGraph3D::RegisterMetrics(metrics::FamilyFactory* family_factory) {

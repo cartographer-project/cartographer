@@ -366,6 +366,10 @@ double ConstraintBuilder3D::sampling_ratio() {
   return options_.sampling_ratio();
 }
 
+size_t ConstraintBuilder3D::target_submap_selection() {
+  return options_.target_submap_selection();
+}
+
 void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
