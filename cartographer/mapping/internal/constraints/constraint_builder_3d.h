@@ -128,6 +128,8 @@ class ConstraintBuilder3D {
 
   double max_constraint_distance();
 
+  double sampling_ratio();
+
  private:
   struct SubmapScanMatcher {
     const HybridGrid* high_resolution_hybrid_grid = nullptr;

@@ -362,7 +362,7 @@ double ConstraintBuilder3D::max_constraint_distance() {
   return options_.max_constraint_distance();
 }
 
-double ConstraintBuilder3D::sampling_ration() {
+double ConstraintBuilder3D::sampling_ratio() {
   return options_.sampling_ratio();
 }
 
