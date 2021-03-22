@@ -362,6 +362,10 @@ double ConstraintBuilder3D::max_constraint_distance() {
   return options_.max_constraint_distance();
 }
 
+double ConstraintBuilder3D::sampling_ration() {
+  return options_.sampling_ratio();
+}
+
 void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
