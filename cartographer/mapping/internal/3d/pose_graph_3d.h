@@ -298,6 +298,7 @@ class PoseGraph3D : public PoseGraph {
   std::function<void(const TrajectoryNode&)> local_slam_node_cb_;
 
   absl::Time constraint_builder_start_;
+  absl::Duration last_constraint_builder_dur_{absl::ZeroDuration()};
 
   // Allows querying and manipulating the pose graph by the 'trimmers_'. The
   // 'mutex_' of the pose graph is held while this class is used.

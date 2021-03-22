@@ -58,6 +58,7 @@ struct WorkQueueCharacterization {
   std::map<WorkItemType, size_t> queue_distribution;
   std::map<WorkItemType, std::chrono::system_clock::duration> processed_time_spent;
   WorkItem::Details cummulative_processed_queue_details;
+  std::string constraint_builder_dur;  // Time between last processing cycle and next optimization
 };
 
 using WorkQueue = std::deque<WorkItem>;

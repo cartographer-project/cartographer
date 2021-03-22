@@ -289,7 +289,6 @@ std::optional<constraints::LoopClosureSearchType> PoseGraph3D::ComputeConstraint
       // local search window.
       maybe_add_local_constraint = true;
     } else if (global_localization_samplers_[node_id.trajectory_id]->Pulse(options_.global_sampling_ratio() * sampling_scaling)) {
-      std::cerr << "Global localization pulsed at sampling ratio scaled by " << sampling_scaling << std::endl;
       // In this situation, 'global_node_pose' and 'global_submap_pose' have
       // orientations agreeing on gravity. Their relationship regarding yaw is
       // arbitrary. Finding the correct yaw component will be handled by the
@@ -412,7 +411,6 @@ std::pair<WorkItem::Result, WorkItem::Details> PoseGraph3D::ComputeConstraintsFo
     }
   }
 
-  std::cerr << "SUBMAP DENSITY " << submaps_in_range_of_node << std::endl;  
   double submap_selection_scaling = ComputeSubmapSamplingScaling(submaps_in_range_of_node);
 
   for (const auto& submap_id : finished_submap_ids) {
@@ -494,7 +492,7 @@ void PoseGraph3D::DeleteTrajectoriesIfNeeded() {
 
 void PoseGraph3D::HandleWorkQueue(
     const constraints::ConstraintBuilder3D::Result& result) {
-  std::cerr << "WORK_QUEUE_PROFILE (constraint_processesing time) " << absl::FormatDuration(absl::Now() - constraint_builder_start_) << std::endl;
+  last_constraint_builder_dur_ = absl::Now() - constraint_builder_start_;
   {
     absl::MutexLock locker(&mutex_);
     data_.constraints.insert(data_.constraints.end(), result.begin(),
@@ -616,6 +614,7 @@ void PoseGraph3D::DrainWorkQueue() {
     // And details about processing that happened before the coming optimization
     absl::MutexLock locker(&work_queue_mutex_);
     auto characterization = characterize(work_queue_);
+    characterization.constraint_builder_dur = absl::FormatDuration(last_constraint_builder_dur_);
     characterization.processed_time_spent = processed_time_spent;
     characterization.cummulative_processed_queue_details = cummulative_queue_details;
     work_items_queue_cb_(std::chrono::steady_clock::now(), work_queue_size, characterization);
@@ -1371,9 +1370,7 @@ void PoseGraph3D::SetGlobalSlamOptimizationCallback(
 
 double PoseGraph3D::ComputeSubmapSamplingScaling(size_t submap_density) {
   size_t target_selection = constraint_builder_.target_submap_selection();
-  std::cerr << "Target selection " << target_selection << std::endl;
   double default_sampling_ratio = constraint_builder_.sampling_ratio();
-  std::cerr << "Default sampling ratio" << std::endl;
   if (!target_selection) {
     return 1.0;
   }
