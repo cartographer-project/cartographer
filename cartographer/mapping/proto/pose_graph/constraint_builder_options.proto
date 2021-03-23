@@ -47,6 +47,12 @@ message ConstraintBuilderOptions {
   // If enabled, logs information of loop-closing constraints for debugging.
   bool log_matches = 8;
 
+  // Scale the sampling ratio based on the 
+  // (target_submap_selection / number_of_in_range_submaps) * sampling_ratio
+  // This ensures a bounded loop closure search size
+  // If set to 0. Always use the default sampling ratio
+  int32 target_submap_selection = 15;
+
   // Options for the internally used scan matchers.
   mapping.scan_matching.proto.FastCorrelativeScanMatcherOptions2D
       fast_correlative_scan_matcher_options = 9;

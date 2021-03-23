@@ -63,7 +63,6 @@ ConstraintBuilder3D::ConstraintBuilder3D(
       thread_pool_(thread_pool),
       finish_node_task_(absl::make_unique<common::Task>()),
       when_done_task_(absl::make_unique<common::Task>()),
-      sampler_(options.sampling_ratio()),
       ceres_scan_matcher_(options.ceres_scan_matcher_options_3d()) {}
 
 ConstraintBuilder3D::~ConstraintBuilder3D() {
@@ -79,16 +78,19 @@ bool ConstraintBuilder3D::MaybeAddConstraint(
     const SubmapId& submap_id, const Submap3D* const submap,
     const NodeId& node_id, const TrajectoryNode::Data* const constant_data,
     const transform::Rigid3d& global_node_pose,
-    const transform::Rigid3d& global_submap_pose,
+    const transform::Rigid3d& global_submap_pose, double sampling_ratio,
     std::function<void(
-      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
-      std::optional<Constraint> 
-    )> loop_closure_cb) {
+        scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
+        std::optional<Constraint>)>
+        loop_closure_cb) {
   if ((global_node_pose.translation() - global_submap_pose.translation())
           .norm() > options_.max_constraint_distance()) {
     return false;
   }
-  if (!sampler_.Pulse()) return false;
+  if (!sampler_.Pulse(sampling_ratio)) {
+    std::cerr << "CONSTRAINT SAMPLER: " << sampler_.DebugString() << std::endl;
+    return false;
+  }
 
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
@@ -118,9 +120,9 @@ bool ConstraintBuilder3D::MaybeAddGlobalConstraint(
     const Eigen::Quaterniond& global_node_rotation,
     const Eigen::Quaterniond& global_submap_rotation,
     std::function<void(
-      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
-      std::optional<Constraint>
-    )> loop_closure_cb) {
+        scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+        std::optional<Constraint>)>
+        loop_closure_cb) {
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
@@ -209,9 +211,9 @@ void ConstraintBuilder3D::ComputeConstraint(
     const SubmapScanMatcher& submap_scan_matcher,
     std::unique_ptr<Constraint>* constraint,
     std::function<void(
-      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
-      std::optional<Constraint> 
-    )> loop_closure_cb) {
+        scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+        std::optional<Constraint>)>
+        loop_closure_cb) {
   CHECK(submap_scan_matcher.fast_correlative_scan_matcher);
   // The 'constraint_transform' (submap i <- node j) is computed from:
   // - a 'high_resolution_point_cloud' in node j and
@@ -239,8 +241,10 @@ void ConstraintBuilder3D::ComputeConstraint(
           match_result->rotational_score);
       kGlobalConstraintLowResolutionScoresMetric->Observe(
           match_result->low_resolution_score);
-    } else if(match_result != nullptr && loop_closure_cb) {
-      loop_closure_cb(scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),{});
+    } else if (match_result != nullptr && loop_closure_cb) {
+      loop_closure_cb(
+          scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
+          {});
       return;
     } else {
       return;
@@ -259,8 +263,10 @@ void ConstraintBuilder3D::ComputeConstraint(
           match_result->rotational_score);
       kConstraintLowResolutionScoresMetric->Observe(
           match_result->low_resolution_score);
-    } else if(match_result != nullptr && loop_closure_cb) {
-      loop_closure_cb(scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),{});
+    } else if (match_result != nullptr && loop_closure_cb) {
+      loop_closure_cb(
+          scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
+          {});
       return;
     } else {
       return;
@@ -293,14 +299,13 @@ void ConstraintBuilder3D::ComputeConstraint(
       Constraint::INTER_SUBMAP});
   if (loop_closure_cb) {
     loop_closure_cb(
-      scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
-      Constraint{
-        submap_id,
-        node_id,
-        {constraint_transform, options_.loop_closure_translation_weight(),
-        options_.loop_closure_rotation_weight()},
-        Constraint::INTER_SUBMAP}
-    );
+        scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
+        Constraint{
+            submap_id,
+            node_id,
+            {constraint_transform, options_.loop_closure_translation_weight(),
+             options_.loop_closure_rotation_weight()},
+            Constraint::INTER_SUBMAP});
   }
   if (options_.log_matches()) {
     std::ostringstream info;
@@ -356,6 +361,18 @@ void ConstraintBuilder3D::RunWhenDoneCallback() {
 int ConstraintBuilder3D::GetNumFinishedNodes() {
   absl::MutexLock locker(&mutex_);
   return num_finished_nodes_;
+}
+
+double ConstraintBuilder3D::max_constraint_distance() {
+  return options_.max_constraint_distance();
+}
+
+double ConstraintBuilder3D::sampling_ratio() {
+  return options_.sampling_ratio();
+}
+
+size_t ConstraintBuilder3D::target_submap_selection() {
+  return options_.target_submap_selection();
 }
 
 void ConstraintBuilder3D::DeleteScanMatcher(const SubmapId& submap_id) {

@@ -39,18 +39,19 @@ class MockOptimizationProblem3D : public OptimizationProblem3D {
   ~MockOptimizationProblem3D() override = default;
 
   MOCK_METHOD3(Solve,
-               void(const std::vector<Constraint> &,
-                    const std::map<int, PoseGraphInterface::TrajectoryState> &,
-                    const std::map<std::string, LandmarkNode> &));
+               void(const std::vector<Constraint>&,
+                    const std::map<int, PoseGraphInterface::TrajectoryState>&,
+                    const std::map<std::string, LandmarkNode>&));
 };
 
 class PoseGraph3DForTesting : public PoseGraph3D {
  public:
   PoseGraph3DForTesting(
-      const proto::PoseGraphOptions &options,
+      const proto::PoseGraphOptions& options,
       std::unique_ptr<optimization::OptimizationProblem3D> optimization_problem,
-      common::ThreadPool *thread_pool)
-      : PoseGraph3D(options, std::move(optimization_problem), thread_pool, MapBuilderCallbacks{}) {}
+      common::ThreadPool* thread_pool)
+      : PoseGraph3D(options, std::move(optimization_problem), thread_pool,
+                    MapBuilderCallbacks{}) {}
 
   void WaitForAllComputations() { PoseGraph3D::WaitForAllComputations(); }
 };
@@ -252,7 +253,7 @@ class EvenSubmapTrimmer : public PoseGraphTrimmer {
   explicit EvenSubmapTrimmer(int trajectory_id)
       : trajectory_id_(trajectory_id) {}
 
-  void Trim(Trimmable *pose_graph) override {
+  void Trim(Trimmable* pose_graph) override {
     auto submap_ids = pose_graph->GetSubmapIds(trajectory_id_);
     for (const auto submap_id : submap_ids) {
       if (submap_id.submap_index % 2 == 0) {

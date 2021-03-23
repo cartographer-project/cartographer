@@ -16,6 +16,7 @@ POSE_GRAPH = {
   optimize_every_n_nodes = 90,
   constraint_builder = {
     sampling_ratio = 0.3,
+    target_submap_selection = 0, --default (no scaling)
     max_constraint_distance = 15.,
     min_score = 0.55,
     global_localization_min_score = 0.6,
