@@ -88,7 +88,6 @@ bool ConstraintBuilder3D::MaybeAddConstraint(
     return false;
   }
   if (!sampler_.Pulse(sampling_ratio)) {
-    std::cerr << "CONSTRAINT SAMPLER: " << sampler_.DebugString() << std::endl;
     return false;
   }
 
