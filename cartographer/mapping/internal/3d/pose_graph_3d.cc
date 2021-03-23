@@ -615,7 +615,7 @@ void PoseGraph3D::DrainWorkQueue() {
     // And details about processing that happened before the coming optimization
     absl::MutexLock locker(&work_queue_mutex_);
     auto characterization = characterize(work_queue_);
-    characterization.constraint_builder_dur = absl::FormatDuration(last_constraint_builder_dur_);
+    characterization.constraint_builder_duration = absl::FormatDuration(last_constraint_builder_dur_);
     characterization.processed_time_spent = processed_time_spent;
     characterization.cummulative_processed_queue_details = cummulative_queue_details;
     work_items_queue_cb_(std::chrono::steady_clock::now(), work_queue_size, characterization);

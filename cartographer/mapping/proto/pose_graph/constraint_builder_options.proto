@@ -50,7 +50,7 @@ message ConstraintBuilderOptions {
   // Scale the sampling ratio based on the 
   // (target_submap_selection / number_of_in_range_submaps) * sampling_ratio
   // This ensures a bounded loop closure search size
-  // If set to 0. Always use the default sampling ration
+  // If set to 0. Always use the default sampling ratio
   int32 target_submap_selection = 15;
 
   // Options for the internally used scan matchers.

@@ -24,9 +24,12 @@
 namespace cartographer {
 namespace common {
 
-// Signals when a sample should be taken from a stream of data to select a
-// uniformly distributed fraction of the data. The ratio should be kept constant 
-// when running over a batch of function calls to make sense. (e.g. pulse as a function of loop closure density)
+
+// sampler.Pulse(double ratio) returns true at a variable ratio. 
+// Makes the most sense running this with the same value
+// over large batches of function calls. 
+// E.g. a batch of loop closure constraint searches where they
+// share a common neighborhood of submaps
 class VariableRatioSampler {
  public:
   explicit VariableRatioSampler();
@@ -42,9 +45,6 @@ class VariableRatioSampler {
   std::string DebugString();
 
  private:
-  // Sampling occurs if the proportion of samples to pulses drops below this
-  // number.
-
   int64 num_pulses_ = 0;
   int64 num_samples_ = 0;
 };

@@ -202,7 +202,10 @@ class PoseGraph3D : public PoseGraph {
       bool newly_finished_submap) LOCKS_EXCLUDED(mutex_);
 
   // Computes constraints for a node and submap pair.
-  std::optional<constraints::LoopClosureSearchType> ComputeConstraint(const NodeId& node_id, const SubmapId& submap_id, double sampling_scaling)
+  std::optional<constraints::LoopClosureSearchType> ComputeConstraint(
+      const NodeId& node_id, 
+      const SubmapId& submap_id, 
+      double sampling_scaling /* scalar by which the sampling ratio is adjusted */)
       LOCKS_EXCLUDED(mutex_);
 
   // Deletes trajectories waiting for deletion. Must not be called during
@@ -246,7 +249,7 @@ class PoseGraph3D : public PoseGraph {
   void UpdateTrajectoryConnectivity(const Constraint& constraint)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  double ComputeSubmapSamplingScaling(size_t submap_density);
+  double ComputeSubmapSamplingScaling(size_t submap_density /* num submaps within max_constraint_distance */);
 
   const proto::PoseGraphOptions options_;
   GlobalSlamOptimizationCallback global_slam_optimization_callback_;

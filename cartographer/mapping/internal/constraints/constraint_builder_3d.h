@@ -126,10 +126,14 @@ class ConstraintBuilder3D {
 
   static void RegisterMetrics(metrics::FamilyFactory* family_factory);
 
+  // Max constraint distance for loop closure search [m]
   double max_constraint_distance();
 
+  // Default sampling ratio for local constraint search 
+  // (constraint_builder.sampling_ratio)
   double sampling_ratio();
 
+  // The idea submap density the above sampling ratio is tuned for
   size_t target_submap_selection();
 
  private:
