@@ -31,9 +31,9 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "cartographer/common/fixed_ratio_sampler.h"
-#include "cartographer/common/variable_ratio_sampler.h"
 #include "cartographer/common/thread_pool.h"
 #include "cartographer/common/time.h"
+#include "cartographer/common/variable_ratio_sampler.h"
 #include "cartographer/mapping/3d/submap_3d.h"
 #include "cartographer/mapping/internal/constraints/constraint_builder_3d.h"
 #include "cartographer/mapping/internal/optimization/optimization_problem_3d.h"
@@ -118,8 +118,7 @@ class PoseGraph3D : public PoseGraph {
   void RunFinalOptimization() override;
   std::vector<std::vector<int>> GetConnectedTrajectories() const override
       LOCKS_EXCLUDED(mutex_);
-  int ConnectivityCount(int, int) const override
-      LOCKS_EXCLUDED(mutex_);
+  int ConnectivityCount(int, int) const override LOCKS_EXCLUDED(mutex_);
   PoseGraph::SubmapData GetSubmapData(const SubmapId& submap_id) const
       LOCKS_EXCLUDED(mutex_) override;
   MapById<SubmapId, SubmapData> GetAllSubmapData() const
@@ -174,8 +173,11 @@ class PoseGraph3D : public PoseGraph {
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Handles a new work item.
-  void AddWorkItem(const std::function<std::pair<WorkItem::Result, WorkItem::Details>()>& work_item, WorkItemType t = WorkItemType::UNLABELED_ITEM)
-      LOCKS_EXCLUDED(mutex_) LOCKS_EXCLUDED(work_queue_mutex_);
+  void AddWorkItem(
+      const std::function<std::pair<WorkItem::Result, WorkItem::Details>()>&
+          work_item,
+      WorkItemType t = WorkItemType::UNLABELED_ITEM) LOCKS_EXCLUDED(mutex_)
+      LOCKS_EXCLUDED(work_queue_mutex_);
 
   // Adds connectivity and sampler for a trajectory if it does not exist.
   void AddTrajectoryIfNeeded(int trajectory_id)
@@ -203,9 +205,9 @@ class PoseGraph3D : public PoseGraph {
 
   // Computes constraints for a node and submap pair.
   std::optional<constraints::LoopClosureSearchType> ComputeConstraint(
-      const NodeId& node_id, 
-      const SubmapId& submap_id, 
-      double sampling_scaling /* scalar by which the sampling ratio is adjusted */)
+      const NodeId& node_id, const SubmapId& submap_id,
+      double
+          sampling_scaling /* scalar by which the sampling ratio is adjusted */)
       LOCKS_EXCLUDED(mutex_);
 
   // Deletes trajectories waiting for deletion. Must not be called during
@@ -249,7 +251,8 @@ class PoseGraph3D : public PoseGraph {
   void UpdateTrajectoryConnectivity(const Constraint& constraint)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  double ComputeSubmapSamplingScaling(size_t submap_density /* num submaps within max_constraint_distance */);
+  double ComputeSubmapSamplingScaling(
+      size_t submap_density /* num submaps within max_constraint_distance */);
 
   const proto::PoseGraphOptions options_;
   GlobalSlamOptimizationCallback global_slam_optimization_callback_;
@@ -281,21 +284,18 @@ class PoseGraph3D : public PoseGraph {
 
   // Loop closure callback
   std::function<void(
-    scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
-    std::optional<constraints::ConstraintBuilder3D::Constraint> 
-  )> loop_closure_cb_;
+      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+      std::optional<constraints::ConstraintBuilder3D::Constraint>)>
+      loop_closure_cb_;
 
   // Node insertion callback
-  std::function<void(
-    const TrajectoryNode&, 
-    const constraints::ConstraintBuilder3D::Constraint&
-  )> node_insertion_cb_;
+  std::function<void(const TrajectoryNode&,
+                     const constraints::ConstraintBuilder3D::Constraint&)>
+      node_insertion_cb_;
 
-  std::function<void(
-    std::chrono::steady_clock::time_point,
-    int,
-    WorkQueueCharacterization
-  )> work_items_queue_cb_;
+  std::function<void(std::chrono::steady_clock::time_point, int,
+                     WorkQueueCharacterization)>
+      work_items_queue_cb_;
 
   // Local slam node created
   std::function<void(const TrajectoryNode&)> local_slam_node_cb_;

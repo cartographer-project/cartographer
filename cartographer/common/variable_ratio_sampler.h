@@ -24,10 +24,9 @@
 namespace cartographer {
 namespace common {
 
-
-// sampler.Pulse(double ratio) returns true at a variable ratio. 
+// sampler.Pulse(double ratio) returns true at a variable ratio.
 // Makes the most sense running this with the same value
-// over large batches of function calls. 
+// over large batches of function calls.
 // E.g. a batch of loop closure constraint searches where they
 // share a common neighborhood of submaps
 class VariableRatioSampler {

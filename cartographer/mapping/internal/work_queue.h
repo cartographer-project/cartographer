@@ -29,16 +29,16 @@ namespace mapping {
 
 enum class WorkItemType {
   UNLABELED_ITEM,
-  CHANGE_TRAJECTORY_STATE, 
+  CHANGE_TRAJECTORY_STATE,
   OPTIMIZATION_ADD_IMU_DATA,
-  OPTIMIZATION_ADD_ODOM_DATA, 
+  OPTIMIZATION_ADD_ODOM_DATA,
   OPTIMIZATION_ADD_LANDMARK_DATA,
   OPTIMIZATION_ADD_FIXED_FRAME_DATA,
-  OPTIMIZATION_RUN_FINAL, 
-  OPTIMIZATION_INSERT_SUBMAP, 
-  COMPUTE_CONSTRAINTS,  // CAN BE LOOP CLOSURES OR INTRA_SUBMAP CONSTRAINT 
-  NODE_TRAJECTORY_INSERTION, 
-  NODE_SUBMAP_INSERTION, 
+  OPTIMIZATION_RUN_FINAL,
+  OPTIMIZATION_INSERT_SUBMAP,
+  COMPUTE_CONSTRAINTS,  // CAN BE LOOP CLOSURES OR INTRA_SUBMAP CONSTRAINT
+  NODE_TRAJECTORY_INSERTION,
+  NODE_SUBMAP_INSERTION,
 };
 
 struct WorkItem {
@@ -56,9 +56,11 @@ struct WorkItem {
 struct WorkQueueCharacterization {
   std::chrono::steady_clock::time_point front_of_queue_time;
   std::map<WorkItemType, size_t> queue_distribution;
-  std::map<WorkItemType, std::chrono::system_clock::duration> processed_time_spent;
+  std::map<WorkItemType, std::chrono::system_clock::duration>
+      processed_time_spent;
   WorkItem::Details cummulative_processed_queue_details;
-  std::string constraint_builder_duration;  // Time between last processing cycle and next optimization
+  std::string constraint_builder_duration;  // Time between last processing
+                                            // cycle and next optimization
 };
 
 using WorkQueue = std::deque<WorkItem>;

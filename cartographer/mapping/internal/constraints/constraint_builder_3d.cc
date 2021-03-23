@@ -78,12 +78,11 @@ bool ConstraintBuilder3D::MaybeAddConstraint(
     const SubmapId& submap_id, const Submap3D* const submap,
     const NodeId& node_id, const TrajectoryNode::Data* const constant_data,
     const transform::Rigid3d& global_node_pose,
-    const transform::Rigid3d& global_submap_pose,
-    double sampling_ratio,
+    const transform::Rigid3d& global_submap_pose, double sampling_ratio,
     std::function<void(
-      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
-      std::optional<Constraint> 
-    )> loop_closure_cb) {
+        scan_matching::FastCorrelativeScanMatcher3D::Result,  // Coarse search
+        std::optional<Constraint>)>
+        loop_closure_cb) {
   if ((global_node_pose.translation() - global_submap_pose.translation())
           .norm() > options_.max_constraint_distance()) {
     return false;
@@ -121,9 +120,9 @@ bool ConstraintBuilder3D::MaybeAddGlobalConstraint(
     const Eigen::Quaterniond& global_node_rotation,
     const Eigen::Quaterniond& global_submap_rotation,
     std::function<void(
-      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
-      std::optional<Constraint>
-    )> loop_closure_cb) {
+        scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+        std::optional<Constraint>)>
+        loop_closure_cb) {
   absl::MutexLock locker(&mutex_);
   if (when_done_) {
     LOG(WARNING)
@@ -212,9 +211,9 @@ void ConstraintBuilder3D::ComputeConstraint(
     const SubmapScanMatcher& submap_scan_matcher,
     std::unique_ptr<Constraint>* constraint,
     std::function<void(
-      scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
-      std::optional<Constraint> 
-    )> loop_closure_cb) {
+        scan_matching::FastCorrelativeScanMatcher3D::Result,  // Course search
+        std::optional<Constraint>)>
+        loop_closure_cb) {
   CHECK(submap_scan_matcher.fast_correlative_scan_matcher);
   // The 'constraint_transform' (submap i <- node j) is computed from:
   // - a 'high_resolution_point_cloud' in node j and
@@ -242,8 +241,10 @@ void ConstraintBuilder3D::ComputeConstraint(
           match_result->rotational_score);
       kGlobalConstraintLowResolutionScoresMetric->Observe(
           match_result->low_resolution_score);
-    } else if(match_result != nullptr && loop_closure_cb) {
-      loop_closure_cb(scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),{});
+    } else if (match_result != nullptr && loop_closure_cb) {
+      loop_closure_cb(
+          scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
+          {});
       return;
     } else {
       return;
@@ -262,8 +263,10 @@ void ConstraintBuilder3D::ComputeConstraint(
           match_result->rotational_score);
       kConstraintLowResolutionScoresMetric->Observe(
           match_result->low_resolution_score);
-    } else if(match_result != nullptr && loop_closure_cb) {
-      loop_closure_cb(scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),{});
+    } else if (match_result != nullptr && loop_closure_cb) {
+      loop_closure_cb(
+          scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
+          {});
       return;
     } else {
       return;
@@ -296,14 +299,13 @@ void ConstraintBuilder3D::ComputeConstraint(
       Constraint::INTER_SUBMAP});
   if (loop_closure_cb) {
     loop_closure_cb(
-      scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
-      Constraint{
-        submap_id,
-        node_id,
-        {constraint_transform, options_.loop_closure_translation_weight(),
-        options_.loop_closure_rotation_weight()},
-        Constraint::INTER_SUBMAP}
-    );
+        scan_matching::FastCorrelativeScanMatcher3D::Result(*match_result),
+        Constraint{
+            submap_id,
+            node_id,
+            {constraint_transform, options_.loop_closure_translation_weight(),
+             options_.loop_closure_rotation_weight()},
+            Constraint::INTER_SUBMAP});
   }
   if (options_.log_matches()) {
     std::ostringstream info;
