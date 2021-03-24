@@ -256,10 +256,14 @@ void ConstraintBuilder3D::ComputeConstraint(
       return;
     }
   } else {
+    double min_score = options_.min_score();
+    if (submap_id.trajectory_id == node_id.trajectory_id) {
+      min_score = options_.intra_trajectory_min_score();
+    }
     kConstraintsSearchedMetric->Increment();
     match_result = submap_scan_matcher.fast_correlative_scan_matcher->Match(
         global_node_pose, global_submap_pose, *constant_data,
-        options_.min_score());
+        min_score);
 
     if (match_result) {
       match_result->trajectory_a = submap_id.trajectory_id;
@@ -319,7 +323,7 @@ void ConstraintBuilder3D::ComputeConstraint(
             {constraint_transform, options_.loop_closure_translation_weight(),
              options_.loop_closure_rotation_weight()},
             Constraint::INTER_SUBMAP});
-  }
+  }   
   if (options_.log_matches()) {
     std::ostringstream info;
     info << "Node " << node_id << " with "

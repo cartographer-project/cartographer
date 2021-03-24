@@ -34,6 +34,7 @@ proto::ConstraintBuilderOptions CreateConstraintBuilderOptions(
   options.set_max_constraint_distance(
       parameter_dictionary->GetDouble("max_constraint_distance"));
   options.set_min_score(parameter_dictionary->GetDouble("min_score"));
+  options.set_intra_trajectory_min_score(parameter_dictionary->GetDouble("intra_trajectory_min_score"));
   options.set_global_localization_min_score(
       parameter_dictionary->GetDouble("global_localization_min_score"));
   options.set_loop_closure_translation_weight(

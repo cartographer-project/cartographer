@@ -30,8 +30,14 @@ message ConstraintBuilderOptions {
   double max_constraint_distance = 2;
 
   // Threshold for the scan match score below which a match is not considered.
-  // Low scores indicate that the scan and map do not look similar.
+  // Low scores indicate that the scan and map do not look similar. Used on
+  // inter-trajectory loop closures
   double min_score = 4;
+
+  // Threshold for the scan match score below which a match is not considered.
+  // Low scores indicate that the scan and map do not look similar. Used on
+  // intra-trajectory loop closures
+  double intra_trajectory_min_score = 16;
 
   // Threshold below which global localizations are not trusted.
   double global_localization_min_score = 5;
