@@ -88,7 +88,10 @@ struct Candidate3D {
       : scan_index(scan_index), offset(offset) {}
 
   static Candidate3D Unsuccessful() {
-    return Candidate3D(0, Eigen::Array3i::Zero());
+    auto x = Candidate3D(0, Eigen::Array3i::Zero());
+    x.offset.setZero();
+    x.low_resolution_score = -1;
+    return x;
   }
 
   // Index into the discrete scans vectors.
@@ -189,22 +192,19 @@ FastCorrelativeScanMatcher3D::MatchWithSearchParameters(
       precomputation_grid_stack_->max_depth(), min_score);
   if (best_candidate.score > min_score) {
     return absl::make_unique<Result>(Result{
-        true,
-        best_candidate.score,
+        true, best_candidate.score,
         GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>(),
         discrete_scans[best_candidate.scan_index].rotational_score,
-        best_candidate.low_resolution_score});
+        best_candidate.low_resolution_score, -1, -1});
   }
   if (best_candidate.scan_index >= discrete_scans.size()) {
     return nullptr;
   }
   return absl::make_unique<Result>(Result{
-    false,
-    best_candidate.score,
-    GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>(),
-    discrete_scans[best_candidate.scan_index].rotational_score,
-    best_candidate.low_resolution_score}
-  );
+      false, best_candidate.score,
+      GetPoseFromCandidate(discrete_scans, best_candidate).cast<double>(),
+      discrete_scans[best_candidate.scan_index].rotational_score,
+      best_candidate.low_resolution_score, -1, -1});
 }
 
 DiscreteScan3D FastCorrelativeScanMatcher3D::DiscretizeScan(
@@ -394,7 +394,9 @@ Candidate3D FastCorrelativeScanMatcher3D::BranchAndBound(
       if (candidate.score <= min_score) {
         // Return if the candidate is bad because the following candidate will
         // not have better score.
-        return Candidate3D::Unsuccessful();
+        auto x = Candidate3D::Unsuccessful();
+        x.low_resolution_score = -2;
+        return x;
       }
       const float low_resolution_score =
           (*search_parameters.low_resolution_matcher)(
@@ -408,7 +410,9 @@ Candidate3D FastCorrelativeScanMatcher3D::BranchAndBound(
     }
 
     // All candidates have good scores but none passes the matching function.
-    return Candidate3D::Unsuccessful();
+    auto x = Candidate3D::Unsuccessful();
+    x.low_resolution_score = -3;
+    return x;
   }
 
   Candidate3D best_high_resolution_candidate = Candidate3D::Unsuccessful();
@@ -445,6 +449,9 @@ Candidate3D FastCorrelativeScanMatcher3D::BranchAndBound(
         BranchAndBound(search_parameters, discrete_scans,
                        higher_resolution_candidates, candidate_depth - 1,
                        best_high_resolution_candidate.score));
+  }
+  if (best_high_resolution_candidate.low_resolution_score == -1.0) {
+    best_high_resolution_candidate.low_resolution_score = -4.0;
   }
   return best_high_resolution_candidate;
 }

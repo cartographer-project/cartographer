@@ -71,6 +71,8 @@ class FastCorrelativeScanMatcher3D {
     transform::Rigid3d pose_estimate;
     float rotational_score;
     float low_resolution_score;
+    int trajectory_a;
+    int trajectory_b;
   };
 
   FastCorrelativeScanMatcher3D(

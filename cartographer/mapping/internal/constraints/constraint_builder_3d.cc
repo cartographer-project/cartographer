@@ -230,6 +230,12 @@ void ConstraintBuilder3D::ComputeConstraint(
         submap_scan_matcher.fast_correlative_scan_matcher->MatchFullSubmap(
             global_node_pose.rotation(), global_submap_pose.rotation(),
             *constant_data, options_.global_localization_min_score());
+
+    if (match_result) {
+      match_result->trajectory_a = submap_id.trajectory_id;
+      match_result->trajectory_b = node_id.trajectory_id;
+    }
+
     if (match_result != nullptr && match_result->success) {
       CHECK_GT(match_result->score, options_.global_localization_min_score());
       CHECK_GE(node_id.trajectory_id, 0);
@@ -246,6 +252,7 @@ void ConstraintBuilder3D::ComputeConstraint(
           {});
       return;
     } else {
+      std::cerr << "match full submap nullptr" << std::endl;
       return;
     }
   } else {
@@ -253,6 +260,12 @@ void ConstraintBuilder3D::ComputeConstraint(
     match_result = submap_scan_matcher.fast_correlative_scan_matcher->Match(
         global_node_pose, global_submap_pose, *constant_data,
         options_.min_score());
+
+    if (match_result) {
+      match_result->trajectory_a = submap_id.trajectory_id;
+      match_result->trajectory_b = node_id.trajectory_id;
+    }
+
     if (match_result != nullptr && match_result->success) {
       // We've reported a successful local match.
       CHECK_GT(match_result->score, options_.min_score());
@@ -268,6 +281,7 @@ void ConstraintBuilder3D::ComputeConstraint(
           {});
       return;
     } else {
+      std::cerr << "match full submap nullptr" << std::endl;
       return;
     }
   }
