@@ -442,6 +442,21 @@ PoseGraph3D::ComputeConstraintsForNode(
 
   if (newly_finished_submap) {
     const SubmapId newly_finished_submap_id = submap_ids.front();
+    size_t nodes_in_range_submaps = 0;
+    for (const auto& node_id_data : optimization_problem_->node_data()) {
+      const NodeId& node_id = node_id_data.id;
+      const transform::Rigid3d global_node_pose =
+          optimization_problem_->node_data().at(node_id).global_pose;
+      const transform::Rigid3d global_submap_pose =
+          optimization_problem_->submap_data().at(newly_finished_submap_id).global_pose;
+      if ((global_node_pose.translation() - global_submap_pose.translation())
+              .norm() < constraint_builder_.max_constraint_distance()) {
+        nodes_in_range_submaps++;
+      }
+    }
+
+    submap_sampling_scaling =
+      ComputeSubmapSamplingScaling(nodes_in_range_submaps);
     // We have a new completed submap, so we look into adding constraints for
     // old nodes.
     for (const auto& node_id_data : optimization_problem_->node_data()) {

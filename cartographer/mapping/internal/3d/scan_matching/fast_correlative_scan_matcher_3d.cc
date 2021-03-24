@@ -23,6 +23,9 @@
 
 #include "Eigen/Geometry"
 #include "absl/memory/memory.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/synchronization/mutex.h"
+
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/internal/3d/scan_matching/low_resolution_matcher.h"
 #include "cartographer/mapping/proto/scan_matching//fast_correlative_scan_matcher_options_3d.pb.h"
@@ -186,10 +189,12 @@ FastCorrelativeScanMatcher3D::MatchWithSearchParameters(
 
   const std::vector<Candidate3D> lowest_resolution_candidates =
       ComputeLowestResolutionCandidates(search_parameters, discrete_scans);
-
+  auto start = absl::Now();
   const Candidate3D best_candidate = BranchAndBound(
       search_parameters, discrete_scans, lowest_resolution_candidates,
       precomputation_grid_stack_->max_depth(), min_score);
+  auto end = absl::Now();
+  std::cerr << "Branch and Bound took: " << absl::FormatDuration(end - start) << std::endl;
   if (best_candidate.score > min_score) {
     return absl::make_unique<Result>(Result{
         true, best_candidate.score,
