@@ -48,6 +48,7 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
           probability_grid_range_data_inserter_options,
       const DrawTrajectories& draw_trajectories, const OutputType& output_type,
       std::unique_ptr<FileWriter> file_writer,
+      std::unique_ptr<FileWriter> yaml_file_writer,
       const std::vector<mapping::proto::Trajectory>& trajectories,
       PointsProcessor* next);
   ProbabilityGridPointsProcessor(const ProbabilityGridPointsProcessor&) =
@@ -70,6 +71,7 @@ class ProbabilityGridPointsProcessor : public PointsProcessor {
   const OutputType output_type_;
   const std::vector<mapping::proto::Trajectory> trajectories_;
   std::unique_ptr<FileWriter> file_writer_;
+  std::unique_ptr<FileWriter> yaml_file_writer_;
   PointsProcessor* const next_;
   mapping::ProbabilityGridRangeDataInserter2D range_data_inserter_;
   mapping::ValueConversionTables conversion_tables_;

@@ -18,6 +18,7 @@
 
 #include "Eigen/Core"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/math.h"
 #include "cartographer/io/draw_trajectories.h"
@@ -84,12 +85,14 @@ ProbabilityGridPointsProcessor::ProbabilityGridPointsProcessor(
         probability_grid_range_data_inserter_options,
     const DrawTrajectories& draw_trajectories, const OutputType& output_type,
     std::unique_ptr<FileWriter> file_writer,
+    std::unique_ptr<FileWriter> yaml_file_writer,
     const std::vector<mapping::proto::Trajectory>& trajectories,
     PointsProcessor* const next)
     : draw_trajectories_(draw_trajectories),
       output_type_(output_type),
       trajectories_(trajectories),
       file_writer_(std::move(file_writer)),
+      yaml_file_writer_(std::move(yaml_file_writer)),
       next_(next),
       range_data_inserter_(probability_grid_range_data_inserter_options),
       probability_grid_(
@@ -114,14 +117,16 @@ ProbabilityGridPointsProcessor::FromDictionary(
       dictionary->HasKey("output_type")
           ? OutputTypeFromString(dictionary->GetString("output_type"))
           : OutputType::kPng;
+
+  std::string filename = dictionary->GetString("filename") +
+                         FileExtensionFromOutputType(output_type);
+
   return absl::make_unique<ProbabilityGridPointsProcessor>(
       dictionary->GetDouble("resolution"),
       mapping::CreateProbabilityGridRangeDataInserterOptions2D(
           dictionary->GetDictionary("range_data_inserter").get()),
-      draw_trajectories, output_type,
-      file_writer_factory(dictionary->GetString("filename") +
-                          FileExtensionFromOutputType(output_type)),
-      trajectories, next);
+      draw_trajectories, output_type, file_writer_factory(filename),
+      file_writer_factory(filename + ".yaml"), trajectories, next);
 }
 
 void ProbabilityGridPointsProcessor::Process(
@@ -145,6 +150,30 @@ PointsProcessor::FlushResult ProbabilityGridPointsProcessor::Flush() {
       }
       image->WritePng(file_writer_.get());
       CHECK(file_writer_->Close());
+
+      // write YAML which confirms to http://wiki.ros.org/map_server
+      const char* format =
+          "image: %s\n"
+          "resolution: %f\n"
+          "origin: [%f, %f, 0]\n"
+          "occupied_thresh: 0.65\n"
+          "free_thresh: 0.196\n"
+          "negate: 0\n";
+
+      const cartographer::mapping::MapLimits& limits =
+          probability_grid_.limits();
+      const cartographer::mapping::CellLimits& cell_limits =
+          limits.cell_limits();
+
+      double resolution = limits.resolution();
+      std::string yaml_str = absl::StrFormat(
+          format, file_writer_->GetFilename().c_str(), resolution,
+          limits.max().x() -
+              resolution * (cell_limits.num_x_cells - offset.x()),
+          limits.max().y() -
+              resolution * (cell_limits.num_y_cells - offset.y()));
+      yaml_file_writer_->Write(yaml_str.c_str(), yaml_str.length());
+      CHECK(yaml_file_writer_->Close());
     }
   } else if (output_type_ == OutputType::kPb) {
     const auto probability_grid_proto = probability_grid_.ToProto();

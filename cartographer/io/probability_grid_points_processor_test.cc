@@ -44,11 +44,15 @@ std::unique_ptr<PointsBatch> CreatePointsBatch() {
 }
 
 ::cartographer::io::FileWriterFactory CreateFakeFileWriterFactory(
-    const std::string& expected_filename,
+    const std::string& expected_filename1,
+    const std::string& expected_filename2,
     std::shared_ptr<std::vector<char>> fake_file_writer_output) {
-  return [&fake_file_writer_output,
-          &expected_filename](const std::string& full_filename) {
-    EXPECT_EQ(expected_filename, full_filename);
+  return [&fake_file_writer_output, &expected_filename1,
+          &expected_filename2](const std::string& full_filename) {
+    EXPECT_PRED3(
+        [](auto str, auto s1, auto s2) { return str == s1 || str == s2; },
+        full_filename, expected_filename1, expected_filename2);
+
     return ::absl::make_unique<::cartographer::io::FakeFileWriter>(
         full_filename, fake_file_writer_output);
   };
@@ -125,10 +129,11 @@ class ProbabilityGridPointsProcessorTest : public ::testing::Test {
   ProbabilityGridPointsProcessorTest()
       : pipeline_dictionary_(CreateParameterDictionary()) {}
 
-  void Run(const std::string& expected_filename) {
+  void Run(const std::string& expected_filename1,
+           const std::string& expected_filename2) {
     const auto pipeline = CreatePipelineFromDictionary(
         pipeline_dictionary_.get(), dummy_trajectories_,
-        CreateFakeFileWriterFactory(expected_filename,
+        CreateFakeFileWriterFactory(expected_filename1, expected_filename2,
                                     fake_file_writer_output_));
     EXPECT_TRUE(pipeline.size() > 0);
 
@@ -149,7 +154,7 @@ TEST_F(ProbabilityGridPointsProcessorTest, WriteProto) {
   const auto expected_prob_grid_proto = CreateExpectedProbabilityGrid(
       CreatePointsBatch(),
       pipeline_dictionary_->GetArrayValuesAsDictionaries().front().get());
-  Run("map.pb");
+  Run("map.pb", "map.pb.yaml");
   EXPECT_THAT(*fake_file_writer_output_,
               ::testing::ContainerEq(expected_prob_grid_proto));
 }
