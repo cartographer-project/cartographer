@@ -30,10 +30,10 @@ float NormalTo2DAngle(const Eigen::Vector3f& v) {
 float EstimateNormal(const sensor::PointCloud& returns,
                      const size_t estimation_point_index,
                      const size_t sample_window_begin,
-                     const size_t sample_window_end,
-                     const Eigen::Vector3f& sensor_origin) {
+                     const size_t sample_window_end) {
   const Eigen::Vector3f& estimation_point =
       returns[estimation_point_index].position;
+  const Eigen::Vector3f& sensor_origin = returns[estimation_point_index].origin;
   if (sample_window_end - sample_window_begin < 2) {
     return NormalTo2DAngle(sensor_origin - estimation_point);
   }
@@ -102,7 +102,7 @@ std::vector<float> EstimateNormals(
     }
     const float normal_estimate =
         EstimateNormal(range_data.returns, current_point, sample_window_begin,
-                       sample_window_end, range_data.origin);
+                       sample_window_end);
     normals.push_back(normal_estimate);
   }
   return normals;

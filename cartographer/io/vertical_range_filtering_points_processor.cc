@@ -42,7 +42,8 @@ void VerticalRangeFilteringPointsProcessor::Process(
     std::unique_ptr<PointsBatch> batch) {
   absl::flat_hash_set<int> to_remove;
   for (size_t i = 0; i < batch->points.size(); ++i) {
-    const float distance_z = batch->points[i].position.z() - batch->origin.z();
+    const float distance_z =
+        batch->points[i].position.z() - batch->points[i].origin.z();
     if (!(min_z_ <= distance_z && distance_z <= max_z_) ) {
       to_remove.insert(i);
     }

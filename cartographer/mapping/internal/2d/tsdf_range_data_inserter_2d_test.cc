@@ -49,9 +49,9 @@ class RangeDataInserterTest2DTSDF : public ::testing::Test {
 
   void InsertPoint() {
     auto range_data = sensor::RangeData();
-    range_data.returns.push_back({Eigen::Vector3f{-0.5f, 3.5f, 0.f}});
-    range_data.origin.x() = -0.5f;
-    range_data.origin.y() = -0.5f;
+    range_data.origin = Eigen::Vector3f{-0.5f, -0.5f, 0.f};
+    range_data.returns.push_back(
+        {Eigen::Vector3f{-0.5f, 3.5f, 0.f}, range_data.origin});
     range_data_inserter_->Insert(range_data, &tsdf_);
     tsdf_.FinishUpdate();
   }
@@ -237,11 +237,13 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertPointQuadraticWeight) {
 TEST_F(RangeDataInserterTest2DTSDF,
        InsertSmallAnglePointWithoutNormalProjection) {
   auto range_data = sensor::RangeData();
-  range_data.returns.push_back({Eigen::Vector3f{-0.5f, 3.5f, 0.f}});
-  range_data.returns.push_back({Eigen::Vector3f{5.5f, 3.5f, 0.f}});
-  range_data.returns.push_back({Eigen::Vector3f{10.5f, 3.5f, 0.f}});
-  range_data.origin.x() = -0.5f;
-  range_data.origin.y() = -0.5f;
+  range_data.origin = Eigen::Vector3f(-0.5f, -0.5f, 0.0f);
+  range_data.returns.push_back(
+      {Eigen::Vector3f{-0.5f, 3.5f, 0.f}, range_data.origin});
+  range_data.returns.push_back(
+      {Eigen::Vector3f{5.5f, 3.5f, 0.f}, range_data.origin});
+  range_data.returns.push_back(
+      {Eigen::Vector3f{10.5f, 3.5f, 0.f}, range_data.origin});
   range_data_inserter_->Insert(range_data, &tsdf_);
   tsdf_.FinishUpdate();
   float x = 4.5f;
@@ -264,10 +266,11 @@ TEST_F(RangeDataInserterTest2DTSDF, InsertSmallAnglePointWitNormalProjection) {
   options_.set_project_sdf_distance_to_scan_normal(true);
   range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   auto range_data = sensor::RangeData();
-  range_data.returns.push_back({Eigen::Vector3f{-0.5f, 3.5f, 0.f}});
-  range_data.returns.push_back({Eigen::Vector3f{5.5f, 3.5f, 0.f}});
-  range_data.origin.x() = -0.5f;
-  range_data.origin.y() = -0.5f;
+  range_data.origin = Eigen::Vector3f(-0.5f, -0.5f, 0.0f);
+  range_data.returns.push_back(
+      {Eigen::Vector3f{-0.5f, 3.5f, 0.f}, range_data.origin});
+  range_data.returns.push_back(
+      {Eigen::Vector3f{5.5f, 3.5f, 0.f}, range_data.origin});
   range_data_inserter_->Insert(range_data, &tsdf_);
   tsdf_.FinishUpdate();
   float x = 4.5f;
@@ -294,10 +297,11 @@ TEST_F(RangeDataInserterTest2DTSDF,
       bandwidth);
   range_data_inserter_ = absl::make_unique<TSDFRangeDataInserter2D>(options_);
   auto range_data = sensor::RangeData();
-  range_data.returns.push_back({Eigen::Vector3f{-0.5f, 3.5f, 0.f}});
-  range_data.returns.push_back({Eigen::Vector3f{5.5f, 3.5f, 0.f}});
-  range_data.origin.x() = -0.5f;
-  range_data.origin.y() = -0.5f;
+  range_data.origin = Eigen::Vector3f(-0.5f, -0.5f, 0.0f);
+  range_data.returns.push_back(
+      {Eigen::Vector3f{-0.5f, 3.5f, 0.f}, range_data.origin});
+  range_data.returns.push_back(
+      {Eigen::Vector3f{5.5f, 3.5f, 0.f}, range_data.origin});
   range_data_inserter_->Insert(range_data, &tsdf_);
   tsdf_.FinishUpdate();
   float x = -0.5f;

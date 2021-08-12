@@ -43,7 +43,7 @@ sensor::RangeData FilterRangeDataByMaxRange(const sensor::RangeData& range_data,
   sensor::RangeData result{range_data.origin, {}, {}};
   result.returns =
       range_data.returns.copy_if([&](const sensor::RangefinderPoint& point) {
-        return (point.position - range_data.origin).norm() <= max_range;
+        return (point.position - point.origin).norm() <= max_range;
       });
   return result;
 }

@@ -22,6 +22,7 @@ import "cartographer/transform/proto/transform.proto";
 
 message RangefinderPoint {
   transform.proto.Vector3f position = 1;
+  transform.proto.Vector3f origin = 2;
 }
 
 message TimedRangefinderPoint {

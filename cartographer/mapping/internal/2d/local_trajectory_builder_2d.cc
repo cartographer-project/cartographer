@@ -165,19 +165,19 @@ LocalTrajectoryBuilder2D::AddRangeData(
   for (size_t i = 0; i < synchronized_data.ranges.size(); ++i) {
     const sensor::TimedRangefinderPoint& hit =
         synchronized_data.ranges[i].point_time;
-    const Eigen::Vector3f origin_in_local =
-        range_data_poses[i] *
-        synchronized_data.origins.at(synchronized_data.ranges[i].origin_index);
     sensor::RangefinderPoint hit_in_local =
-        range_data_poses[i] * sensor::ToRangefinderPoint(hit);
-    const Eigen::Vector3f delta = hit_in_local.position - origin_in_local;
+        range_data_poses[i] *
+        sensor::ToRangefinderPoint(
+            hit, synchronized_data.origins.at(
+                     synchronized_data.ranges[i].origin_index));
+    const Eigen::Vector3f delta = hit_in_local.position - hit_in_local.origin;
     const float range = delta.norm();
     if (range >= options_.min_range()) {
       if (range <= options_.max_range()) {
         accumulated_range_data_.returns.push_back(hit_in_local);
       } else {
         hit_in_local.position =
-            origin_in_local +
+            hit_in_local.origin +
             options_.missing_data_ray_length() / range * delta;
         accumulated_range_data_.misses.push_back(hit_in_local);
       }

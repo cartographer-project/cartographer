@@ -43,7 +43,7 @@ void MinMaxRangeFilteringPointsProcessor::Process(
   absl::flat_hash_set<int> to_remove;
   for (size_t i = 0; i < batch->points.size(); ++i) {
     const float range_squared =
-        (batch->points[i].position - batch->origin).squaredNorm();
+        (batch->points[i].position - batch->points[i].origin).squaredNorm();
     if (!(min_range_squared_ <= range_squared &&
           range_squared <= max_range_squared_)) {
       to_remove.insert(i);

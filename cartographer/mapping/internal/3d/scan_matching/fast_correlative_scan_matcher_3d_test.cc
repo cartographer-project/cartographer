@@ -40,18 +40,19 @@ class FastCorrelativeScanMatcher3DTest : public ::testing::Test {
         options_(CreateFastCorrelativeScanMatcher3DTestOptions3D(6)) {}
 
   void SetUp() override {
-    point_cloud_ = sensor::PointCloud({{Eigen::Vector3f(4.f, 0.f, 0.f)},
-                                       {Eigen::Vector3f(4.5f, 0.f, 0.f)},
-                                       {Eigen::Vector3f(5.f, 0.f, 0.f)},
-                                       {Eigen::Vector3f(5.5f, 0.f, 0.f)},
-                                       {Eigen::Vector3f(0.f, 4.f, 0.f)},
-                                       {Eigen::Vector3f(0.f, 4.5f, 0.f)},
-                                       {Eigen::Vector3f(0.f, 5.f, 0.f)},
-                                       {Eigen::Vector3f(0.f, 5.5f, 0.f)},
-                                       {Eigen::Vector3f(0.f, 0.f, 4.f)},
-                                       {Eigen::Vector3f(0.f, 0.f, 4.5f)},
-                                       {Eigen::Vector3f(0.f, 0.f, 5.f)},
-                                       {Eigen::Vector3f(0.f, 0.f, 5.5f)}});
+    point_cloud_ = sensor::PointCloud(
+        {{Eigen::Vector3f(4.f, 0.f, 0.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(4.5f, 0.f, 0.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(5.f, 0.f, 0.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(5.5f, 0.f, 0.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(0.f, 4.f, 0.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(0.f, 4.5f, 0.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(0.f, 5.f, 0.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(0.f, 5.5f, 0.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(0.f, 0.f, 4.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(0.f, 0.f, 4.5f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(0.f, 0.f, 5.f), Eigen::Vector3f(0.f, 0.f, 0.f)},
+         {Eigen::Vector3f(0.f, 0.f, 5.5f), Eigen::Vector3f(0.f, 0.f, 0.f)}});
   }
 
   transform::Rigid3f GetRandomPose() {
