@@ -106,7 +106,7 @@ TRAJECTORY_BUILDER_3D = {
     },
   },
 
-  -- When setting use_intensites to true, the intensity_cost_function_options_0
+  -- When setting use_intensities to true, the intensity_cost_function_options_0
   -- parameter in ceres_scan_matcher has to be set up as well or otherwise
   -- CeresScanMatcher will CHECK-fail.
   use_intensities = false,
