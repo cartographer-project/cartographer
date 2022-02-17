@@ -43,6 +43,7 @@
 
   <depend>libboost-iostreams-dev</depend>
   <depend>eigen</depend>
+  <depend>libabsl-dev</depend>
   <depend>libcairo2-dev</depend>
   <depend>libceres-dev</depend>
   <depend>libgflags-dev</depend>
