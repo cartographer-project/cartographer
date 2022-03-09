@@ -86,6 +86,7 @@ class CompressedPointCloud::ConstIterator {
   size_t remaining_points_;
   int32 remaining_points_in_current_block_;
   Eigen::Vector3f current_point_;
+  Eigen::Vector3f current_point_origin_;
   Eigen::Vector3i current_block_coordinates_;
   std::vector<int32>::const_iterator input_;
 };

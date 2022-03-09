@@ -58,7 +58,7 @@ CompressedPointCloud::ConstIterator::EndIterator(
 
 RangefinderPoint CompressedPointCloud::ConstIterator::operator*() const {
   CHECK_GT(remaining_points_, 0);
-  return {current_point_};
+  return {current_point_, current_point_origin_};
 }
 
 CompressedPointCloud::ConstIterator&
@@ -94,6 +94,10 @@ void CompressedPointCloud::ConstIterator::ReadNextPoint() {
   current_point_[2] =
       (current_block_coordinates_[2] + (point >> (2 * kBitsPerCoordinate))) *
       kPrecision;
+  // TODO(Magnago): at the moment serialization of the origin is not supported.
+  // Here we assume set the origin to (0,0,0). Fix this when the origin
+  // will be stored inside the CompressedPointCloud.
+  current_point_origin_ = Eigen::Vector3f::Zero();
 }
 
 CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
@@ -113,6 +117,9 @@ CompressedPointCloud::CompressedPointCloud(const PointCloud& point_cloud)
     CHECK_LT(point.position.cwiseAbs().maxCoeff() / kPrecision,
              1 << kMaxBitsPerDirection)
         << "Point out of bounds: " << point.position;
+    // TODO(Magnago): point.origin  is not compressed. Proper compression of the
+    // origin should be implemented enabling the recovery of the correct value
+    // when uncompressing.
     Eigen::Array3i raster_point;
     Eigen::Array3i block_coordinate;
     for (int i = 0; i < 3; ++i) {
