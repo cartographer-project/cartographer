@@ -24,9 +24,11 @@
 namespace cartographer {
 namespace mapping {
 
-struct YawOnlyQuaternionPlus {
+// Provides operations used to create a Ceres Manifold with a 4-D ambient
+// space and a 1-D tangent space that represents a yaw rotation only.
+struct YawOnlyQuaternionOperations {
   template <typename T>
-  bool operator()(const T* x, const T* delta, T* x_plus_delta) const {
+  bool Plus(const T* x, const T* delta, T* x_plus_delta) const {
     const T clamped_delta = common::Clamp(delta[0], T(-0.5), T(0.5));
     T q_delta[4];
     q_delta[0] = ceres::sqrt(1. - clamped_delta * clamped_delta);
@@ -36,11 +38,22 @@ struct YawOnlyQuaternionPlus {
     ceres::QuaternionProduct(q_delta, x, x_plus_delta);
     return true;
   }
+  template <typename T>
+  bool Minus(const T* y, const T* x, T* y_minus_x) const {
+    T minus_x[4] = {x[0], -x[1], -x[2], -x[3]};
+    T q_delta[4];
+    ceres::QuaternionProduct(y, minus_x, q_delta);
+    y_minus_x[0] = q_delta[3];
+    return true;
+  }
 };
 
-struct ConstantYawQuaternionPlus {
+// Provides operations used to create a Ceres Manifold with a 4-D ambient
+// space and a 2-D tangent space that represents a rotation only in pitch and
+// roll, but no yaw.
+struct ConstantYawQuaternionOperations {
   template <typename T>
-  bool operator()(const T* x, const T* delta, T* x_plus_delta) const {
+  bool Plus(const T* x, const T* delta, T* x_plus_delta) const {
     const T delta_norm =
         ceres::sqrt(common::Pow2(delta[0]) + common::Pow2(delta[1]));
     const T sin_delta_over_delta =
@@ -59,7 +72,28 @@ struct ConstantYawQuaternionPlus {
     ceres::QuaternionProduct(x, q_delta, x_plus_delta);
     return true;
   }
+  template <typename T>
+  bool Minus(const T* y, const T* x, T* y_minus_x) const {
+    T minus_x[4] = {x[0], -x[1], -x[2], -x[3]};
+    T q_delta[4];
+    ceres::QuaternionProduct(minus_x, y, q_delta);
+    const T& cos_delta_norm = q_delta[0];
+    const T sin_delta_norm =
+        ceres::sqrt(common::Pow2(q_delta[1]) + common::Pow2(q_delta[2]));
+    const T delta_norm = atan2(sin_delta_norm, cos_delta_norm);
+    const T delta_over_sin_delta =
+        delta_norm < 1e-6 ? T(1.) : delta_norm / sin_delta_norm;
+    y_minus_x[0] = q_delta[1] * delta_over_sin_delta;
+    y_minus_x[1] = q_delta[2] * delta_over_sin_delta;
+    return true;
+  }
 };
+
+// Type aliases used to create manifolds.
+using YawOnlyQuaternionManifold =
+    ceres::AutoDiffManifold<YawOnlyQuaternionOperations, 4, 1>;
+using ConstantYawQuaternionManifold =
+    ceres::AutoDiffManifold<ConstantYawQuaternionOperations, 4, 2>;
 
 }  // namespace mapping
 }  // namespace cartographer
