@@ -1,4 +1,3 @@
 **/Dockerfile*
 **/.dockerignore
 **/.git
-**/.travis.yml
