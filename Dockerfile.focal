@@ -22,7 +22,7 @@ ENV CC=$cc
 ENV CXX=$cxx
 
 # This base image doesn't ship with sudo, apt-utils. tzdata is installed here to avoid hanging later
-# when it would wait for user input. 
+# when it would wait for user input.
 RUN apt-get update && apt-get install -y sudo apt-utils tzdata && rm -rf /var/lib/apt/lists/*
 
 COPY scripts/install_debs_cmake.sh cartographer/scripts/

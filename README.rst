@@ -16,7 +16,7 @@
 Cartographer
 ============
 
-|build| |docs| |license|
+|build-jammy| |build-focal| |docs| |license|
 
 Purpose
 =======
@@ -83,7 +83,11 @@ Slides of these Cartographer Open House meetings are listed below.
 - June 22, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170622/sildes.pdf>`_
 - June 8, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170608/slides.pdf>`_
 
-.. |build| image:: https://github.com/cartographer-project/cartographer/actions/workflows/ci-focal.yaml/badge.svg
+.. |build-jammy| image:: https://github.com/cartographer-project/cartographer/actions/workflows/ci-jammy.yaml/badge.svg
+    :alt: Ubuntu 22.04 Build Status
+    :scale: 100%
+    :target: https://github.com/cartographer-project/cartographer/actions/workflows/ci-jammy.yaml
+.. |build-focal| image:: https://github.com/cartographer-project/cartographer/actions/workflows/ci-focal.yaml/badge.svg
     :alt: Ubuntu 20.04 Build Status
     :scale: 100%
     :target: https://github.com/cartographer-project/cartographer/actions/workflows/ci-focal.yaml

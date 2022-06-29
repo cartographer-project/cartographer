@@ -37,17 +37,15 @@ sudo apt-get install -y \
     ninja-build \
     stow
 
-# Install Ceres Solver and Protocol Buffers support if available.
+# Install Ceres Solver, Protocol Buffers, Abseil support if available.
 # No need to build it ourselves.
-if [[ "$(lsb_release -sc)" = "focal" || "$(lsb_release -sc)" = "buster" ]]
-then
-  sudo apt-get install -y python3-sphinx libgmock-dev libceres-dev protobuf-compiler
-else
-  sudo apt-get install -y python-sphinx
-  if [[ "$(lsb_release -sc)" = "bionic" ]]
-  then
-    sudo apt-get install -y libceres-dev
-  fi
-fi
-
-
+case "$(lsb_release -sc)" in
+    jammy)
+        sudo apt-get install -y python3-sphinx libgmock-dev libceres-dev protobuf-compiler libabsl-dev ;;
+    focal|buster)
+        sudo apt-get install -y python3-sphinx libgmock-dev libceres-dev protobuf-compiler ;;
+    bionic)
+        sudo apt-get install -y python-sphinx libceres-dev ;;
+    *)
+        sudo apt-get install -y python-sphinx ;;
+esac
