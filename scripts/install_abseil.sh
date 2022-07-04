@@ -19,7 +19,7 @@ set -o verbose
 
 git clone https://github.com/abseil/abseil-cpp.git
 cd abseil-cpp
-git checkout d902eb869bcfacc1bad14933ed9af4bed006d481
+git checkout 215105818dfde3174fe799600bb0f3cae233d0bf # 20211102.0
 mkdir build
 cd build
 cmake -G Ninja \
