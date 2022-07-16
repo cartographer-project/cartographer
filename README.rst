@@ -16,7 +16,7 @@
 Cartographer
 ============
 
-|build-jammy| |build-focal| |docs| |license|
+|build-jammy| |build-focal| |build-bionic| |docs| |license|
 
 Purpose
 =======
@@ -91,6 +91,10 @@ Slides of these Cartographer Open House meetings are listed below.
     :alt: Ubuntu 20.04 Build Status
     :scale: 100%
     :target: https://github.com/cartographer-project/cartographer/actions/workflows/ci-focal.yaml
+.. |build-bionic| image:: https://github.com/cartographer-project/cartographer/actions/workflows/ci-bionic.yaml/badge.svg
+    :alt: Ubuntu 18.04 Build Status
+    :scale: 100%
+    :target: https://github.com/cartographer-project/cartographer/actions/workflows/ci-bionic.yaml
 .. |docs| image:: https://readthedocs.org/projects/google-cartographer/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
