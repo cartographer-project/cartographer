@@ -27,6 +27,7 @@ sudo apt-get install -y \
     google-mock \
     libboost-all-dev \
     libcairo2-dev \
+    libceres-dev \
     libcurl4-openssl-dev \
     libeigen3-dev \
     libgflags-dev \
@@ -35,17 +36,16 @@ sudo apt-get install -y \
     libsuitesparse-dev \
     lsb-release \
     ninja-build \
+    python3-sphinx \
     stow
 
-# Install Ceres Solver, Protocol Buffers, Abseil support if available.
+# Install Protocol Buffers and Abseil if available.
 # No need to build it ourselves.
 case "$(lsb_release -sc)" in
     jammy)
-        sudo apt-get install -y python3-sphinx libgmock-dev libceres-dev protobuf-compiler libabsl-dev ;;
+        sudo apt-get install -y libgmock-dev protobuf-compiler libabsl-dev ;;
     focal|buster)
-        sudo apt-get install -y python3-sphinx libgmock-dev libceres-dev protobuf-compiler ;;
+        sudo apt-get install -y libgmock-dev protobuf-compiler ;;
     bionic)
-        sudo apt-get install -y python-sphinx libceres-dev ;;
-    *)
-        sudo apt-get install -y python-sphinx ;;
+        ;;
 esac
