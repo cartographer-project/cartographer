@@ -42,7 +42,7 @@ sudo apt-get install -y \
 # Install Protocol Buffers and Abseil if available.
 # No need to build it ourselves.
 case "$(lsb_release -sc)" in
-    jammy)
+    jammy|bullseye)
         sudo apt-get install -y libgmock-dev protobuf-compiler libabsl-dev ;;
     focal|buster)
         sudo apt-get install -y libgmock-dev protobuf-compiler ;;
