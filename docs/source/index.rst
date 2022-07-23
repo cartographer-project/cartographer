@@ -75,10 +75,6 @@ On Ubuntu 18.04 (Bionic):
   :language: bash
   :lines: 20-
 
-.. literalinclude:: ../../scripts/install_ceres.sh
-  :language: bash
-  :lines: 20-
-
 .. literalinclude:: ../../scripts/install_proto3.sh
   :language: bash
   :lines: 20-
@@ -97,8 +93,8 @@ on systems that meet the following requirements:
 
 * 64-bit, modern CPU (e.g. 3rd generation i7)
 * 16 GB RAM
-* Ubuntu 18.04 (Bionic), 20.04 (Focal)
-* gcc version 6.3.0, 7.5.0, 9.3.0
+* Ubuntu 18.04 (Bionic), 20.04 (Focal), 22.04 (Jammy)
+* gcc version 7.5.0, 9.3.0, 11.2.0
 
 Known Issues
 ------------
