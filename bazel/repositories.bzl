@@ -20,6 +20,7 @@ def cartographer_repositories():
     _maybe(
         http_archive,
         name = "com_github_nelhage_rules_boost",
+        sha256 = "f7d620c0061631d5b7685cd1065f2e2bf0768559555010a75e8e4720006f5867",
         strip_prefix = "rules_boost-c3fae06e819ed8b93e31b150387dce4864758643",
         urls = [
             "https://github.com/nelhage/rules_boost/archive/c3fae06e819ed8b93e31b150387dce4864758643.tar.gz",
