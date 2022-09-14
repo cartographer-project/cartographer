@@ -68,7 +68,7 @@ ImuBasedPoseExtrapolator::InitializeWithImu(
         transform::Rigid3d::Rotation(FromTwoVectors(
             imu_data.back().linear_acceleration, Eigen::Vector3d::UnitZ())));
   }
-  return extrapolator;
+  return std::move(extrapolator);
 }
 
 common::Time ImuBasedPoseExtrapolator::GetLastPoseTime() const {
