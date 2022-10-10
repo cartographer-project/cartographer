@@ -16,7 +16,7 @@
 Cartographer
 ============
 
-|build| |docs| |license|
+|build-jammy| |build-focal| |build-bionic| |build-bullseye| |build-buster| |docs| |license|
 
 Purpose
 =======
@@ -83,10 +83,26 @@ Slides of these Cartographer Open House meetings are listed below.
 - June 22, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170622/sildes.pdf>`_
 - June 8, 2017: `Slides <https://storage.googleapis.com/cartographer-public-data/cartographer-open-house/170608/slides.pdf>`_
 
-.. |build| image:: https://travis-ci.org/cartographer-project/cartographer.svg?branch=master
-    :alt: Build Status
+.. |build-jammy| image:: https://github.com/cartographer-project/cartographer/actions/workflows/ci-jammy.yaml/badge.svg
+    :alt: Ubuntu 22.04 Build Status
     :scale: 100%
-    :target: https://travis-ci.org/cartographer-project/cartographer
+    :target: https://github.com/cartographer-project/cartographer/actions/workflows/ci-jammy.yaml
+.. |build-focal| image:: https://github.com/cartographer-project/cartographer/actions/workflows/ci-focal.yaml/badge.svg
+    :alt: Ubuntu 20.04 Build Status
+    :scale: 100%
+    :target: https://github.com/cartographer-project/cartographer/actions/workflows/ci-focal.yaml
+.. |build-bionic| image:: https://github.com/cartographer-project/cartographer/actions/workflows/ci-bionic.yaml/badge.svg
+    :alt: Ubuntu 18.04 Build Status
+    :scale: 100%
+    :target: https://github.com/cartographer-project/cartographer/actions/workflows/ci-bionic.yaml
+.. |build-bullseye| image:: https://github.com/cartographer-project/cartographer/actions/workflows/ci-bullseye.yaml/badge.svg
+    :alt: Debian Bullseye Build Status
+    :scale: 100%
+    :target: https://github.com/cartographer-project/cartographer/actions/workflows/ci-bullseye.yaml
+.. |build-buster| image:: https://github.com/cartographer-project/cartographer/actions/workflows/ci-buster.yaml/badge.svg
+    :alt: Debian Buster Build Status
+    :scale: 100%
+    :target: https://github.com/cartographer-project/cartographer/actions/workflows/ci-buster.yaml
 .. |docs| image:: https://readthedocs.org/projects/google-cartographer/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
