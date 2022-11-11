@@ -26,6 +26,10 @@
 #include "cartographer/mapping/value_conversion_tables.h"
 #include "cartographer/transform/rigid_transform.h"
 
+// Workaround to prevent SubmapSlice structure alignment issue with cartographer_ros
+// Github issue #1909
+// #pragma pack(16)
+
 namespace cartographer {
 namespace io {
 
@@ -39,23 +43,54 @@ struct PaintSubmapSlicesResult {
   Eigen::Array2f origin;
 };
 
-struct SubmapSlice {
+/* Structure rearranged according to the static analyzer recommendation
+ * SA Message:
+ *    Excessive padding in 'struct cartographer::io::SubmapSlice' (32 padding bytes,
+ *    where 0 is optimal). Optimal fields order:
+ *    - slice_pose,
+ *    - pose,
+ *    - resolution,
+ *    - surface,
+ *    - cairo_data,
+ *    - width,
+ *    - height,
+ *    - version,
+ *    - metadata_version,
+ *    consider reordering the fields or adding explicit padding members
+ *    [clang-analyzer-optin.performance.Padding]
+ *
+ * Old version:
+ *   // Texture data.
+ *   int width;
+ *   int height;
+ *   int version;
+ *   double resolution;
+ *   ::cartographer::transform::Rigid3d slice_pose;
+ *   ::cartographer::io::UniqueCairoSurfacePtr surface;
+ *   // Pixel data used by 'surface'. Must outlive 'surface'.
+ *   std::vector<uint32_t> cairo_data;
+ *   // Metadata.
+ *   ::cartographer::transform::Rigid3d pose;
+ *   int metadata_version = -1;
+*/
+
+// Another C++11-compliant workaround to prevent SubmapSlice structure
+// alignment issue with cartographer_ros
+// Github issue #1909
+struct alignas(32) SubmapSlice {
+  // Pixel data used by 'surface'. Must outlive 'surface'.
+  std::vector<uint32_t> cairo_data;
+  ::cartographer::io::UniqueCairoSurfacePtr surface;
   SubmapSlice()
       : surface(::cartographer::io::MakeUniqueCairoSurfacePtr(nullptr)) {}
-
-  // Texture data.
+  double resolution;
+  // Metadata.
   int width;
   int height;
   int version;
-  double resolution;
-  ::cartographer::transform::Rigid3d slice_pose;
-  ::cartographer::io::UniqueCairoSurfacePtr surface;
-  // Pixel data used by 'surface'. Must outlive 'surface'.
-  std::vector<uint32_t> cairo_data;
-
-  // Metadata.
-  ::cartographer::transform::Rigid3d pose;
   int metadata_version = -1;
+  ::cartographer::transform::Rigid3d slice_pose;
+  ::cartographer::transform::Rigid3d pose;
 };
 
 struct SubmapTexture {
