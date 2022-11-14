@@ -46,9 +46,11 @@ class InterpolatedTSDF2DTest : public ::testing::Test {
 };
 
 TEST_F(InterpolatedTSDF2DTest, InterpolatesGridPoints) {
-  std::vector<Eigen::Vector2f> inner_points = {
-      Eigen::Vector2f(1.f, 1.f), Eigen::Vector2f(2.f, 1.f),
-      Eigen::Vector2f(1.f, 2.f), Eigen::Vector2f(2.f, 2.f)};
+  std::vector<Eigen::Vector2f> inner_points;
+  inner_points.push_back(Eigen::Vector2f(1.f, 1.f));
+  inner_points.push_back(Eigen::Vector2f(2.f, 1.f));
+  inner_points.push_back(Eigen::Vector2f(1.f, 2.f));
+  inner_points.push_back(Eigen::Vector2f(2.f, 2.f));
   for (const Eigen::Vector2f& point : inner_points) {
     tsdf_.SetCell(tsdf_.limits().GetCellIndex(point), 0.1f, 1.0f);
   }

@@ -41,6 +41,12 @@ struct TimedPointCloudOriginData {
   common::Time time;
   std::vector<Eigen::Vector3f> origins;
   std::vector<RangeMeasurement> ranges;
+  TimedPointCloudOriginData(common::Time _time = common::Time(),
+                            std::vector<Eigen::Vector3f> _origins = std::vector<Eigen::Vector3f>(),
+                            std::vector<RangeMeasurement> _ranges = std::vector<RangeMeasurement>()):
+                                                                                                       time(_time),
+                                                                                                       origins(_origins),
+                                                                                                       ranges(_ranges) {}
 };
 
 // Converts 'timed_point_cloud_data' to a proto::TimedPointCloudData.

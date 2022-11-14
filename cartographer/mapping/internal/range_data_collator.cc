@@ -45,7 +45,7 @@ sensor::TimedPointCloudOriginData RangeDataCollator::AddRangeData(
   }
   id_to_pending_data_.emplace(sensor_id, std::move(timed_point_cloud_data));
   if (expected_sensor_ids_.size() != id_to_pending_data_.size()) {
-    return {};
+    return sensor::TimedPointCloudOriginData();
   }
   current_start_ = current_end_;
   // We have messages from all sensors, move forward to oldest.
@@ -58,7 +58,7 @@ sensor::TimedPointCloudOriginData RangeDataCollator::AddRangeData(
 }
 
 sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
-  sensor::TimedPointCloudOriginData result{current_end_, {}, {}};
+  sensor::TimedPointCloudOriginData result(current_end_);
   bool warned_for_dropped_points = false;
   for (auto it = id_to_pending_data_.begin();
        it != id_to_pending_data_.end();) {
