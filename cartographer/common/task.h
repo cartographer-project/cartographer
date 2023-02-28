@@ -38,34 +38,34 @@ class Task {
   Task() = default;
   ~Task();
 
-  State GetState() LOCKS_EXCLUDED(mutex_);
+  State GetState() ABSL_LOCKS_EXCLUDED(mutex_);
 
   // State must be 'NEW'.
-  void SetWorkItem(const WorkItem& work_item) LOCKS_EXCLUDED(mutex_);
+  void SetWorkItem(const WorkItem& work_item) ABSL_LOCKS_EXCLUDED(mutex_);
 
   // State must be 'NEW'. 'dependency' may be nullptr, in which case it is
   // assumed completed.
-  void AddDependency(std::weak_ptr<Task> dependency) LOCKS_EXCLUDED(mutex_);
+  void AddDependency(std::weak_ptr<Task> dependency) ABSL_LOCKS_EXCLUDED(mutex_);
 
  private:
   // Allowed in all states.
   void AddDependentTask(Task* dependent_task);
 
   // State must be 'DEPENDENCIES_COMPLETED' and becomes 'COMPLETED'.
-  void Execute() LOCKS_EXCLUDED(mutex_);
+  void Execute() ABSL_LOCKS_EXCLUDED(mutex_);
 
   // State must be 'NEW' and becomes 'DISPATCHED' or 'DEPENDENCIES_COMPLETED'.
-  void SetThreadPool(ThreadPoolInterface* thread_pool) LOCKS_EXCLUDED(mutex_);
+  void SetThreadPool(ThreadPoolInterface* thread_pool) ABSL_LOCKS_EXCLUDED(mutex_);
 
   // State must be 'NEW' or 'DISPATCHED'. If 'DISPATCHED', may become
   // 'DEPENDENCIES_COMPLETED'.
   void OnDependenyCompleted();
 
-  WorkItem work_item_ GUARDED_BY(mutex_);
-  ThreadPoolInterface* thread_pool_to_notify_ GUARDED_BY(mutex_) = nullptr;
-  State state_ GUARDED_BY(mutex_) = NEW;
-  unsigned int uncompleted_dependencies_ GUARDED_BY(mutex_) = 0;
-  std::set<Task*> dependent_tasks_ GUARDED_BY(mutex_);
+  WorkItem work_item_ ABSL_GUARDED_BY(mutex_);
+  ThreadPoolInterface* thread_pool_to_notify_ ABSL_GUARDED_BY(mutex_) = nullptr;
+  State state_ ABSL_GUARDED_BY(mutex_) = NEW;
+  unsigned int uncompleted_dependencies_ ABSL_GUARDED_BY(mutex_) = 0;
+  std::set<Task*> dependent_tasks_ ABSL_GUARDED_BY(mutex_);
 
   absl::Mutex mutex_;
 };

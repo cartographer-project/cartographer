@@ -118,7 +118,7 @@ class ConstraintBuilder2D {
   // accessed after 'creation_task_handle' has completed.
   const SubmapScanMatcher* DispatchScanMatcherConstruction(
       const SubmapId& submap_id, const Grid2D* grid)
-      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Runs in a background thread and does computations for an additional
   // constraint, assuming 'submap' and 'compressed_point_cloud' do not change
@@ -129,9 +129,9 @@ class ConstraintBuilder2D {
                          const transform::Rigid2d& initial_relative_pose,
                          const SubmapScanMatcher& submap_scan_matcher,
                          std::unique_ptr<Constraint>* constraint)
-      LOCKS_EXCLUDED(mutex_);
+      ABSL_LOCKS_EXCLUDED(mutex_);
 
-  void RunWhenDoneCallback() LOCKS_EXCLUDED(mutex_);
+  void RunWhenDoneCallback() ABSL_LOCKS_EXCLUDED(mutex_);
 
   const constraints::proto::ConstraintBuilderOptions options_;
   common::ThreadPoolInterface* thread_pool_;
@@ -139,34 +139,34 @@ class ConstraintBuilder2D {
 
   // 'callback' set by WhenDone().
   std::unique_ptr<std::function<void(const Result&)>> when_done_
-      GUARDED_BY(mutex_);
+      ABSL_GUARDED_BY(mutex_);
 
   // TODO(gaschler): Use atomics instead of mutex to access these counters.
   // Number of the node in reaction to which computations are currently
   // added. This is always the number of nodes seen so far, even when older
   // nodes are matched against a new submap.
-  int num_started_nodes_ GUARDED_BY(mutex_) = 0;
+  int num_started_nodes_ ABSL_GUARDED_BY(mutex_) = 0;
 
-  int num_finished_nodes_ GUARDED_BY(mutex_) = 0;
+  int num_finished_nodes_ ABSL_GUARDED_BY(mutex_) = 0;
 
-  std::unique_ptr<common::Task> finish_node_task_ GUARDED_BY(mutex_);
+  std::unique_ptr<common::Task> finish_node_task_ ABSL_GUARDED_BY(mutex_);
 
-  std::unique_ptr<common::Task> when_done_task_ GUARDED_BY(mutex_);
+  std::unique_ptr<common::Task> when_done_task_ ABSL_GUARDED_BY(mutex_);
 
   // Constraints currently being computed in the background. A deque is used to
   // keep pointers valid when adding more entries. Constraint search results
   // with below-threshold scores are also 'nullptr'.
-  std::deque<std::unique_ptr<Constraint>> constraints_ GUARDED_BY(mutex_);
+  std::deque<std::unique_ptr<Constraint>> constraints_ ABSL_GUARDED_BY(mutex_);
 
   // Map of dispatched or constructed scan matchers by 'submap_id'.
   std::map<SubmapId, SubmapScanMatcher> submap_scan_matchers_
-      GUARDED_BY(mutex_);
+      ABSL_GUARDED_BY(mutex_);
   std::map<SubmapId, common::FixedRatioSampler> per_submap_sampler_;
 
   scan_matching::CeresScanMatcher2D ceres_scan_matcher_;
 
   // Histogram of scan matcher scores.
-  common::Histogram score_histogram_ GUARDED_BY(mutex_);
+  common::Histogram score_histogram_ ABSL_GUARDED_BY(mutex_);
 };
 
 }  // namespace constraints

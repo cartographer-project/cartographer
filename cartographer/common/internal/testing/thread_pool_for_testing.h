@@ -35,7 +35,7 @@ class ThreadPoolForTesting : public ThreadPoolInterface {
   ~ThreadPoolForTesting();
 
   std::weak_ptr<Task> Schedule(std::unique_ptr<Task> task)
-      LOCKS_EXCLUDED(mutex_) override;
+      ABSL_LOCKS_EXCLUDED(mutex_) override;
 
   void WaitUntilIdle();
 
@@ -44,14 +44,14 @@ class ThreadPoolForTesting : public ThreadPoolInterface {
 
   void DoWork();
 
-  void NotifyDependenciesCompleted(Task* task) LOCKS_EXCLUDED(mutex_) override;
+  void NotifyDependenciesCompleted(Task* task) ABSL_LOCKS_EXCLUDED(mutex_) override;
 
   absl::Mutex mutex_;
-  bool running_ GUARDED_BY(mutex_) = true;
-  bool idle_ GUARDED_BY(mutex_) = true;
-  std::deque<std::shared_ptr<Task>> task_queue_ GUARDED_BY(mutex_);
-  std::map<Task*, std::shared_ptr<Task>> tasks_not_ready_ GUARDED_BY(mutex_);
-  std::thread thread_ GUARDED_BY(mutex_);
+  bool running_ ABSL_GUARDED_BY(mutex_) = true;
+  bool idle_ ABSL_GUARDED_BY(mutex_) = true;
+  std::deque<std::shared_ptr<Task>> task_queue_ ABSL_GUARDED_BY(mutex_);
+  std::map<Task*, std::shared_ptr<Task>> tasks_not_ready_ ABSL_GUARDED_BY(mutex_);
+  std::thread thread_ ABSL_GUARDED_BY(mutex_);
 };
 
 }  // namespace testing

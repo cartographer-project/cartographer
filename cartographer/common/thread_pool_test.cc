@@ -34,7 +34,7 @@ class Receiver {
 
   void WaitForNumberSequence(const std::vector<int>& expected_numbers) {
     const auto predicate =
-        [this, &expected_numbers]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+        [this, &expected_numbers]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
           return (received_numbers_.size() >= expected_numbers.size());
         };
     absl::MutexLock locker(&mutex_);
@@ -43,7 +43,7 @@ class Receiver {
   }
 
   absl::Mutex mutex_;
-  std::vector<int> received_numbers_ GUARDED_BY(mutex_);
+  std::vector<int> received_numbers_ ABSL_GUARDED_BY(mutex_);
 };
 
 TEST(ThreadPoolTest, RunTask) {

@@ -47,7 +47,7 @@ class BlockingQueue {
 
   // Pushes a value onto the queue. Blocks if the queue is full.
   void Push(T t) {
-    const auto predicate = [this]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    const auto predicate = [this]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
       return QueueNotFullCondition();
     };
     absl::MutexLock lock(&mutex_);
@@ -57,7 +57,7 @@ class BlockingQueue {
 
   // Like push, but returns false if 'timeout' is reached.
   bool PushWithTimeout(T t, const common::Duration timeout) {
-    const auto predicate = [this]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    const auto predicate = [this]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
       return QueueNotFullCondition();
     };
     absl::MutexLock lock(&mutex_);
@@ -71,7 +71,7 @@ class BlockingQueue {
 
   // Pops the next value from the queue. Blocks until a value is available.
   T Pop() {
-    const auto predicate = [this]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    const auto predicate = [this]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
       return !QueueEmptyCondition();
     };
     absl::MutexLock lock(&mutex_);
@@ -84,7 +84,7 @@ class BlockingQueue {
 
   // Like Pop, but can timeout. Returns nullptr in this case.
   T PopWithTimeout(const common::Duration timeout) {
-    const auto predicate = [this]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    const auto predicate = [this]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
       return !QueueEmptyCondition();
     };
     absl::MutexLock lock(&mutex_);
@@ -100,7 +100,7 @@ class BlockingQueue {
   // Like Peek, but can timeout. Returns nullptr in this case.
   template <typename R>
   R* PeekWithTimeout(const common::Duration timeout) {
-    const auto predicate = [this]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    const auto predicate = [this]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
       return !QueueEmptyCondition();
     };
     absl::MutexLock lock(&mutex_);
@@ -131,7 +131,7 @@ class BlockingQueue {
 
   // Blocks until the queue is empty.
   void WaitUntilEmpty() {
-    const auto predicate = [this]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    const auto predicate = [this]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
       return QueueEmptyCondition();
     };
     absl::MutexLock lock(&mutex_);
@@ -140,18 +140,18 @@ class BlockingQueue {
 
  private:
   // Returns true iff the queue is empty.
-  bool QueueEmptyCondition() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+  bool QueueEmptyCondition() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
     return deque_.empty();
   }
 
   // Returns true iff the queue is not full.
-  bool QueueNotFullCondition() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+  bool QueueNotFullCondition() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
     return queue_size_ == kInfiniteQueueSize || deque_.size() < queue_size_;
   }
 
   absl::Mutex mutex_;
-  const size_t queue_size_ GUARDED_BY(mutex_);
-  std::deque<T> deque_ GUARDED_BY(mutex_);
+  const size_t queue_size_ ABSL_GUARDED_BY(mutex_);
+  std::deque<T> deque_ ABSL_GUARDED_BY(mutex_);
 };
 
 }  // namespace common
