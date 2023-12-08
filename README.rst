@@ -34,10 +34,10 @@ A Note for ROS Users
 ====================
 
 **Cartographer is no longer actively maintained.**
-On rare occassions critical pull requests may be merged, but no new development is currently taking place, including issue response.
+On rare occasions critical pull requests may be merged, but no new development is currently taking place, including issue response.
 If you are installing Cartographer in ROS 1 / ROS 2 using a binary package that package is a fork of this repository.
 The ROS fork of Cartographer is only maintained in a limited capacity.
-No new development takes place on this fork, but pull requests may be merged at the maintainers' disretion.    
+No new development takes place on this fork, but pull requests may be merged at the maintainers' discretion.    
 
 The ROS fork of Cartographer, and the ROS wrapper library, can be found at these locations:
 
