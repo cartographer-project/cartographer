@@ -15,9 +15,10 @@
 """External dependencies for Cartographer."""
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 def cartographer_repositories():
-    _maybe(
+    maybe(
         http_archive,
         name = "com_github_nelhage_rules_boost",
         sha256 = "f7d620c0061631d5b7685cd1065f2e2bf0768559555010a75e8e4720006f5867",
@@ -27,7 +28,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_github_antonovvk_bazel_rules",
         sha256 = "2f5327a2dc9a0cc8ead93953a5d2ae2e0308aece685e46cc89c27538a7e9a73a",
@@ -37,7 +38,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_github_gflags_gflags",
         sha256 = "6e16c8bc91b1310a44f3965e616383dbda48f83e8c1eaa2370a215057b00cabe",
@@ -48,7 +49,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_google_glog",
         sha256 = "dfc074b41a5b86fc5dda4f0e2e2d6cc5b21f798c9fcc8ed5fea9c8f7c4613be6",
@@ -59,7 +60,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "net_zlib_zlib",
         sha256 = "6d4d6640ca3121620995ee255945161821218752b551a1a180f4215f7d124d45",
@@ -71,7 +72,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "org_cairographics_pixman",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party/pixman:pixman.BUILD",
@@ -83,7 +84,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "org_cairographics_cairo",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party/cairo:cairo.BUILD",
@@ -95,7 +96,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "org_freetype_freetype2",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:freetype2.BUILD",
@@ -107,7 +108,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "org_libgd_libgd",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:gd.BUILD",
@@ -119,7 +120,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "org_freedesktop_fontconfig",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party/fontconfig:fontconfig.BUILD",
@@ -131,7 +132,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "org_ceres_solver_ceres_solver",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:ceres.BUILD",
@@ -143,7 +144,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "org_tuxfamily_eigen",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:eigen.BUILD",
@@ -155,7 +156,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_github_libexpat_libexpat",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:expat.BUILD",
@@ -167,7 +168,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "libjpeg",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:libjpeg.BUILD",
@@ -179,7 +180,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "org_libpng_libpng",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:libpng.BUILD",
@@ -191,7 +192,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_google_googletest",
         sha256 = "c18f281fd6621bb264570b99860a0241939b4a251c9b1af709b811d33bc63af8",
@@ -202,7 +203,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "bazel_skylib",
         sha256 = "e5d90f0ec952883d56747b7604e2a15ee36e288bb556c3d0ed33e818a4d971f2",
@@ -210,7 +211,7 @@ def cartographer_repositories():
         urls = ["https://github.com/bazelbuild/bazel-skylib/archive/1.0.2.tar.gz"],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_google_protobuf",
         sha256 = "1c744a6a1f2c901e68c5521bc275e22bdc66256eeb605c2781923365b7087e5f",
@@ -222,7 +223,7 @@ def cartographer_repositories():
         repo_mapping = {"@zlib": "@net_zlib_zlib"},
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "org_lua_lua",
         build_file = "@com_github_googlecartographer_cartographer//bazel/third_party:lua.BUILD",
@@ -234,18 +235,19 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    _GRPC_VERSION = "1.32.0"
+    maybe(
         http_archive,
         name = "com_github_grpc_grpc",
-        sha256 = "f869c648090e8bddaa1260a271b1089caccbe735bf47ac9cd7d44d35a02fb129",
-        strip_prefix = "grpc-1.19.1",
+        sha256 = "f880ebeb2ccf0e47721526c10dd97469200e40b5f101a0d9774eb69efa0bd07a",
+        strip_prefix = "grpc-{}".format(_GRPC_VERSION),
         urls = [
-            "https://mirror.bazel.build/github.com/grpc/grpc/archive/v1.19.1.tar.gz",
-            "https://github.com/grpc/grpc/archive/v1.19.1.tar.gz",
+            "https://mirror.bazel.build/github.com/grpc/grpc/archive/v{}.tar.gz".format(_GRPC_VERSION),
+            "https://github.com/grpc/grpc/archive/v{}.tar.gz".format(_GRPC_VERSION),
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_github_jupp0r_prometheus_cpp",
         sha256 = "07a704819cb90ed619cbf1a2713ba39faab27b8898b4561cc11a3c8b3ace83ea",
@@ -255,7 +257,7 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_github_googlecartographer_async_grpc",
         sha256 = "83c2a27c92979787f38810adc4b6bb67aa09607c53dbadca3430a5f29e0a1cd3",
@@ -265,15 +267,15 @@ def cartographer_repositories():
         ],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "com_google_absl",
-        sha256 = "c8ba586a9ab12bc4a67bb419fc0d2146200942b072bac95f50490f977b7fb04f",
-        strip_prefix = "abseil-cpp-5441bbe1db5d0f2ca24b5b60166367b0966790af",
-        urls = ["https://github.com/abseil/abseil-cpp/archive/5441bbe1db5d0f2ca24b5b60166367b0966790af.tar.gz"],
+        sha256 = "f368a8476f4e2e0eccf8a7318b98dafbe30b2600f4e3cf52636e5eb145aba06a",
+        strip_prefix = "abseil-cpp-df3ea785d8c30a9503321a3d35ee7d35808f190d",
+        urls = ["https://github.com/abseil/abseil-cpp/archive/df3ea785d8c30a9503321a3d35ee7d35808f190d.tar.gz"],
     )
 
-    _maybe(
+    maybe(
         http_archive,
         name = "rules_python",
         sha256 = "e5470e92a18aa51830db99a4d9c492cc613761d5bdb7131c04bd92b9834380f6",
@@ -295,7 +297,3 @@ def cartographer_repositories():
         name = "grpc++_codegen_proto",
         actual = "@com_github_grpc_grpc//:grpc++_codegen_proto",
     )
-
-def _maybe(repo_rule, name, **kwargs):
-    if name not in native.existing_rules():
-        repo_rule(name = name, **kwargs)
