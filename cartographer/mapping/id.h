@@ -25,8 +25,10 @@
 #include <memory>
 #include <ostream>
 #include <tuple>
+#include <utility>
 #include <vector>
 
+#include "absl/hash/hash.h"
 #include "absl/memory/memory.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
@@ -79,6 +81,11 @@ struct NodeId {
   }
 };
 
+template <typename H>
+H AbslHashValue(H h, const NodeId& id) {
+  return H::combine(std::move(h), id.trajectory_id, id.node_index);
+}
+
 inline std::ostream& operator<<(std::ostream& os, const NodeId& v) {
   return os << "(" << v.trajectory_id << ", " << v.node_index << ")";
 }
@@ -109,6 +116,11 @@ struct SubmapId {
     proto->set_submap_index(submap_index);
   }
 };
+
+template <typename H>
+H AbslHashValue(H h, const SubmapId& id) {
+  return H::combine(std::move(h), id.trajectory_id, id.submap_index);
+}
 
 inline std::ostream& operator<<(std::ostream& os, const SubmapId& v) {
   return os << "(" << v.trajectory_id << ", " << v.submap_index << ")";
@@ -419,5 +431,13 @@ class MapById {
 
 }  // namespace mapping
 }  // namespace cartographer
+
+template <>
+struct std::hash<cartographer::mapping::NodeId>
+    : absl::Hash<cartographer::mapping::NodeId> {};
+
+template <>
+struct std::hash<cartographer::mapping::SubmapId>
+    : absl::Hash<cartographer::mapping::SubmapId> {};
 
 #endif  // CARTOGRAPHER_MAPPING_ID_H_
