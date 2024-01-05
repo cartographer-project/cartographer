@@ -83,7 +83,7 @@ void ThreadPool::DoWork() {
   // away CPU resources from more important foreground threads.
   CHECK_NE(nice(10), -1);
 #endif
-  const auto predicate = [this]() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+  const auto predicate = [this]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
     return !task_queue_.empty() || !running_;
   };
   for (;;) {
