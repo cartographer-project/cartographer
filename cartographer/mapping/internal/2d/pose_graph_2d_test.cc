@@ -45,7 +45,8 @@ class PoseGraph2DTest : public ::testing::Test {
     for (float t = 0.f; t < 2.f * M_PI; t += 0.005f) {
       const float r = (std::sin(20.f * t) + 2.f) * std::sin(t + 2.f);
       point_cloud_.push_back(
-          {Eigen::Vector3f{r * std::sin(t), r * std::cos(t), 0.f}});
+          {Eigen::Vector3f{r * std::sin(t), r * std::cos(t), 0.f},
+           Eigen::Vector3f{0.f, 0.f, 0.f}});
     }
 
     {
@@ -176,8 +177,7 @@ class PoseGraph2DTest : public ::testing::Test {
     const sensor::PointCloud new_point_cloud = sensor::TransformPointCloud(
         point_cloud_,
         transform::Embed3D(current_pose_.inverse().cast<float>()));
-    const sensor::RangeData range_data{
-        Eigen::Vector3f::Zero(), new_point_cloud, {}};
+    const sensor::RangeData range_data{new_point_cloud.begin()->origin, new_point_cloud, {}};
     const transform::Rigid2d pose_estimate = noise * current_pose_;
     constexpr int kTrajectoryId = 0;
     active_submaps_->InsertRangeData(TransformRangeData(

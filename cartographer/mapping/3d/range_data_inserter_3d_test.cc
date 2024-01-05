@@ -43,10 +43,11 @@ class RangeDataInserter3DTest : public ::testing::Test {
   void InsertPointCloud() {
     const Eigen::Vector3f origin = Eigen::Vector3f(0.f, 0.f, -4.f);
     const std::vector<sensor::RangefinderPoint> returns = {
-        {Eigen::Vector3f{-3.f, -1.f, 4.f}},
-        {Eigen::Vector3f{-2.f, 0.f, 4.f}},
-        {Eigen::Vector3f{-1.f, 1.f, 4.f}},
-        {Eigen::Vector3f{0.f, 2.f, 4.f}}};
+        {Eigen::Vector3f{-3.f, -1.f, 4.f}, origin},
+        {Eigen::Vector3f{-2.f, 0.f, 4.f}, origin},
+        {Eigen::Vector3f{-1.f, 1.f, 4.f}, origin},
+        {Eigen::Vector3f{0.f, 2.f, 4.f}, origin},
+    };
     range_data_inserter_->Insert(
         sensor::RangeData{origin, sensor::PointCloud(returns), {}},
         &hybrid_grid_,
@@ -56,10 +57,11 @@ class RangeDataInserter3DTest : public ::testing::Test {
   void InsertPointCloudWithIntensities() {
     const Eigen::Vector3f origin = Eigen::Vector3f(0.f, 0.f, -4.f);
     const std::vector<sensor::RangefinderPoint> returns = {
-        {Eigen::Vector3f{-3.f, -1.f, 4.f}},
-        {Eigen::Vector3f{-2.f, 0.f, 4.f}},
-        {Eigen::Vector3f{-1.f, 1.f, 4.f}},
-        {Eigen::Vector3f{0.f, 2.f, 4.f}}};
+        {Eigen::Vector3f{-3.f, -1.f, 4.f}, origin},
+        {Eigen::Vector3f{-2.f, 0.f, 4.f}, origin},
+        {Eigen::Vector3f{-1.f, 1.f, 4.f}, origin},
+        {Eigen::Vector3f{0.f, 2.f, 4.f}, origin},
+    };
     const std::vector<float> intensities{7.f, 8.f, 9.f, 10.f};
     range_data_inserter_->Insert(
         sensor::RangeData{origin, sensor::PointCloud(returns, intensities), {}},

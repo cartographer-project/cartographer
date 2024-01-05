@@ -227,7 +227,8 @@ LocalTrajectoryBuilder3D::AddRangeData(
       const float range = delta.norm();
       if (range >= options_.min_range()) {
         if (range <= options_.max_range()) {
-          accumulated_points.push_back(sensor::RangefinderPoint{hit_in_local});
+          accumulated_points.push_back(
+              sensor::RangefinderPoint{hit_in_local, origin_in_local});
           if (options_.use_intensities()) {
             accumulated_intensities.push_back(hit.intensity);
           }

@@ -52,13 +52,14 @@ CreateRealTimeCorrelativeScanMatcherTestOptions2D() {
 class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
  protected:
   RealTimeCorrelativeScanMatcherTest() {
-    point_cloud_.push_back({Eigen::Vector3f{0.025f, 0.175f, 0.f}});
-    point_cloud_.push_back({Eigen::Vector3f{-0.025f, 0.175f, 0.f}});
-    point_cloud_.push_back({Eigen::Vector3f{-0.075f, 0.175f, 0.f}});
-    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.175f, 0.f}});
-    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.125f, 0.f}});
-    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.075f, 0.f}});
-    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.025f, 0.f}});
+    Eigen::Vector3f origin(0.5f, -0.5f, 0.f);
+    point_cloud_.push_back({Eigen::Vector3f{0.025f, 0.175f, 0.f}, origin});
+    point_cloud_.push_back({Eigen::Vector3f{-0.025f, 0.175f, 0.f}, origin});
+    point_cloud_.push_back({Eigen::Vector3f{-0.075f, 0.175f, 0.f}, origin});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.175f, 0.f}, origin});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.125f, 0.f}, origin});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.075f, 0.f}, origin});
+    point_cloud_.push_back({Eigen::Vector3f{-0.125f, 0.025f, 0.f}, origin});
     real_time_correlative_scan_matcher_ =
         absl::make_unique<RealTimeCorrelativeScanMatcher2D>(
             CreateRealTimeCorrelativeScanMatcherTestOptions2D());
@@ -87,7 +88,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
           CreateTSDFRangeDataInserterOptions2D(parameter_dictionary.get()));
     }
     range_data_inserter_->Insert(
-        sensor::RangeData{Eigen::Vector3f(0.5f, -0.5f, 0.f), point_cloud_, {}},
+        sensor::RangeData{point_cloud_.begin()->origin, point_cloud_, {}},
         grid_.get());
     grid_->FinishUpdate();
   }
@@ -109,7 +110,7 @@ class RealTimeCorrelativeScanMatcherTest : public ::testing::Test {
                   parameter_dictionary.get()));
     }
     range_data_inserter_->Insert(
-        sensor::RangeData{Eigen::Vector3f::Zero(), point_cloud_, {}},
+        sensor::RangeData{point_cloud_.begin()->origin, point_cloud_, {}},
         grid_.get());
     grid_->FinishUpdate();
   }

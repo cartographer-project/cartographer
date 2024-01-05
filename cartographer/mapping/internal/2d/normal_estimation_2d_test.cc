@@ -39,15 +39,15 @@ TEST(NormalEstimation2DTest, SinglePoint) {
       CreateNormalEstimationOptions2D(parameter_dictionary.get());
   auto range_data = sensor::RangeData();
   const size_t num_angles = 100;
-  range_data.origin.x() = 0.f;
-  range_data.origin.y() = 0.f;
+  const auto origin = Eigen::Vector3f::Zero();
   for (size_t angle_idx = 0; angle_idx < num_angles; ++angle_idx) {
     const double angle = static_cast<double>(angle_idx) /
                              static_cast<double>(num_angles) * 2. * M_PI -
                          M_PI;
     range_data.returns = sensor::PointCloud(
         {{Eigen::Vector3d{std::cos(angle), std::sin(angle), 0.}
-              .cast<float>()}});
+              .cast<float>(),
+         origin}});
     std::vector<float> normals;
     normals = EstimateNormals(range_data, options);
     EXPECT_NEAR(common::NormalizeAngleDifference(angle - normals[0] - M_PI),
@@ -64,38 +64,43 @@ TEST(NormalEstimation2DTest, StraightLineGeometry) {
   const proto::NormalEstimationOptions2D options =
       CreateNormalEstimationOptions2D(parameter_dictionary.get());
   auto range_data = sensor::RangeData();
-  range_data.returns.push_back({Eigen::Vector3f{-1.f, 1.f, 0.f}});
-  range_data.returns.push_back({Eigen::Vector3f{0.f, 1.f, 0.f}});
-  range_data.returns.push_back({Eigen::Vector3f{1.f, 1.f, 0.f}});
-  range_data.origin.x() = 0.f;
-  range_data.origin.y() = 0.f;
+  const auto origin = Eigen::Vector3f::Zero();
+  range_data.returns.push_back({Eigen::Vector3f{-1.f, 1.f, 0.f}, origin});
+  range_data.returns.push_back({Eigen::Vector3f{0.f, 1.f, 0.f}, origin});
+  range_data.returns.push_back({Eigen::Vector3f{1.f, 1.f, 0.f}, origin});
   std::vector<float> normals;
   normals = EstimateNormals(range_data, options);
   for (const float normal : normals) {
     EXPECT_NEAR(normal, -M_PI_2, 1e-4);
   }
   normals.clear();
-  range_data.returns = sensor::PointCloud({{Eigen::Vector3f{1.f, 1.f, 0.f}},
-                                           {Eigen::Vector3f{1.f, 0.f, 0.f}},
-                                           {Eigen::Vector3f{1.f, -1.f, 0.f}}});
+  range_data.returns = sensor::PointCloud({
+      {Eigen::Vector3f{1.f, 1.f, 0.f}, origin},
+      {Eigen::Vector3f{1.f, 0.f, 0.f}, origin},
+      {Eigen::Vector3f{1.f, -1.f, 0.f}, origin},
+  });
   normals = EstimateNormals(range_data, options);
   for (const float normal : normals) {
     EXPECT_NEAR(std::abs(normal), M_PI, 1e-4);
   }
 
   normals.clear();
-  range_data.returns = sensor::PointCloud({{Eigen::Vector3f{1.f, -1.f, 0.f}},
-                                           {Eigen::Vector3f{0.f, -1.f, 0.f}},
-                                           {Eigen::Vector3f{-1.f, -1.f, 0.f}}});
+  range_data.returns = sensor::PointCloud({
+      {Eigen::Vector3f{1.f, -1.f, 0.f}, origin},
+      {Eigen::Vector3f{0.f, -1.f, 0.f}, origin},
+      {Eigen::Vector3f{-1.f, -1.f, 0.f}, origin},
+  });
   normals = EstimateNormals(range_data, options);
   for (const float normal : normals) {
     EXPECT_NEAR(normal, M_PI_2, 1e-4);
   }
 
   normals.clear();
-  range_data.returns = sensor::PointCloud({{Eigen::Vector3f{-1.f, -1.f, 0.f}},
-                                           {Eigen::Vector3f{-1.f, 0.f, 0.f}},
-                                           {Eigen::Vector3f{-1.f, 1.f, 0.f}}});
+  range_data.returns = sensor::PointCloud({
+      {Eigen::Vector3f{-1.f, -1.f, 0.f}, origin},
+      {Eigen::Vector3f{-1.f, 0.f, 0.f}, origin},
+      {Eigen::Vector3f{-1.f, 1.f, 0.f}, origin},
+  });
   normals = EstimateNormals(range_data, options);
   for (const float normal : normals) {
     EXPECT_NEAR(normal, 0, 1e-4);
@@ -115,16 +120,17 @@ TEST_P(CircularGeometry2DTest, NumSamplesPerNormal) {
   const proto::NormalEstimationOptions2D options =
       CreateNormalEstimationOptions2D(parameter_dictionary.get());
   auto range_data = sensor::RangeData();
+  const auto origin = Eigen::Vector3f::Zero();
   const size_t num_angles = 100;
   for (size_t angle_idx = 0; angle_idx < num_angles; ++angle_idx) {
     const double angle = static_cast<double>(angle_idx) /
                              static_cast<double>(num_angles) * 2. * M_PI -
                          M_PI;
     range_data.returns.push_back(
-        {Eigen::Vector3d{std::cos(angle), std::sin(angle), 0.}.cast<float>()});
+        {Eigen::Vector3d{std::cos(angle), std::sin(angle), 0.}.cast<float>(),
+         origin});
   }
-  range_data.origin.x() = 0.f;
-  range_data.origin.y() = 0.f;
+  range_data.origin = origin;
   std::vector<float> normals;
   normals = EstimateNormals(range_data, options);
   for (size_t angle_idx = 0; angle_idx < num_angles; ++angle_idx) {

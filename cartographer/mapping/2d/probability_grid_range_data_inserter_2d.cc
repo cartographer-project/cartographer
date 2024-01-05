@@ -39,9 +39,11 @@ void GrowAsNeeded(const sensor::RangeData& range_data,
   constexpr float kPadding = 1e-6f;
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
     bounding_box.extend(hit.position.head<2>());
+    bounding_box.extend(hit.origin.head<2>());
   }
   for (const sensor::RangefinderPoint& miss : range_data.misses) {
     bounding_box.extend(miss.position.head<2>());
+    bounding_box.extend(miss.origin.head<2>());
   }
   probability_grid->GrowLimits(bounding_box.min() -
                                kPadding * Eigen::Vector2f::Ones());
@@ -61,12 +63,12 @@ void CastRays(const sensor::RangeData& range_data,
       superscaled_resolution, limits.max(),
       CellLimits(limits.cell_limits().num_x_cells * kSubpixelScale,
                  limits.cell_limits().num_y_cells * kSubpixelScale));
-  const Eigen::Array2i begin =
-      superscaled_limits.GetCellIndex(range_data.origin.head<2>());
   // Compute and add the end points.
   std::vector<Eigen::Array2i> ends;
+  std::vector<Eigen::Array2i> begins;
   ends.reserve(range_data.returns.size());
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
+    begins.push_back(superscaled_limits.GetCellIndex(hit.origin.head<2>()));
     ends.push_back(superscaled_limits.GetCellIndex(hit.position.head<2>()));
     probability_grid->ApplyLookupTable(ends.back() / kSubpixelScale, hit_table);
   }
@@ -76,9 +78,9 @@ void CastRays(const sensor::RangeData& range_data,
   }
 
   // Now add the misses.
-  for (const Eigen::Array2i& end : ends) {
+  for (size_t i = 0; i < ends.size(); i++) {
     std::vector<Eigen::Array2i> ray =
-        RayToPixelMask(begin, end, kSubpixelScale);
+        RayToPixelMask(begins[i], ends[i], kSubpixelScale);
     for (const Eigen::Array2i& cell_index : ray) {
       probability_grid->ApplyLookupTable(cell_index, miss_table);
     }
@@ -87,7 +89,8 @@ void CastRays(const sensor::RangeData& range_data,
   // Finally, compute and add empty rays based on misses in the range data.
   for (const sensor::RangefinderPoint& missing_echo : range_data.misses) {
     std::vector<Eigen::Array2i> ray = RayToPixelMask(
-        begin, superscaled_limits.GetCellIndex(missing_echo.position.head<2>()),
+        superscaled_limits.GetCellIndex(missing_echo.origin.head<2>()),
+        superscaled_limits.GetCellIndex(missing_echo.position.head<2>()),
         kSubpixelScale);
     for (const Eigen::Array2i& cell_index : ray) {
       probability_grid->ApplyLookupTable(cell_index, miss_table);

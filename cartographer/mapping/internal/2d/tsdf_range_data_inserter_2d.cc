@@ -32,13 +32,15 @@ const float kSqrtTwoPi = std::sqrt(2.0 * M_PI);
 
 void GrowAsNeeded(const sensor::RangeData& range_data,
                   const float truncation_distance, TSDF2D* const tsdf) {
-  Eigen::AlignedBox2f bounding_box(range_data.origin.head<2>());
+  Eigen::AlignedBox2f bounding_box;
   for (const sensor::RangefinderPoint& hit : range_data.returns) {
-    const Eigen::Vector3f direction =
-        (hit.position - range_data.origin).normalized();
+    const Eigen::Vector3f direction = (hit.position - hit.origin).normalized();
     const Eigen::Vector3f end_position =
         hit.position + truncation_distance * direction;
+    const Eigen::Vector3f start_position =
+        hit.origin - truncation_distance * direction;
     bounding_box.extend(end_position.head<2>());
+    bounding_box.extend(start_position.head<2>());
   }
   // Padding around bounding box to avoid numerical issues at cell boundaries.
   constexpr float kPadding = 1e-6f;
@@ -151,9 +153,10 @@ void TSDFRangeDataInserter2D::Insert(const sensor::RangeData& range_data,
                               options_.normal_estimation_options());
   }
 
-  const Eigen::Vector2f origin = sorted_range_data.origin.head<2>();
   for (size_t hit_index = 0; hit_index < sorted_range_data.returns.size();
        ++hit_index) {
+    const Eigen::Vector2f origin =
+        sorted_range_data.returns[hit_index].origin.head<2>();
     const Eigen::Vector2f hit =
         sorted_range_data.returns[hit_index].position.head<2>();
     const float normal = normals.empty()

@@ -102,11 +102,12 @@ void OutlierRemovingPointsProcessor::ProcessInPhaseTwo(
   // by better ray casting, and also by marking the hits of the current range
   // data to be excluded.
   for (size_t i = 0; i < batch.points.size(); ++i) {
-    const Eigen::Vector3f delta = batch.points[i].position - batch.origin;
+    const Eigen::Vector3f delta =
+        batch.points[i].position - batch.points[i].origin;
     const float length = delta.norm();
     for (float x = 0; x < length; x += voxel_size_) {
       const Eigen::Array3i index =
-          voxels_.GetCellIndex(batch.origin + (x / length) * delta);
+          voxels_.GetCellIndex(batch.points[i].origin + (x / length) * delta);
       if (voxels_.value(index).hits > 0) {
         ++voxels_.mutable_value(index)->rays;
       }

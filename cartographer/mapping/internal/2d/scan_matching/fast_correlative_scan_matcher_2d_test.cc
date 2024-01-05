@@ -150,12 +150,13 @@ TEST(FastCorrelativeScanMatcherTest, CorrectPose) {
   const auto options = CreateFastCorrelativeScanMatcherTestOptions2D(3);
 
   sensor::PointCloud point_cloud;
-  point_cloud.push_back({Eigen::Vector3f{-2.5f, 0.5f, 0.f}});
-  point_cloud.push_back({Eigen::Vector3f{-2.f, 0.5f, 0.f}});
-  point_cloud.push_back({Eigen::Vector3f{0.f, -0.5f, 0.f}});
-  point_cloud.push_back({Eigen::Vector3f{0.5f, -1.6f, 0.f}});
-  point_cloud.push_back({Eigen::Vector3f{2.5f, 0.5f, 0.f}});
-  point_cloud.push_back({Eigen::Vector3f{2.5f, 1.7f, 0.f}});
+  Eigen::Vector3f origin(0.f, 0.f, 0.f);
+  point_cloud.push_back({Eigen::Vector3f{-2.5f, 0.5f, 0.f}, origin});
+  point_cloud.push_back({Eigen::Vector3f{-2.f, 0.5f, 0.f}, origin});
+  point_cloud.push_back({Eigen::Vector3f{0.f, -0.5f, 0.f}, origin});
+  point_cloud.push_back({Eigen::Vector3f{0.5f, -1.6f, 0.f}, origin});
+  point_cloud.push_back({Eigen::Vector3f{2.5f, 0.5f, 0.f}, origin});
+  point_cloud.push_back({Eigen::Vector3f{2.5f, 1.7f, 0.f}, origin});
 
   for (int i = 0; i != 50; ++i) {
     const transform::Rigid2f expected_pose(
@@ -200,12 +201,16 @@ TEST(FastCorrelativeScanMatcherTest, FullSubmapMatching) {
   const auto options = CreateFastCorrelativeScanMatcherTestOptions2D(6);
 
   sensor::PointCloud unperturbed_point_cloud;
-  unperturbed_point_cloud.push_back({Eigen::Vector3f{-2.5f, 0.5f, 0.f}});
-  unperturbed_point_cloud.push_back({Eigen::Vector3f{-2.25f, 0.5f, 0.f}});
-  unperturbed_point_cloud.push_back({Eigen::Vector3f{0.f, 0.5f, 0.f}});
-  unperturbed_point_cloud.push_back({Eigen::Vector3f{0.25f, 1.6f, 0.f}});
-  unperturbed_point_cloud.push_back({Eigen::Vector3f{2.5f, 0.5f, 0.f}});
-  unperturbed_point_cloud.push_back({Eigen::Vector3f{2.f, 1.8f, 0.f}});
+  Eigen::Vector3f origin(0.f, 0.f, 0.f);
+  unperturbed_point_cloud.push_back(
+      {Eigen::Vector3f{-2.5f, 0.5f, 0.f}, origin});
+  unperturbed_point_cloud.push_back(
+      {Eigen::Vector3f{-2.25f, 0.5f, 0.f}, origin});
+  unperturbed_point_cloud.push_back({Eigen::Vector3f{0.f, 0.5f, 0.f}, origin});
+  unperturbed_point_cloud.push_back(
+      {Eigen::Vector3f{0.25f, 1.6f, 0.f}, origin});
+  unperturbed_point_cloud.push_back({Eigen::Vector3f{2.5f, 0.5f, 0.f}, origin});
+  unperturbed_point_cloud.push_back({Eigen::Vector3f{2.f, 1.8f, 0.f}, origin});
 
   for (int i = 0; i != 20; ++i) {
     const transform::Rigid2f perturbation(

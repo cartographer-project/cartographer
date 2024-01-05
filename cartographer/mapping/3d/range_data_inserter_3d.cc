@@ -25,12 +25,11 @@ namespace mapping {
 namespace {
 
 void InsertMissesIntoGrid(const std::vector<uint16>& miss_table,
-                          const Eigen::Vector3f& origin,
                           const sensor::PointCloud& returns,
                           HybridGrid* hybrid_grid,
                           const int num_free_space_voxels) {
-  const Eigen::Array3i origin_cell = hybrid_grid->GetCellIndex(origin);
   for (const sensor::RangefinderPoint& hit : returns) {
+    const Eigen::Array3i origin_cell = hybrid_grid->GetCellIndex(hit.origin);
     const Eigen::Array3i hit_cell = hybrid_grid->GetCellIndex(hit.position);
 
     const Eigen::Array3i delta = hit_cell - origin_cell;
@@ -104,8 +103,8 @@ void RangeDataInserter3D::Insert(
 
   // By not starting a new update after hits are inserted, we give hits priority
   // (i.e. no hits will be ignored because of a miss in the same cell).
-  InsertMissesIntoGrid(miss_table_, range_data.origin, range_data.returns,
-                       hybrid_grid, options_.num_free_space_voxels());
+  InsertMissesIntoGrid(miss_table_, range_data.returns, hybrid_grid,
+                       options_.num_free_space_voxels());
   if (intensity_hybrid_grid != nullptr) {
     InsertIntensitiesIntoGrid(range_data.returns, intensity_hybrid_grid,
                               options_.intensity_threshold());

@@ -55,8 +55,10 @@ TEST(PointCloudTest, TransformTimedPointCloud) {
 }
 
 TEST(PointCloudTest, CopyIf) {
-  std::vector<RangefinderPoint> points = {
-      {{0.f, 0.f, 0.f}}, {{1.f, 1.f, 1.f}}, {{2.f, 2.f, 2.f}}};
+  Eigen::Vector3f origin(0.f, 0.f, 0.f);
+  std::vector<RangefinderPoint> points = {{{0.f, 0.f, 0.f}, origin},
+                                          {{1.f, 1.f, 1.f}, origin},
+                                          {{2.f, 2.f, 2.f}, origin}};
 
   const PointCloud point_cloud(points);
   const PointCloud copied_point_cloud = point_cloud.copy_if(
@@ -64,14 +66,17 @@ TEST(PointCloudTest, CopyIf) {
 
   EXPECT_EQ(copied_point_cloud.size(), 2);
   EXPECT_THAT(copied_point_cloud.intensities(), IsEmpty());
-  EXPECT_THAT(copied_point_cloud.points(),
-              ElementsAre(RangefinderPoint{Eigen::Vector3f{1.f, 1.f, 1.f}},
-                          RangefinderPoint{Eigen::Vector3f{2.f, 2.f, 2.f}}));
+  EXPECT_THAT(
+      copied_point_cloud.points(),
+      ElementsAre(RangefinderPoint{Eigen::Vector3f{1.f, 1.f, 1.f}, origin},
+                  RangefinderPoint{Eigen::Vector3f{2.f, 2.f, 2.f}, origin}));
 }
 
 TEST(PointCloudTest, CopyIfWithIntensities) {
-  std::vector<RangefinderPoint> points = {
-      {{0.f, 0.f, 0.f}}, {{1.f, 1.f, 1.f}}, {{2.f, 2.f, 2.f}}};
+  Eigen::Vector3f origin(0.f, 0.f, 0.f);
+  std::vector<RangefinderPoint> points = {{{0.f, 0.f, 0.f}, origin},
+                                          {{1.f, 1.f, 1.f}, origin},
+                                          {{2.f, 2.f, 2.f}, origin}};
   std::vector<float> intensities = {0.f, 1.f, 2.f};
 
   const PointCloud point_cloud(points, intensities);
@@ -79,9 +84,10 @@ TEST(PointCloudTest, CopyIfWithIntensities) {
       [&](const RangefinderPoint& point) { return point.position.x() > 0.1f; });
   EXPECT_EQ(copied_point_cloud.size(), 2);
   EXPECT_EQ(copied_point_cloud.intensities().size(), 2);
-  EXPECT_THAT(copied_point_cloud.points(),
-              ElementsAre(RangefinderPoint{Eigen::Vector3f{1.f, 1.f, 1.f}},
-                          RangefinderPoint{Eigen::Vector3f{2.f, 2.f, 2.f}}));
+  EXPECT_THAT(
+      copied_point_cloud.points(),
+      ElementsAre(RangefinderPoint{Eigen::Vector3f{1.f, 1.f, 1.f}, origin},
+                  RangefinderPoint{Eigen::Vector3f{2.f, 2.f, 2.f}, origin}));
   EXPECT_THAT(copied_point_cloud.intensities(),
               ElementsAre(FloatNear(1.f, 1e-6), FloatNear(2.f, 1e-6)));
 }
