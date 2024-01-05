@@ -44,7 +44,7 @@ The ROS fork of Cartographer, and the ROS wrapper library, can be found at these
 - `Cartographer Fork <https://github.com/ros2/cartographer>`_
 - `Cartographer ROS  <https://github.com/ros2/cartographer_ros>`_
 
-Additional discussion can be found in `this ROS Discourse thread<https://discourse.ros.org/t/rolling-and-soon-humble-release-of-both-cartographer-and-cartographer-ros-v2-and-call-for-testing/25137>`_.  
+Additional discussion can be found in `this ROS Discourse thread <https://discourse.ros.org/t/rolling-and-soon-humble-release-of-both-cartographer-and-cartographer-ros-v2-and-call-for-testing/25137>`_.  
 
 
 Getting started
