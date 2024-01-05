@@ -28,6 +28,21 @@
 #include "cartographer/common/math.h"
 #include "cartographer/common/port.h"
 
+#include<Eigen/StdVector>
+/*
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Matrix<float, 2, 1>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Matrix<double, 2, 1>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Rotation2D<float>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Rotation2D<double>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Matrix<float, 3, 1>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Matrix<double, 3, 1>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Quaternion<float>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Quaternion<double>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::AngleAxis<float>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::AngleAxis<double>);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Eigen::Matrix<double, 4, 1, 0, 4, 1>);
+*/
+
 namespace cartographer {
 namespace transform {
 

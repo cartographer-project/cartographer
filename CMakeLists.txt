@@ -24,6 +24,7 @@ set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VE
 option(BUILD_GRPC "build Cartographer gRPC support" false)
 set(CARTOGRAPHER_HAS_GRPC ${BUILD_GRPC})
 option(BUILD_PROMETHEUS "build Prometheus monitoring support" false)
+option(DISABLE_AVX_ALIGNMENT "disable AVX x32 Eigen-containing structure alignment producing segmentation faults on AVX-enabled systems" false)
 
 include("${PROJECT_SOURCE_DIR}/cmake/functions.cmake")
 google_initialize_cartographer_project()
@@ -185,6 +186,9 @@ endif()
 set(INSTALL_GENERATED_HDRS ${ALL_PROTO_HDRS} ${ALL_GRPC_SERVICE_HDRS})
 
 add_library(${PROJECT_NAME} STATIC ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
+if(DISABLE_AVX_ALIGNMENT)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC EIGEN_MAX_ALIGN_BYTES=16)
+endif(DISABLE_AVX_ALIGNMENT)
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/cartographer/common/config.h.cmake
