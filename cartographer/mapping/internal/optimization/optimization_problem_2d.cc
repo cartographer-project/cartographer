@@ -144,8 +144,8 @@ void AddLandmarkCostFunctions(
                                          *prev_node_pose, *next_node_pose);
         C_landmarks->emplace(
             landmark_id,
-            CeresPose(starting_point, nullptr /* translation_parametrization */,
-                      absl::make_unique<ceres::QuaternionParameterization>(),
+            CeresPose(starting_point, nullptr /* translation_manifold */,
+                      absl::make_unique<ceres::QuaternionManifold>(),
                       problem));
         // Set landmark constant if it is frozen.
         if (landmark_node.second.frozen) {

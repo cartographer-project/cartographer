@@ -160,8 +160,8 @@ void AddLandmarkCostFunctions(
                                          *prev_node_pose, *next_node_pose);
         C_landmarks->emplace(
             landmark_id,
-            CeresPose(starting_point, nullptr /* translation_parametrization */,
-                      absl::make_unique<ceres::QuaternionParameterization>(),
+            CeresPose(starting_point, nullptr /* translation_manifold */,
+                      absl::make_unique<ceres::QuaternionManifold>(),
                       problem));
         // Set landmark constant if it is frozen.
         if (landmark_node.second.frozen) {
@@ -274,12 +274,11 @@ void OptimizationProblem3D::Solve(
   ceres::Problem::Options problem_options;
   ceres::Problem problem(problem_options);
 
-  const auto translation_parameterization =
-      [this]() -> std::unique_ptr<ceres::LocalParameterization> {
-    return options_.fix_z_in_3d()
-               ? absl::make_unique<ceres::SubsetParameterization>(
-                     3, std::vector<int>{2})
-               : nullptr;
+  const auto translation_manifold =
+      [this]() -> std::unique_ptr<ceres::Manifold> {
+    return options_.fix_z_in_3d() ? absl::make_unique<ceres::SubsetManifold>(
+                                        3, std::vector<int>{2})
+                                  : nullptr;
   };
 
   // Set the starting point.
@@ -298,9 +297,8 @@ void OptimizationProblem3D::Solve(
       C_submaps.Insert(
           submap_id_data.id,
           CeresPose(submap_id_data.data.global_pose,
-                    translation_parameterization(),
-                    absl::make_unique<ceres::AutoDiffLocalParameterization<
-                        ConstantYawQuaternionPlus, 4, 2>>(),
+                    translation_manifold(),
+                    absl::make_unique<ConstantYawQuaternionManifold>(),
                     &problem));
       problem.SetParameterBlockConstant(
           C_submaps.at(submap_id_data.id).translation());
@@ -308,8 +306,8 @@ void OptimizationProblem3D::Solve(
       C_submaps.Insert(
           submap_id_data.id,
           CeresPose(submap_id_data.data.global_pose,
-                    translation_parameterization(),
-                    absl::make_unique<ceres::QuaternionParameterization>(),
+                    translation_manifold(),
+                    absl::make_unique<ceres::QuaternionManifold>(),
                     &problem));
     }
     if (frozen) {
@@ -324,8 +322,8 @@ void OptimizationProblem3D::Solve(
         frozen_trajectories.count(node_id_data.id.trajectory_id) != 0;
     C_nodes.Insert(
         node_id_data.id,
-        CeresPose(node_id_data.data.global_pose, translation_parameterization(),
-                  absl::make_unique<ceres::QuaternionParameterization>(),
+        CeresPose(node_id_data.data.global_pose, translation_manifold(),
+                  absl::make_unique<ceres::QuaternionManifold>(),
                   &problem));
     if (frozen) {
       problem.SetParameterBlockConstant(C_nodes.at(node_id_data.id).rotation());
@@ -550,9 +548,7 @@ void OptimizationProblem3D::Solve(
                     Eigen::AngleAxisd(
                         transform::GetYaw(fixed_frame_pose_in_map.rotation()),
                         Eigen::Vector3d::UnitZ())),
-                nullptr,
-                absl::make_unique<ceres::AutoDiffLocalParameterization<
-                    YawOnlyQuaternionPlus, 4, 1>>(),
+                nullptr, absl::make_unique<YawOnlyQuaternionManifold>(),
                 &problem));
         fixed_frame_pose_initialized = true;
       }
