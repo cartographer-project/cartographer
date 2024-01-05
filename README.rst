@@ -30,6 +30,23 @@ configurations.
 .. _Cartographer: https://github.com/cartographer-project/cartographer
 .. _SLAM: https://en.wikipedia.org/wiki/Simultaneous_localization_and_mapping
 
+A Note for ROS Users
+====================
+
+**Cartographer is no longer actively maintained.**
+On rare occasions critical pull requests may be merged, but no new development is currently taking place, including issue response.
+If you are installing Cartographer in ROS 1 / ROS 2 using a binary package that package is a fork of this repository.
+The ROS fork of Cartographer is only maintained in a limited capacity.
+No new development takes place on this fork, but pull requests may be merged at the maintainers' discretion.    
+
+The ROS fork of Cartographer, and the ROS wrapper library, can be found at these locations:
+
+- `Cartographer Fork <https://github.com/ros2/cartographer>`_
+- `Cartographer ROS  <https://github.com/ros2/cartographer_ros>`_
+
+Additional discussion can be found in `this ROS Discourse thread<https://discourse.ros.org/t/rolling-and-soon-humble-release-of-both-cartographer-and-cartographer-ros-v2-and-call-for-testing/25137>`_.  
+
+
 Getting started
 ===============
 
