@@ -21,3 +21,4 @@ build -c opt
 # reduces build time.
 build --force_pic
 
+build --incompatible_disallow_empty_glob
