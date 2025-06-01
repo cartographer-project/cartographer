@@ -1262,6 +1262,28 @@ void PoseGraph3D::TrimmingHandle::TrimSubmap(const SubmapId& submap_id) {
   parent_->constraint_builder_.DeleteScanMatcher(submap_id);
   parent_->optimization_problem_->TrimSubmap(submap_id);
 
+  // Removes landmark observations whose timestamps are older than the latest
+  // timestamp among the 'nodes_to_remove'.
+  common::Time latest_to_be_removed_node_time;
+  for (const NodeId& node_id : nodes_to_remove) {
+    latest_to_be_removed_node_time =
+        std::max(latest_to_be_removed_node_time,
+                 parent_->data_.trajectory_nodes.at(node_id).time());
+  }
+  for (auto& landmark_node : parent_->data_.landmark_nodes) {
+    auto& observations = landmark_node.second.landmark_observations;
+    if (observations.empty()) continue;
+    observations.erase(
+        std::remove_if(
+            observations.begin(), observations.end(),
+            [&latest_to_be_removed_node_time](
+                PoseGraphInterface::LandmarkNode::LandmarkObservation&
+                    observation) {
+              return observation.time <= latest_to_be_removed_node_time;
+            }),
+        observations.end());
+  }
+
   // We have one submap less, update the gauge metrics.
   kDeletedSubmapsMetric->Increment();
   if (parent_->IsTrajectoryFrozen(submap_id.trajectory_id)) {
