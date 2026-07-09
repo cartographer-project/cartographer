@@ -64,13 +64,18 @@ void Task::SetThreadPool(ThreadPoolInterface* thread_pool) {
 }
 
 void Task::AddDependentTask(Task* dependent_task) {
-  absl::MutexLock locker(&mutex_);
-  if (state_ == COMPLETED) {
-    dependent_task->OnDependenyCompleted();
-    return;
+  bool was_completed;
+  {
+    absl::MutexLock locker(&mutex_);
+    was_completed = (state_ == COMPLETED);
+    if (!was_completed) {
+      bool inserted = dependent_tasks_.insert(dependent_task).second;
+      CHECK(inserted) << "Given dependency is already a dependency.";
+    }
   }
-  bool inserted = dependent_tasks_.insert(dependent_task).second;
-  CHECK(inserted) << "Given dependency is already a dependency.";
+  if (was_completed) {
+    dependent_task->OnDependenyCompleted();
+  }
 }
 
 void Task::OnDependenyCompleted() {
@@ -96,9 +101,13 @@ void Task::Execute() {
     work_item_();
   }
 
-  absl::MutexLock locker(&mutex_);
-  state_ = COMPLETED;
-  for (Task* dependent_task : dependent_tasks_) {
+  std::set<Task*> dependent_tasks;
+  {
+    absl::MutexLock locker(&mutex_);
+    state_ = COMPLETED;
+    dependent_tasks = dependent_tasks_;
+  }
+  for (Task* dependent_task : dependent_tasks) {
     dependent_task->OnDependenyCompleted();
   }
 }
