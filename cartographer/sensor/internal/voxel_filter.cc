@@ -90,7 +90,6 @@ std::vector<bool> RandomizedVoxelFilterIndices(
     const std::vector<T>& point_cloud, const float resolution,
     PointFunction&& point_function) {
   // According to https://en.wikipedia.org/wiki/Reservoir_sampling
-  std::minstd_rand0 generator;
   absl::flat_hash_map<VoxelKeyType, std::pair<int, int>>
       voxel_count_and_point_index;
   for (size_t i = 0; i < point_cloud.size(); i++) {
@@ -98,12 +97,8 @@ std::vector<bool> RandomizedVoxelFilterIndices(
         point_function(point_cloud[i]), resolution)];
     voxel.first++;
     if (voxel.first == 1) {
+      // Keep the first point that falls into each voxel.
       voxel.second = i;
-    } else {
-      std::uniform_int_distribution<> distribution(1, voxel.first);
-      if (distribution(generator) == voxel.first) {
-        voxel.second = i;
-      }
     }
   }
   std::vector<bool> points_used(point_cloud.size(), false);

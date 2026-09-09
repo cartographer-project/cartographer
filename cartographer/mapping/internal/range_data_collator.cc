@@ -16,6 +16,7 @@
 
 #include "cartographer/mapping/internal/range_data_collator.h"
 
+#include <algorithm>
 #include <memory>
 
 #include "absl/memory/memory.h"
@@ -121,11 +122,12 @@ sensor::TimedPointCloudOriginData RangeDataCollator::CropAndMerge() {
     }
   }
 
-  std::sort(result.ranges.begin(), result.ranges.end(),
-            [](const sensor::TimedPointCloudOriginData::RangeMeasurement& a,
-               const sensor::TimedPointCloudOriginData::RangeMeasurement& b) {
-              return a.point_time.time < b.point_time.time;
-            });
+  std::stable_sort(
+      result.ranges.begin(), result.ranges.end(),
+      [](const sensor::TimedPointCloudOriginData::RangeMeasurement& a,
+         const sensor::TimedPointCloudOriginData::RangeMeasurement& b) {
+        return a.point_time.time < b.point_time.time;
+      });
   return result;
 }
 

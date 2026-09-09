@@ -40,6 +40,43 @@ TEST(VoxelFilterTest, ReturnsOnePointInEachVoxel) {
   EXPECT_THAT(result.points(), Contains(point_cloud[2]));
 }
 
+TEST(VoxelFilterTest, KeepsTheFirstPointInEachVoxel) {
+  std::vector<RangefinderPoint> points;
+  std::vector<float> intensities;
+  // Ten points inside a single voxel, tagged by intensity in insertion order.
+  for (int i = 0; i < 10; ++i) {
+    points.push_back({{0.01f * i, 0.f, 0.f}});
+    intensities.push_back(static_cast<float>(i));
+  }
+  const PointCloud result = VoxelFilter(PointCloud(points, intensities), 0.3f);
+  ASSERT_EQ(result.size(), 1);
+  EXPECT_EQ(result.intensities()[0], 0.f);
+}
+
+TEST(VoxelFilterTest, SelectionDoesNotDependOnOtherVoxels) {
+  // The representative chosen for one voxel must not depend on how many points
+  // fell into an unrelated voxel earlier in the cloud.
+  const auto filter_with_prefix = [](int num_prefix_points) {
+    std::vector<RangefinderPoint> points;
+    std::vector<float> intensities;
+    for (int i = 0; i < num_prefix_points; ++i) {
+      points.push_back({{10.f + 0.01f * i, 0.f, 0.f}});
+      intensities.push_back(-1.f);
+    }
+    for (int i = 0; i < 10; ++i) {
+      points.push_back({{0.01f * i, 0.f, 0.f}});
+      intensities.push_back(static_cast<float>(i));
+    }
+    const PointCloud result =
+        VoxelFilter(PointCloud(points, intensities), 0.3f);
+    for (size_t i = 0; i < result.size(); ++i) {
+      if (result.intensities()[i] >= 0.f) return result.intensities()[i];
+    }
+    return -1.f;
+  };
+  EXPECT_EQ(filter_with_prefix(2), filter_with_prefix(7));
+}
+
 TEST(VoxelFilterTest, CorrectIntensities) {
   std::vector<RangefinderPoint> points;
   std::vector<float> intensities;

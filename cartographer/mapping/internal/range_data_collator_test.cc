@@ -88,6 +88,33 @@ TEST(RangeDataCollatorTest, SingleSensor) {
   EXPECT_TRUE(ArePointTimestampsSorted(output_2));
 }
 
+// A point cloud without per-point timestamps reaches local SLAM with every
+// point time set to zero, so all of CropAndMerge's sort keys are equal.
+// std::sort leaves the order of equal elements undefined, and the voxel filter
+// downstream keeps the first point that falls into each voxel, so the order
+// decides which measurement survives and reaches the scan matcher.
+TEST(RangeDataCollatorTest, PreservesOrderOfPointsWithEqualTimestamps) {
+  // Large enough that introsort does not fall back to insertion sort, which
+  // would happen to be stable.
+  constexpr int kNumEqualSamples = 100;
+  const std::string sensor_id = "single_sensor";
+  RangeDataCollator collator({sensor_id});
+  sensor::TimedPointCloudData data{
+      common::FromUniversal(300), Eigen::Vector3f(0.f, 1.f, 2.f), {}, {}};
+  data.ranges.reserve(kNumEqualSamples);
+  for (int i = 0; i < kNumEqualSamples; ++i) {
+    // Tag each point by its position in the message.
+    data.ranges.push_back(
+        {Eigen::Vector3f{1.f, 2.f, static_cast<float>(i)}, 0.f});
+  }
+  const auto output = collator.AddRangeData(sensor_id, data);
+  ASSERT_EQ(output.ranges.size(), kNumEqualSamples);
+  for (int i = 0; i < kNumEqualSamples; ++i) {
+    EXPECT_EQ(output.ranges[i].point_time.position.z(), static_cast<float>(i))
+        << "point " << i << " moved";
+  }
+}
+
 TEST(RangeDataCollatorTest, SingleSensorEmptyData) {
   const std::string sensor_id = "single_sensor";
   RangeDataCollator collator({sensor_id});
